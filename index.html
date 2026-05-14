@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>MySoul — 12 Week Year</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Lora:ital@1&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#1a1f2e;--bg2:#1f2538;--s1:#252c40;--s2:#2d3450;--s3:#343d5c;
+  --b1:rgba(255,255,255,0.07);--b2:rgba(255,255,255,0.12);--b3:rgba(255,255,255,0.18);
+  --t1:#dde4f8;--t2:#9aa4c8;--t3:#606880;
+  --ac:#6c63ff;--ac2:#9b95ff;
+  --hc:#2dd4a0;--sp:#ff8c5a;--sc:#5ab4ff;--st:#e879b0;--pe:#b97dff;
+  --gold:#f5c842;--red:#f87171;--r:14px;--rs:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  background:var(--bg);
+  background-image:radial-gradient(ellipse 70% 50% at 5% 0%,rgba(108,99,255,0.13) 0%,transparent 55%),radial-gradient(ellipse 50% 40% at 95% 95%,rgba(45,212,160,0.07) 0%,transparent 50%);
+  color:var(--t1);font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;line-height:1.55;min-height:100vh;
+}
+.wrap{max-width:1100px;margin:0 auto;padding:0 16px 80px;}
+
+.hdr{padding:28px 0 22px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--b2);margin-bottom:24px;}
+.eyebrow{font-family:'Lora',serif;font-style:italic;font-size:12px;color:var(--t3);letter-spacing:0.12em;margin-bottom:3px;}
+.title{font-size:26px;font-weight:700;letter-spacing:-0.5px;}
+.title em{font-style:normal;color:var(--ac2);}
+.hdr-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.wpill{background:linear-gradient(135deg,var(--ac),var(--ac2));color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;letter-spacing:0.04em;white-space:nowrap;}
+.sync-badge{font-size:11px;font-weight:600;padding:5px 12px;border-radius:20px;border:1px solid;white-space:nowrap;transition:all .3s;}
+.sync-badge.ok{color:var(--hc);border-color:rgba(45,212,160,.3);background:rgba(45,212,160,.08);}
+.sync-badge.busy{color:var(--gold);border-color:rgba(245,200,66,.3);background:rgba(245,200,66,.08);}
+.sync-badge.err{color:var(--red);border-color:rgba(248,113,113,.3);background:rgba(248,113,113,.08);}
+.sync-badge.off{color:var(--t3);border-color:var(--b2);background:transparent;}
+
+.tl-wrap{margin-bottom:22px;}
+.tl-lbl{font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--t3);margin-bottom:8px;}
+.tl-bar{display:flex;gap:4px;}
+.ts{flex:1;height:7px;border-radius:4px;background:var(--s3);cursor:pointer;transition:transform .1s;}
+.ts:hover{transform:scaleY(1.5);}
+.ts.past{background:linear-gradient(90deg,var(--ac),var(--ac2));opacity:.45;}
+.ts.current{background:linear-gradient(90deg,var(--gold),#f5a623);box-shadow:0 0 10px rgba(245,200,66,.35);}
+.ts.great{background:var(--hc);opacity:.8;}
+.ts.viewing{outline:2px solid var(--gold);outline-offset:2px;}
+.tl-nums{display:flex;gap:4px;margin-top:4px;}
+.tl-nums span{flex:1;font-size:9px;color:var(--t3);text-align:center;}
+
+.wnav{display:flex;align-items:center;gap:8px;margin-bottom:22px;flex-wrap:wrap;}
+.wnav-lbl{font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--t3);}
+.wtabs{display:flex;gap:4px;flex-wrap:wrap;}
+.wt{width:32px;height:32px;border-radius:var(--rs);border:1px solid var(--b2);background:transparent;color:var(--t2);font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;position:relative;}
+.wt:hover{background:var(--s2);color:var(--t1);}
+.wt.active{background:var(--ac);border-color:var(--ac);color:#fff;}
+.wt.dot::after{content:'';position:absolute;bottom:3px;left:50%;transform:translateX(-50%);width:3px;height:3px;border-radius:50%;background:var(--hc);}
+.wt.active.dot::after{background:rgba(255,255,255,.55);}
+.cur-btn{background:transparent;border:1px solid var(--b2);color:var(--t2);font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;font-weight:600;padding:7px 14px;border-radius:var(--rs);cursor:pointer;transition:all .15s;white-space:nowrap;margin-left:auto;}
+.cur-btn:hover{background:var(--s2);color:var(--t1);}
+
+.ss{display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px;margin-bottom:20px;}
+@media(max-width:560px){.ss{grid-template-columns:1fr 1fr;}}
+.sc{background:var(--s1);border:1px solid var(--b2);border-radius:var(--r);padding:16px 18px;}
+.sc.p{background:linear-gradient(135deg,var(--s2) 0%,rgba(27,32,52,.95) 100%);border-color:rgba(108,99,255,.28);}
+.sc-lbl{font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--t3);margin-bottom:5px;}
+.sc-val{font-size:30px;font-weight:700;line-height:1;letter-spacing:-1px;}
+.sc-sub{font-size:11px;color:var(--t3);margin-top:3px;}
+.pbar{background:var(--b2);border-radius:3px;height:4px;margin-top:10px;}
+.pfill{height:4px;border-radius:3px;transition:width .45s ease;}
+
+.bd{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);padding:16px 18px;margin-bottom:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:14px;}
+.bd-lbl{font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;display:flex;align-items:center;gap:5px;}
+.bd-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.bd-track{background:var(--b2);border-radius:3px;height:5px;}
+.bd-bar{height:5px;border-radius:3px;transition:width .4s ease;}
+.bd-pct{font-size:11px;color:var(--t3);margin-top:4px;font-weight:500;}
+
+.actions{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap;}
+.btn{background:transparent;border:1px solid var(--b2);color:var(--t2);font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;font-weight:600;padding:7px 14px;border-radius:var(--rs);cursor:pointer;transition:all .15s;}
+.btn:hover{background:var(--s2);color:var(--t1);}
+.btn.primary{background:var(--ac);border-color:var(--ac);color:#fff;}
+.btn.primary:hover{background:#5b53e0;}
+.btn.d{color:var(--red);}
+.btn.d:hover{background:rgba(248,113,113,.1);}
+
+.sec{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--t3);margin-bottom:12px;display:flex;align-items:center;gap:10px;}
+.sec::after{content:'';flex:1;height:1px;background:var(--b2);}
+
+.wg-wrap{background:var(--s1);border:1px solid var(--b2);border-radius:var(--r);padding:14px 18px;margin-bottom:16px;}
+.wg-lbl{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);margin-bottom:6px;}
+.wg-inp{width:100%;background:transparent;border:none;border-bottom:1px solid var(--b2);color:var(--t1);font-family:'Lora',serif;font-style:italic;font-size:15px;outline:none;padding:2px 0 8px;transition:border-color .15s;}
+.wg-inp:focus{border-bottom-color:rgba(108,99,255,.5);}
+.wg-inp::placeholder{color:var(--t3);}
+
+.cgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media(max-width:600px){.cgrid{grid-template-columns:1fr;}}
+.cfull{grid-column:span 2;}
+@media(max-width:600px){.cfull{grid-column:span 1;}}
+
+.cc{background:var(--s1);border:1px solid var(--b2);border-radius:var(--r);overflow:hidden;transition:border-color .15s;}
+.cc:hover{border-color:var(--b3);}
+.cc-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;cursor:pointer;border-bottom:1px solid var(--b1);user-select:none;gap:8px;}
+.cc-hl{display:flex;align-items:center;gap:8px;}
+.cc-ico{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+.cc-name{font-size:12px;font-weight:700;}
+.cc-pct{font-size:11px;font-weight:600;padding:2px 7px;border-radius:12px;background:rgba(255,255,255,.05);color:var(--t3);}
+.cc-chev{font-size:11px;color:var(--t3);transition:transform .2s;flex-shrink:0;}
+.cc-chev.o{transform:rotate(180deg);}
+
+.goal-wrap{padding:9px 16px 0;border-bottom:1px solid var(--b1);}
+.goal-lbl{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--t3);margin-bottom:4px;}
+.goal-inp{width:100%;background:transparent;border:none;border-bottom:1px solid var(--b2);color:var(--t1);font-family:'Lora',serif;font-size:12px;font-style:italic;outline:none;padding:2px 0 7px;transition:border-color .15s;}
+.goal-inp:focus{border-bottom-color:rgba(108,99,255,.5);}
+.goal-inp::placeholder{color:var(--t3);}
+
+.trow{display:flex;align-items:center;padding:8px 10px 8px 16px;border-bottom:1px solid var(--b1);gap:7px;transition:background .1s;}
+.trow:last-child{border-bottom:none;}
+.trow:hover{background:rgba(255,255,255,.02);}
+.tinp{flex:1;background:transparent;border:none;outline:none;color:var(--t1);font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;min-width:0;padding:0;}
+.tinp::placeholder{color:var(--s3);}
+.tinp.sx{color:var(--t3);text-decoration:line-through;text-decoration-color:var(--t3);}
+.stbtn{flex-shrink:0;width:72px;padding:4px 0;border-radius:6px;border:1px solid;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;font-size:10px;font-weight:600;text-align:center;transition:all .15s;}
+.stbtn.done{background:rgba(45,212,160,.1);color:var(--hc);border-color:rgba(45,212,160,.28);}
+.stbtn.todo{background:transparent;color:var(--t3);border-color:var(--b2);}
+.stbtn.todo:hover{color:var(--red);border-color:rgba(248,113,113,.3);background:rgba(248,113,113,.05);}
+.dbtn{flex-shrink:0;background:none;border:none;color:var(--b3);cursor:pointer;font-size:16px;line-height:1;padding:0 2px;transition:color .15s;}
+.dbtn:hover{color:var(--red);}
+.addbtn{display:flex;align-items:center;gap:5px;padding:8px 16px;background:none;border:none;border-top:1px dashed var(--b2);color:var(--t3);cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;width:100%;text-align:left;transition:color .15s;}
+.addbtn:hover{color:var(--t2);}
+
+.notes-wrap{padding:0 16px 12px;border-top:1px solid var(--b1);}
+.notes-lbl{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--t3);margin:10px 0 5px;}
+.notes-ta{width:100%;background:rgba(0,0,0,.15);border:1px solid var(--b1);border-radius:var(--rs);color:var(--t1);font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;padding:8px 12px;outline:none;resize:none;min-height:52px;transition:border-color .15s;line-height:1.5;}
+.notes-ta:focus{border-color:rgba(108,99,255,.4);}
+
+/* Debug panel */
+.debug{background:var(--s1);border:1px solid var(--b2);border-radius:var(--rs);padding:12px 16px;margin-bottom:20px;font-size:11px;color:var(--t3);display:none;}
+.debug.show{display:block;}
+.debug h4{color:var(--t2);margin-bottom:8px;font-size:12px;}
+.debug-row{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--b1);}
+.debug-row:last-child{border-bottom:none;}
+.debug-val{color:var(--t1);}
+
+.loader{position:fixed;inset:0;background:rgba(26,31,46,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:14px;}
+.loader.hide{display:none;}
+.spinner{width:36px;height:36px;border:3px solid var(--b2);border-top-color:var(--ac);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loader-txt{font-size:13px;color:var(--t2);}
+
+.toast{position:fixed;bottom:20px;right:20px;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:600;padding:8px 16px;border-radius:10px;opacity:0;transition:opacity .25s;z-index:998;pointer-events:none;}
+.toast.s{background:var(--s2);border:1px solid rgba(45,212,160,.35);color:var(--hc);}
+.toast.e{background:var(--s2);border:1px solid rgba(248,113,113,.35);color:var(--red);}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<div class="loader" id="loader">
+  <div class="spinner"></div>
+  <div class="loader-txt" id="loaderTxt">Connecting to Google Sheet…</div>
+</div>
+
+<div class="wrap">
+  <header class="hdr">
+    <div>
+      <div class="eyebrow">MySoul Ecosystem</div>
+      <div class="title">12 Week <em>Year</em></div>
+    </div>
+    <div class="hdr-right">
+      <div class="sync-badge off" id="syncBadge">⟳ Connecting</div>
+      <div class="wpill" id="wpill">Week 8 of 12</div>
+    </div>
+  </header>
+
+  <!-- Debug panel — tap title 5x to show -->
+  <div class="debug" id="debugPanel">
+    <h4>Sync Debug</h4>
+    <div class="debug-row"><span>API URL</span><span class="debug-val" id="dbUrl">—</span></div>
+    <div class="debug-row"><span>Last GET</span><span class="debug-val" id="dbGet">—</span></div>
+    <div class="debug-row"><span>Last POST</span><span class="debug-val" id="dbPost">—</span></div>
+    <div class="debug-row"><span>GET Response</span><span class="debug-val" id="dbGetResp">—</span></div>
+    <div class="debug-row"><span>Local data size</span><span class="debug-val" id="dbSize">—</span></div>
+  </div>
+
+  <div class="tl-wrap">
+    <div class="tl-lbl">12-Week Progress</div>
+    <div class="tl-bar" id="tlBar"></div>
+    <div class="tl-nums" id="tlNums"></div>
+  </div>
+
+  <div class="wnav">
+    <span class="wnav-lbl">Week</span>
+    <div class="wtabs" id="wtabs"></div>
+    <button class="cur-btn" onclick="setCur()">Set as Current</button>
+  </div>
+
+  <div class="ss">
+    <div class="sc p">
+      <div class="sc-lbl">Weekly Score</div>
+      <div class="sc-val" id="sval" style="color:var(--ac2)">0%</div>
+      <div class="sc-sub" id="ssub">0 of 0 done</div>
+      <div class="pbar"><div class="pfill" id="sbar" style="width:0%;background:var(--ac)"></div></div>
+    </div>
+    <div class="sc">
+      <div class="sc-lbl">12WY Avg</div>
+      <div class="sc-val" id="avgv" style="color:var(--hc)">0%</div>
+      <div class="sc-sub">all weeks</div>
+    </div>
+    <div class="sc">
+      <div class="sc-lbl">Best Week</div>
+      <div class="sc-val" id="bestv" style="color:var(--gold)">—</div>
+      <div class="sc-sub" id="bests">highest score</div>
+    </div>
+  </div>
+
+  <div class="bd" id="bd"></div>
+
+  <div class="actions">
+    <button class="btn primary" onclick="manualSync()">↑ Push to Sheet</button>
+    <button class="btn" onclick="manualLoad()">↓ Pull from Sheet</button>
+    <button class="btn" onclick="testConnection()">Test Connection</button>
+    <button class="btn d" onclick="clrWeek()">Clear Week</button>
+  </div>
+
+  <div class="sec">Week Goal</div>
+  <div class="wg-wrap">
+    <div class="wg-lbl">What does winning this week look like?</div>
+    <input class="wg-inp" id="wgInp" type="text" placeholder="e.g. Hit 150 leads/day, close 4 MySoulSpace clients, walk every day…" onchange="updateWG(this.value)">
+  </div>
+
+  <div class="sec">Tactics</div>
+  <div class="cgrid" id="cgrid"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── CONFIG ────────────────────────────────────────────────────────────────────
+const API = 'https://script.google.com/macros/s/AKfycbwAnRCgx7A9ucRSx4OH39Eufhq1_Doami_wGqFgmQvu5vNhI6q1q5ldXWgkNKH2k_pz/exec';
+const LS_KEY = 'ms12wy_v4';
+
+const WEEK_DATES = {1:'16 Mar',2:'23 Mar',3:'30 Mar',4:'6 Apr',5:'13 Apr',6:'20 Apr',7:'27 Apr',8:'4 May',9:'11 May',10:'18 May',11:'25 May',12:'1 Jun'};
+
+const CATS = [
+  {id:'health',  name:'Health & Family', color:'#2dd4a0', bg:'rgba(45,212,160,.12)',  ico:'🏃', ph:'Walk, gym & family Sunday',    full:false},
+  {id:'space',   name:'MySoulSpace',     color:'#ff8c5a', bg:'rgba(255,140,90,.12)',  ico:'🧘', ph:'Closings & team systems',       full:false},
+  {id:'school',  name:'MySoulSchool',    color:'#5ab4ff', bg:'rgba(90,180,255,.12)',  ico:'📚', ph:'Scale leads, launch funnels',   full:false},
+  {id:'store',   name:'MySoulStore',     color:'#e879b0', bg:'rgba(232,121,176,.12)', ico:'🛍️', ph:'Source & launch first product', full:false},
+  {id:'personal',name:'Personal Growth', color:'#b97dff', bg:'rgba(185,125,255,.12)', ico:'🎯', ph:'Strategic blocks & journaling', full:true},
+];
+
+// ─── STATE ─────────────────────────────────────────────────────────────────────
+let S = {cur:8, view:8, weeks:{}, col:{}};
+let pushTimer = null;
+let tapCount = 0;
+
+const uid = () => Date.now().toString(36) + Math.random().toString(36).substr(2,5);
+
+function defWeek() {
+  const w = {goal:'', cats:{}};
+  CATS.forEach(c => { w.cats[c.id] = {goal:'', notes:'', tactics:[{id:uid(),text:'',status:'todo'}]}; });
+  return w;
+}
+function getW(n) { if(!S.weeks[n]) S.weeks[n]=defWeek(); return S.weeks[n]; }
+
+// ─── LOCAL STORAGE ─────────────────────────────────────────────────────────────
+function lsSave() { try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch(e){} }
+function lsLoad() { try { const d=localStorage.getItem(LS_KEY); if(d) S=JSON.parse(d); } catch(e){} }
+
+// ─── SYNC STATUS ───────────────────────────────────────────────────────────────
+function badge(state, txt) {
+  const el = document.getElementById('syncBadge');
+  el.className = 'sync-badge ' + state;
+  el.textContent = txt;
+}
+
+function dbg(key, val) {
+  const el = document.getElementById('db'+key);
+  if(el) el.textContent = val;
+}
+
+// ─── PUSH TO SHEET (no-cors POST — fire and forget) ───────────────────────────
+function pushToSheet() {
+  const payload = JSON.stringify(S);
+  lsSave();
+  badge('busy', '⟳ Saving…');
+  dbg('Post', new Date().toLocaleTimeString());
+  dbg('Size', (payload.length/1024).toFixed(1)+'KB');
+
+  // Use no-cors: browser won't complain about CORS but we can't read response
+  fetch(API, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: {'Content-Type':'text/plain'},
+    body: payload
+  })
+  .then(() => {
+    badge('ok', '✓ Saved to Sheet');
+    showToast('Saved to Google Sheet ✓', 's');
+    dbg('Post', '✓ ' + new Date().toLocaleTimeString());
+  })
+  .catch(err => {
+    badge('err', '⚡ Save failed');
+    showToast('Save failed — stored locally', 'e');
+    dbg('Post', '✗ ' + err.message);
+  });
+}
+
+// ─── PULL FROM SHEET (GET with cache-buster) ──────────────────────────────────
+async function pullFromSheet() {
+  badge('busy', '⟳ Loading…');
+  const url = API + '?t=' + Date.now();
+  dbg('Get', new Date().toLocaleTimeString());
+  dbg('Url', API.substr(0,40)+'…');
+
+  try {
+    const res = await fetch(url, {method:'GET', mode:'cors'});
+    const text = await res.text();
+    dbg('GetResp', text.substr(0,60)+'…');
+
+    if (text && text.trim() !== '{}' && text.trim() !== '' && text.includes('"weeks"')) {
+      const remote = JSON.parse(text);
+      S = remote;
+      lsSave();
+      badge('ok', '✓ Synced');
+      return true;
+    }
+    badge('ok', '✓ Ready (sheet empty)');
+    return false;
+  } catch(err) {
+    dbg('GetResp', '✗ ' + err.message);
+    badge('err', '⚡ Offline mode');
+    return false;
+  }
+}
+
+// Schedule a push 2s after last change
+function schedulePush() {
+  lsSave();
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(pushToSheet, 2000);
+}
+
+async function manualSync() {
+  pushToSheet();
+}
+
+async function manualLoad() {
+  document.getElementById('loader').classList.remove('hide');
+  document.getElementById('loaderTxt').textContent = 'Pulling from Google Sheet…';
+  const ok = await pullFromSheet();
+  render();
+  document.getElementById('loader').classList.add('hide');
+  showToast(ok ? 'Loaded from Google Sheet ✓' : 'Sheet is empty — using local data', ok?'s':'e');
+}
+
+async function testConnection() {
+  badge('busy', '⟳ Testing…');
+  showToast('Testing connection…', 's');
+  try {
+    const url = API + '?t=' + Date.now();
+    const res = await fetch(url, {mode:'cors'});
+    const text = await res.text();
+    badge('ok', '✓ Connected');
+    showToast('Connection OK! Response: ' + text.substr(0,50), 's');
+    dbg('GetResp', text.substr(0,80));
+  } catch(err) {
+    badge('err', '⚡ Failed: '+err.message);
+    showToast('Connection failed: ' + err.message, 'e');
+  }
+}
+
+// ─── SCORING ───────────────────────────────────────────────────────────────────
+function scoreW(n) {
+  const w=S.weeks[n]; if(!w) return {done:0,total:0,pct:0,bc:{}};
+  let done=0,total=0; const bc={};
+  CATS.forEach(c => {
+    const cd=w.cats[c.id]; if(!cd){bc[c.id]={done:0,total:0,pct:0};return;}
+    const ts=cd.tactics.filter(t=>t.text.trim());
+    const d=ts.filter(t=>t.status==='done').length;
+    bc[c.id]={done:d,total:ts.length,pct:ts.length?Math.round(d/ts.length*100):0};
+    done+=d; total+=ts.length;
+  });
+  return{done,total,pct:total?Math.round(done/total*100):0,bc};
+}
+function allS(){ return Array.from({length:12},(_,i)=>scoreW(i+1)); }
+
+// ─── RENDER ────────────────────────────────────────────────────────────────────
+function render(){ rTl(); rTabs(); rScores(); rBd(); rWG(); rGrid(); }
+
+function rTl(){
+  const sc=allS();
+  document.getElementById('tlBar').innerHTML=Array.from({length:12},(_,i)=>{
+    const w=i+1,s=sc[i]; let cls='ts';
+    if(w===S.view) cls+=' viewing';
+    if(w===S.cur) cls+=' current';
+    else if(w<S.cur&&s.total>0) cls+=s.pct>=75?' great':' past';
+    else if(w<S.cur) cls+=' past';
+    return `<div class="${cls}" onclick="selW(${w})" title="W${w} (${WEEK_DATES[w]}): ${s.pct}%"></div>`;
+  }).join('');
+  document.getElementById('tlNums').innerHTML=Array.from({length:12},(_,i)=>`<span>${i+1}</span>`).join('');
+}
+
+function rTabs(){
+  const sc=allS();
+  document.getElementById('wtabs').innerHTML=Array.from({length:12},(_,i)=>{
+    const w=i+1,s=sc[i];
+    return `<button class="wt${w===S.view?' active':''}${s.total>0?' dot':''}" onclick="selW(${w})" title="${WEEK_DATES[w]}">${w}</button>`;
+  }).join('');
+  document.getElementById('wpill').textContent=`Week ${S.cur} of 12`;
+}
+
+function rScores(){
+  const s=scoreW(S.view); const p=s.pct;
+  const el=document.getElementById('sval');
+  el.textContent=p+'%'; el.style.color=p>=85?'var(--hc)':p>=70?'var(--gold)':'var(--ac2)';
+  document.getElementById('ssub').textContent=`${s.done} of ${s.total} done`;
+  const b=document.getElementById('sbar');
+  b.style.width=p+'%'; b.style.background=p>=85?'var(--hc)':p>=70?'var(--gold)':'var(--ac)';
+  const all=allS().filter(x=>x.total>0);
+  const avg=all.length?Math.round(all.reduce((a,b)=>a+b.pct,0)/all.length):0;
+  document.getElementById('avgv').textContent=avg+'%';
+  let best={pct:0,w:0};
+  allS().forEach((x,i)=>{if(x.pct>best.pct&&x.total>0){best.pct=x.pct;best.w=i+1;}});
+  document.getElementById('bestv').textContent=best.w?best.pct+'%':'—';
+  document.getElementById('bests').textContent=best.w?`Week ${best.w} (${WEEK_DATES[best.w]})`:'no data yet';
+}
+
+function rBd(){
+  const s=scoreW(S.view);
+  document.getElementById('bd').innerHTML=CATS.map(c=>{
+    const cs=s.bc[c.id]||{done:0,total:0,pct:0};
+    return `<div>
+      <div class="bd-lbl"><span class="bd-dot" style="background:${c.color}"></span>${c.name}</div>
+      <div class="bd-track"><div class="bd-bar" style="width:${cs.pct}%;background:${c.color}"></div></div>
+      <div class="bd-pct">${cs.done}/${cs.total} · ${cs.pct}%</div>
+    </div>`;
+  }).join('');
+}
+
+function rWG(){
+  document.getElementById('wgInp').value = getW(S.view).goal||'';
+}
+
+function rGrid(){
+  const w=getW(S.view);
+  document.getElementById('cgrid').innerHTML=CATS.map(c=>{
+    const cd=w.cats[c.id]||{goal:'',notes:'',tactics:[]};
+    const open=!S.col[c.id];
+    const s=(scoreW(S.view).bc[c.id])||{pct:0};
+    const pc=s.pct>=85?'var(--hc)':s.pct>=70?'var(--gold)':'var(--t3)';
+    const rows=cd.tactics.map(t=>`
+      <div class="trow">
+        <input class="tinp${t.status==='done'?' sx':''}" type="text" value="${esc(t.text)}" placeholder="Add tactic…"
+          onchange="upT('${c.id}','${t.id}',this.value)" oninput="ltT('${c.id}','${t.id}',this.value)">
+        <button class="stbtn ${t.status}" onclick="togT('${c.id}','${t.id}')">
+          ${t.status==='done'?'✓ Done':'○ To do'}
+        </button>
+        <button class="dbtn" onclick="delT('${c.id}','${t.id}')">×</button>
+      </div>`).join('');
+    return `<div class="cc${c.full?' cfull':''}">
+      <div class="cc-head" onclick="togCat('${c.id}')">
+        <div class="cc-hl">
+          <div class="cc-ico" style="background:${c.bg}">${c.ico}</div>
+          <span class="cc-name" style="color:${c.color}">${c.name}</span>
+          <span class="cc-pct" style="color:${pc}">${s.pct}%</span>
+        </div>
+        <span class="cc-chev${open?' o':''}">▾</span>
+      </div>
+      ${open?`
+        <div class="goal-wrap">
+          <div class="goal-lbl">Weekly focus</div>
+          <input class="goal-inp" type="text" value="${esc(cd.goal||'')}" placeholder="${c.ph}…" onchange="upGoal('${c.id}',this.value)">
+        </div>
+        <div>${rows}</div>
+        <button class="addbtn" onclick="addT('${c.id}')">＋ Add tactic</button>
+        <div class="notes-wrap">
+          <div class="notes-lbl">Notes / blockers</div>
+          <textarea class="notes-ta" placeholder="What happened? Wins, blockers, learnings…" onchange="upNotes('${c.id}',this.value)">${esc(cd.notes||'')}</textarea>
+        </div>
+      `:''}
+    </div>`;
+  }).join('');
+}
+
+// ─── ACTIONS ───────────────────────────────────────────────────────────────────
+function selW(w){ S.view=w; render(); }
+function setCur(){ S.cur=S.view; schedulePush(); render(); showToast(`Week ${S.view} set as current`, 's'); }
+function togCat(id){ S.col[id]=!S.col[id]; render(); }
+function updateWG(val){ getW(S.view).goal=val; schedulePush(); }
+
+function togT(cid,tid){
+  const t=getW(S.view).cats[cid].tactics.find(x=>x.id===tid);
+  if(t){ t.status=t.status==='done'?'todo':'done'; schedulePush(); render(); }
+}
+function upT(cid,tid,val){
+  const t=getW(S.view).cats[cid].tactics.find(x=>x.id===tid);
+  if(t){ t.text=val; schedulePush(); rScores(); rBd(); rTl(); rTabs(); }
+}
+function ltT(cid,tid,val){
+  const t=getW(S.view).cats[cid].tactics.find(x=>x.id===tid);
+  if(t) t.text=val;
+}
+function addT(cid){
+  getW(S.view).cats[cid].tactics.push({id:uid(),text:'',status:'todo'});
+  schedulePush(); render();
+  setTimeout(()=>{ const r=document.querySelectorAll('.tinp'); r[r.length-1]?.focus(); },50);
+}
+function delT(cid,tid){
+  const cat=getW(S.view).cats[cid];
+  if(cat.tactics.length<=1){ cat.tactics[0]={id:uid(),text:'',status:'todo'}; schedulePush(); render(); return; }
+  cat.tactics=cat.tactics.filter(x=>x.id!==tid); schedulePush(); render();
+}
+function upGoal(cid,val){ getW(S.view).cats[cid].goal=val; schedulePush(); }
+function upNotes(cid,val){ getW(S.view).cats[cid].notes=val; schedulePush(); }
+function clrWeek(){
+  if(!confirm(`Clear all data for Week ${S.view}?`)) return;
+  delete S.weeks[S.view]; schedulePush(); render(); showToast('Week cleared','e');
+}
+
+function showToast(msg,type='s'){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className=`toast ${type} show`;
+  clearTimeout(window._tt);
+  window._tt=setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// Tap title 5x to show debug panel
+document.addEventListener('DOMContentLoaded',()=>{
+  document.querySelector('.title').addEventListener('click',()=>{
+    tapCount++;
+    if(tapCount>=5){ document.getElementById('debugPanel').classList.toggle('show'); tapCount=0; }
+  });
+});
+
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ─── INIT ──────────────────────────────────────────────────────────────────────
+async function init(){
+  lsLoad();
+  render();
+  const ok = await pullFromSheet();
+  if(ok) render();
+  document.getElementById('loader').classList.add('hide');
+}
+
+init();
+</script>
+</body>
+</html>
