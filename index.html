@@ -7,33 +7,31 @@
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Lora:ital@1&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#1a1f2e;--bg2:#1f2538;--s1:#252c40;--s2:#2d3450;--s3:#343d5c;
+  --bg:#1a1f2e;--s1:#252c40;--s2:#2d3450;--s3:#343d5c;
   --b1:rgba(255,255,255,0.07);--b2:rgba(255,255,255,0.12);--b3:rgba(255,255,255,0.18);
   --t1:#dde4f8;--t2:#9aa4c8;--t3:#606880;
   --ac:#6c63ff;--ac2:#9b95ff;
-  --hc:#2dd4a0;--sp:#ff8c5a;--sc:#5ab4ff;--st:#e879b0;--pe:#b97dff;
-  --gold:#f5c842;--red:#f87171;--r:14px;--rs:8px;
+  --hc:#2dd4a0;--gold:#f5c842;--red:#f87171;--deleg:#c4b5fd;
+  --r:14px;--rs:8px;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-body{
-  background:var(--bg);
-  background-image:radial-gradient(ellipse 70% 50% at 5% 0%,rgba(108,99,255,0.13) 0%,transparent 55%),radial-gradient(ellipse 50% 40% at 95% 95%,rgba(45,212,160,0.07) 0%,transparent 50%);
-  color:var(--t1);font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;line-height:1.55;min-height:100vh;
-}
+body{background:var(--bg);background-image:radial-gradient(ellipse 70% 50% at 5% 0%,rgba(108,99,255,0.13) 0%,transparent 55%),radial-gradient(ellipse 50% 40% at 95% 95%,rgba(45,212,160,0.07) 0%,transparent 50%);color:var(--t1);font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;line-height:1.55;min-height:100vh;}
 .wrap{max-width:1100px;margin:0 auto;padding:0 16px 80px;}
 
+/* HEADER */
 .hdr{padding:28px 0 22px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--b2);margin-bottom:24px;}
 .eyebrow{font-family:'Lora',serif;font-style:italic;font-size:12px;color:var(--t3);letter-spacing:0.12em;margin-bottom:3px;}
 .title{font-size:26px;font-weight:700;letter-spacing:-0.5px;}
 .title em{font-style:normal;color:var(--ac2);}
 .hdr-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
-.wpill{background:linear-gradient(135deg,var(--ac),var(--ac2));color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;letter-spacing:0.04em;white-space:nowrap;}
+.wpill{background:linear-gradient(135deg,var(--ac),var(--ac2));color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;white-space:nowrap;}
 .sync-badge{font-size:11px;font-weight:600;padding:5px 12px;border-radius:20px;border:1px solid;white-space:nowrap;transition:all .3s;}
 .sync-badge.ok{color:var(--hc);border-color:rgba(45,212,160,.3);background:rgba(45,212,160,.08);}
 .sync-badge.busy{color:var(--gold);border-color:rgba(245,200,66,.3);background:rgba(245,200,66,.08);}
 .sync-badge.err{color:var(--red);border-color:rgba(248,113,113,.3);background:rgba(248,113,113,.08);}
-.sync-badge.off{color:var(--t3);border-color:var(--b2);background:transparent;}
+.sync-badge.off{color:var(--t3);border-color:var(--b2);}
 
+/* TIMELINE */
 .tl-wrap{margin-bottom:22px;}
 .tl-lbl{font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--t3);margin-bottom:8px;}
 .tl-bar{display:flex;gap:4px;}
@@ -46,6 +44,7 @@ body{
 .tl-nums{display:flex;gap:4px;margin-top:4px;}
 .tl-nums span{flex:1;font-size:9px;color:var(--t3);text-align:center;}
 
+/* WEEK NAV */
 .wnav{display:flex;align-items:center;gap:8px;margin-bottom:22px;flex-wrap:wrap;}
 .wnav-lbl{font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--t3);}
 .wtabs{display:flex;gap:4px;flex-wrap:wrap;}
@@ -57,6 +56,7 @@ body{
 .cur-btn{background:transparent;border:1px solid var(--b2);color:var(--t2);font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;font-weight:600;padding:7px 14px;border-radius:var(--rs);cursor:pointer;transition:all .15s;white-space:nowrap;margin-left:auto;}
 .cur-btn:hover{background:var(--s2);color:var(--t1);}
 
+/* SCORE STRIP */
 .ss{display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px;margin-bottom:20px;}
 @media(max-width:560px){.ss{grid-template-columns:1fr 1fr;}}
 .sc{background:var(--s1);border:1px solid var(--b2);border-radius:var(--r);padding:16px 18px;}
@@ -67,6 +67,7 @@ body{
 .pbar{background:var(--b2);border-radius:3px;height:4px;margin-top:10px;}
 .pfill{height:4px;border-radius:3px;transition:width .45s ease;}
 
+/* BREAKDOWN */
 .bd{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);padding:16px 18px;margin-bottom:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:14px;}
 .bd-lbl{font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;display:flex;align-items:center;gap:5px;}
 .bd-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
@@ -74,6 +75,7 @@ body{
 .bd-bar{height:5px;border-radius:3px;transition:width .4s ease;}
 .bd-pct{font-size:11px;color:var(--t3);margin-top:4px;font-weight:500;}
 
+/* ACTIONS */
 .actions{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap;}
 .btn{background:transparent;border:1px solid var(--b2);color:var(--t2);font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;font-weight:600;padding:7px 14px;border-radius:var(--rs);cursor:pointer;transition:all .15s;}
 .btn:hover{background:var(--s2);color:var(--t1);}
@@ -82,20 +84,32 @@ body{
 .btn.d{color:var(--red);}
 .btn.d:hover{background:rgba(248,113,113,.1);}
 
+/* DELEGATION SUMMARY STRIP */
+.deleg-strip{background:linear-gradient(135deg,rgba(196,181,253,.06),rgba(108,99,255,.06));border:1px solid rgba(196,181,253,.2);border-radius:var(--r);padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+.deleg-strip-title{font-size:12px;font-weight:700;color:var(--deleg);}
+.deleg-counts{display:flex;gap:16px;}
+.deleg-count{text-align:center;}
+.deleg-count-num{font-size:20px;font-weight:700;line-height:1;}
+.deleg-count-lbl{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;}
+
+/* SECTION */
 .sec{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--t3);margin-bottom:12px;display:flex;align-items:center;gap:10px;}
 .sec::after{content:'';flex:1;height:1px;background:var(--b2);}
 
+/* WEEK GOAL */
 .wg-wrap{background:var(--s1);border:1px solid var(--b2);border-radius:var(--r);padding:14px 18px;margin-bottom:16px;}
 .wg-lbl{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);margin-bottom:6px;}
 .wg-inp{width:100%;background:transparent;border:none;border-bottom:1px solid var(--b2);color:var(--t1);font-family:'Lora',serif;font-style:italic;font-size:15px;outline:none;padding:2px 0 8px;transition:border-color .15s;}
 .wg-inp:focus{border-bottom-color:rgba(108,99,255,.5);}
 .wg-inp::placeholder{color:var(--t3);}
 
+/* CAT GRID */
 .cgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
 @media(max-width:600px){.cgrid{grid-template-columns:1fr;}}
 .cfull{grid-column:span 2;}
 @media(max-width:600px){.cfull{grid-column:span 1;}}
 
+/* CATEGORY CARD */
 .cc{background:var(--s1);border:1px solid var(--b2);border-radius:var(--r);overflow:hidden;transition:border-color .15s;}
 .cc:hover{border-color:var(--b3);}
 .cc-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;cursor:pointer;border-bottom:1px solid var(--b1);user-select:none;gap:8px;}
@@ -106,49 +120,66 @@ body{
 .cc-chev{font-size:11px;color:var(--t3);transition:transform .2s;flex-shrink:0;}
 .cc-chev.o{transform:rotate(180deg);}
 
+/* Goal */
 .goal-wrap{padding:9px 16px 0;border-bottom:1px solid var(--b1);}
 .goal-lbl{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--t3);margin-bottom:4px;}
 .goal-inp{width:100%;background:transparent;border:none;border-bottom:1px solid var(--b2);color:var(--t1);font-family:'Lora',serif;font-size:12px;font-style:italic;outline:none;padding:2px 0 7px;transition:border-color .15s;}
 .goal-inp:focus{border-bottom-color:rgba(108,99,255,.5);}
 .goal-inp::placeholder{color:var(--t3);}
 
-.trow{display:flex;align-items:center;padding:8px 10px 8px 16px;border-bottom:1px solid var(--b1);gap:7px;transition:background .1s;}
+/* TACTIC ROW */
+.trow{border-bottom:1px solid var(--b1);}
 .trow:last-child{border-bottom:none;}
-.trow:hover{background:rgba(255,255,255,.02);}
+.trow-main{display:flex;align-items:center;padding:8px 10px 8px 16px;gap:7px;transition:background .1s;}
+.trow-main:hover{background:rgba(255,255,255,.02);}
 .tinp{flex:1;background:transparent;border:none;outline:none;color:var(--t1);font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;min-width:0;padding:0;}
 .tinp::placeholder{color:var(--s3);}
-.tinp.sx{color:var(--t3);text-decoration:line-through;text-decoration-color:var(--t3);}
-.stbtn{flex-shrink:0;width:72px;padding:4px 0;border-radius:6px;border:1px solid;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;font-size:10px;font-weight:600;text-align:center;transition:all .15s;}
+.tinp.sx{color:var(--t3);text-decoration:line-through;}
+.tinp.delegated-inp{color:var(--deleg);}
+
+/* STATUS BUTTON — 3 states */
+.stbtn{flex-shrink:0;width:82px;padding:4px 0;border-radius:6px;border:1px solid;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;font-size:10px;font-weight:600;text-align:center;transition:all .15s;}
 .stbtn.done{background:rgba(45,212,160,.1);color:var(--hc);border-color:rgba(45,212,160,.28);}
+.stbtn.delegated{background:rgba(196,181,253,.1);color:var(--deleg);border-color:rgba(196,181,253,.28);}
 .stbtn.todo{background:transparent;color:var(--t3);border-color:var(--b2);}
-.stbtn.todo:hover{color:var(--red);border-color:rgba(248,113,113,.3);background:rgba(248,113,113,.05);}
+.stbtn.todo:hover{color:var(--hc);border-color:rgba(45,212,160,.3);}
+
 .dbtn{flex-shrink:0;background:none;border:none;color:var(--b3);cursor:pointer;font-size:16px;line-height:1;padding:0 2px;transition:color .15s;}
 .dbtn:hover{color:var(--red);}
+
+/* DELEGATION PANEL */
+.deleg-panel{padding:10px 16px 12px;background:rgba(196,181,253,.04);border-top:1px solid rgba(196,181,253,.15);}
+.deleg-panel-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px;}
+.deleg-select{flex:1;min-width:120px;background:var(--s2);border:1px solid rgba(196,181,253,.2);border-radius:6px;color:var(--t1);font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;padding:6px 10px;outline:none;cursor:pointer;}
+.deleg-select:focus{border-color:var(--deleg);}
+.deleg-date{flex:1;min-width:110px;background:var(--s2);border:1px solid rgba(196,181,253,.2);border-radius:6px;color:var(--t1);font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;padding:6px 10px;outline:none;}
+.deleg-date:focus{border-color:var(--deleg);}
+.deleg-ctx{width:100%;background:var(--s2);border:1px solid rgba(196,181,253,.2);border-radius:6px;color:var(--t1);font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;padding:7px 10px;outline:none;resize:none;min-height:44px;}
+.deleg-ctx:focus{border-color:var(--deleg);}
+.deleg-ctx::placeholder{color:var(--t3);}
+.deleg-assigned{font-size:10px;color:var(--deleg);padding:2px 0 4px;}
+
 .addbtn{display:flex;align-items:center;gap:5px;padding:8px 16px;background:none;border:none;border-top:1px dashed var(--b2);color:var(--t3);cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;width:100%;text-align:left;transition:color .15s;}
 .addbtn:hover{color:var(--t2);}
 
+/* NOTES */
 .notes-wrap{padding:0 16px 12px;border-top:1px solid var(--b1);}
 .notes-lbl{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--t3);margin:10px 0 5px;}
 .notes-ta{width:100%;background:rgba(0,0,0,.15);border:1px solid var(--b1);border-radius:var(--rs);color:var(--t1);font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;padding:8px 12px;outline:none;resize:none;min-height:52px;transition:border-color .15s;line-height:1.5;}
 .notes-ta:focus{border-color:rgba(108,99,255,.4);}
 
-/* Debug panel */
-.debug{background:var(--s1);border:1px solid var(--b2);border-radius:var(--rs);padding:12px 16px;margin-bottom:20px;font-size:11px;color:var(--t3);display:none;}
-.debug.show{display:block;}
-.debug h4{color:var(--t2);margin-bottom:8px;font-size:12px;}
-.debug-row{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--b1);}
-.debug-row:last-child{border-bottom:none;}
-.debug-val{color:var(--t1);}
-
+/* LOADER */
 .loader{position:fixed;inset:0;background:rgba(26,31,46,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:14px;}
 .loader.hide{display:none;}
 .spinner{width:36px;height:36px;border:3px solid var(--b2);border-top-color:var(--ac);border-radius:50%;animation:spin .7s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
 .loader-txt{font-size:13px;color:var(--t2);}
 
+/* TOAST */
 .toast{position:fixed;bottom:20px;right:20px;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:600;padding:8px 16px;border-radius:10px;opacity:0;transition:opacity .25s;z-index:998;pointer-events:none;}
 .toast.s{background:var(--s2);border:1px solid rgba(45,212,160,.35);color:var(--hc);}
 .toast.e{background:var(--s2);border:1px solid rgba(248,113,113,.35);color:var(--red);}
+.toast.d{background:var(--s2);border:1px solid rgba(196,181,253,.35);color:var(--deleg);}
 .toast.show{opacity:1;}
 </style>
 </head>
@@ -156,7 +187,7 @@ body{
 
 <div class="loader" id="loader">
   <div class="spinner"></div>
-  <div class="loader-txt" id="loaderTxt">Connecting to Google Sheet…</div>
+  <div class="loader-txt">Loading your 12WY data…</div>
 </div>
 
 <div class="wrap">
@@ -170,16 +201,6 @@ body{
       <div class="wpill" id="wpill">Week 8 of 12</div>
     </div>
   </header>
-
-  <!-- Debug panel — tap title 5x to show -->
-  <div class="debug" id="debugPanel">
-    <h4>Sync Debug</h4>
-    <div class="debug-row"><span>API URL</span><span class="debug-val" id="dbUrl">—</span></div>
-    <div class="debug-row"><span>Last GET</span><span class="debug-val" id="dbGet">—</span></div>
-    <div class="debug-row"><span>Last POST</span><span class="debug-val" id="dbPost">—</span></div>
-    <div class="debug-row"><span>GET Response</span><span class="debug-val" id="dbGetResp">—</span></div>
-    <div class="debug-row"><span>Local data size</span><span class="debug-val" id="dbSize">—</span></div>
-  </div>
 
   <div class="tl-wrap">
     <div class="tl-lbl">12-Week Progress</div>
@@ -214,17 +235,29 @@ body{
 
   <div class="bd" id="bd"></div>
 
+  <!-- Delegation Summary -->
+  <div class="deleg-strip" id="delegStrip">
+    <div>
+      <div class="deleg-strip-title">→ 12WY Delegations — This Week</div>
+      <div style="font-size:11px;color:var(--t3);margin-top:2px">Tasks delegated to your team this week</div>
+    </div>
+    <div class="deleg-counts">
+      <div class="deleg-count"><div class="deleg-count-num" id="dTotal" style="color:var(--deleg)">0</div><div class="deleg-count-lbl">Total</div></div>
+      <div class="deleg-count"><div class="deleg-count-num" id="dDone" style="color:var(--hc)">0</div><div class="deleg-count-lbl">Done</div></div>
+      <div class="deleg-count"><div class="deleg-count-num" id="dPending" style="color:var(--gold)">0</div><div class="deleg-count-lbl">Pending</div></div>
+    </div>
+  </div>
+
   <div class="actions">
     <button class="btn primary" onclick="manualSync()">↑ Push to Sheet</button>
     <button class="btn" onclick="manualLoad()">↓ Pull from Sheet</button>
-    <button class="btn" onclick="testConnection()">Test Connection</button>
     <button class="btn d" onclick="clrWeek()">Clear Week</button>
   </div>
 
   <div class="sec">Week Goal</div>
   <div class="wg-wrap">
     <div class="wg-lbl">What does winning this week look like?</div>
-    <input class="wg-inp" id="wgInp" type="text" placeholder="e.g. Hit 150 leads/day, close 4 MySoulSpace clients, walk every day…" onchange="updateWG(this.value)">
+    <input class="wg-inp" id="wgInp" type="text" placeholder="e.g. Hit 150 leads/day, 4 closings, walk every day…" onchange="updateWG(this.value)">
   </div>
 
   <div class="sec">Tactics</div>
@@ -234,167 +267,109 @@ body{
 <div class="toast" id="toast"></div>
 
 <script>
-// ─── CONFIG ────────────────────────────────────────────────────────────────────
 const API = 'https://script.google.com/macros/s/AKfycbwAnRCgx7A9ucRSx4OH39Eufhq1_Doami_wGqFgmQvu5vNhI6q1q5ldXWgkNKH2k_pz/exec';
-const LS_KEY = 'ms12wy_v4';
+const LS_KEY = 'ms12wy_v5';
 
-const WEEK_DATES = {1:'16 Mar',2:'23 Mar',3:'30 Mar',4:'6 Apr',5:'13 Apr',6:'20 Apr',7:'27 Apr',8:'4 May',9:'11 May',10:'18 May',11:'25 May',12:'1 Jun'};
+const WEEK_DATES = {1:'16–22 Mar',2:'23–29 Mar',3:'30 Mar–5 Apr',4:'6–12 Apr',5:'13–19 Apr',6:'20–26 Apr',7:'27 Apr–3 May',8:'4–10 May',9:'11–17 May',10:'18–24 May',11:'25–31 May',12:'1–7 Jun'};
+
+const TEAM = ['Namita Singh','Dolly Nagar','Varsha Rajput','Tanvi Negi','Deesha Jain','Aravind Kumaravel','Siddhi Singh','Vandna Narwat','Rudrani Saha','Megha Chanda'];
 
 const CATS = [
-  {id:'health',  name:'Health & Family', color:'#2dd4a0', bg:'rgba(45,212,160,.12)',  ico:'🏃', ph:'Walk, gym & family Sunday',    full:false},
-  {id:'space',   name:'MySoulSpace',     color:'#ff8c5a', bg:'rgba(255,140,90,.12)',  ico:'🧘', ph:'Closings & team systems',       full:false},
-  {id:'school',  name:'MySoulSchool',    color:'#5ab4ff', bg:'rgba(90,180,255,.12)',  ico:'📚', ph:'Scale leads, launch funnels',   full:false},
-  {id:'store',   name:'MySoulStore',     color:'#e879b0', bg:'rgba(232,121,176,.12)', ico:'🛍️', ph:'Source & launch first product', full:false},
-  {id:'personal',name:'Personal Growth', color:'#b97dff', bg:'rgba(185,125,255,.12)', ico:'🎯', ph:'Strategic blocks & journaling', full:true},
+  {id:'health',  name:'Health & Family', color:'#2dd4a0', bg:'rgba(45,212,160,.12)',  ico:'🏃', ph:'Walk, gym & family Sunday',     full:false},
+  {id:'space',   name:'MySoulSpace',     color:'#ff8c5a', bg:'rgba(255,140,90,.12)',  ico:'🧘', ph:'Closings & team systems',        full:false},
+  {id:'school',  name:'MySoulSchool',    color:'#5ab4ff', bg:'rgba(90,180,255,.12)',  ico:'📚', ph:'Scale leads, launch funnels',    full:false},
+  {id:'store',   name:'MySoulStore',     color:'#e879b0', bg:'rgba(232,121,176,.12)', ico:'🛍️', ph:'Source & launch first product',  full:false},
+  {id:'personal',name:'Personal Growth', color:'#b97dff', bg:'rgba(185,125,255,.12)', ico:'🎯', ph:'Strategic blocks & journaling',  full:true},
 ];
 
-// ─── STATE ─────────────────────────────────────────────────────────────────────
 let S = {cur:8, view:8, weeks:{}, col:{}};
 let pushTimer = null;
-let tapCount = 0;
-
 const uid = () => Date.now().toString(36) + Math.random().toString(36).substr(2,5);
 
-function defWeek() {
-  const w = {goal:'', cats:{}};
-  CATS.forEach(c => { w.cats[c.id] = {goal:'', notes:'', tactics:[{id:uid(),text:'',status:'todo'}]}; });
+function defWeek(){
+  const w={goal:'',cats:{}};
+  CATS.forEach(c=>{w.cats[c.id]={goal:'',notes:'',tactics:[{id:uid(),text:'',status:'todo',delegatedTo:'',dueDate:'',delegationContext:''}]};});
   return w;
 }
-function getW(n) { if(!S.weeks[n]) S.weeks[n]=defWeek(); return S.weeks[n]; }
+function getW(n){if(!S.weeks[n])S.weeks[n]=defWeek();return S.weeks[n];}
 
-// ─── LOCAL STORAGE ─────────────────────────────────────────────────────────────
-function lsSave() { try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch(e){} }
-function lsLoad() { try { const d=localStorage.getItem(LS_KEY); if(d) S=JSON.parse(d); } catch(e){} }
+// ─── STORAGE ──────────────────────────────────────────────────────────────────
+function lsSave(){try{localStorage.setItem(LS_KEY,JSON.stringify(S));}catch(e){}}
+function lsLoad(){try{const d=localStorage.getItem(LS_KEY);if(d)S=JSON.parse(d);}catch(e){}}
 
-// ─── SYNC STATUS ───────────────────────────────────────────────────────────────
-function badge(state, txt) {
-  const el = document.getElementById('syncBadge');
-  el.className = 'sync-badge ' + state;
-  el.textContent = txt;
-}
+function badge(state,txt){const el=document.getElementById('syncBadge');el.className='sync-badge '+state;el.textContent=txt;}
 
-function dbg(key, val) {
-  const el = document.getElementById('db'+key);
-  if(el) el.textContent = val;
-}
-
-// ─── PUSH TO SHEET (no-cors POST — fire and forget) ───────────────────────────
-function pushToSheet() {
-  const payload = JSON.stringify(S);
+// ─── SYNC ─────────────────────────────────────────────────────────────────────
+function pushToSheet(){
   lsSave();
-  badge('busy', '⟳ Saving…');
-  dbg('Post', new Date().toLocaleTimeString());
-  dbg('Size', (payload.length/1024).toFixed(1)+'KB');
-
-  // Use no-cors: browser won't complain about CORS but we can't read response
-  fetch(API, {
-    method: 'POST',
-    mode: 'no-cors',
-    headers: {'Content-Type':'text/plain'},
-    body: payload
-  })
-  .then(() => {
-    badge('ok', '✓ Saved to Sheet');
-    showToast('Saved to Google Sheet ✓', 's');
-    dbg('Post', '✓ ' + new Date().toLocaleTimeString());
-  })
-  .catch(err => {
-    badge('err', '⚡ Save failed');
-    showToast('Save failed — stored locally', 'e');
-    dbg('Post', '✗ ' + err.message);
-  });
+  badge('busy','⟳ Saving…');
+  fetch(API,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(S)})
+  .then(()=>{badge('ok','✓ Saved');})
+  .catch(()=>{badge('err','⚡ Offline');});
 }
 
-// ─── PULL FROM SHEET (GET with cache-buster) ──────────────────────────────────
-async function pullFromSheet() {
-  badge('busy', '⟳ Loading…');
-  const url = API + '?t=' + Date.now();
-  dbg('Get', new Date().toLocaleTimeString());
-  dbg('Url', API.substr(0,40)+'…');
-
-  try {
-    const res = await fetch(url, {method:'GET', mode:'cors'});
-    const text = await res.text();
-    dbg('GetResp', text.substr(0,60)+'…');
-
-    if (text && text.trim() !== '{}' && text.trim() !== '' && text.includes('"weeks"')) {
-      const remote = JSON.parse(text);
-      S = remote;
-      lsSave();
-      badge('ok', '✓ Synced');
-      return true;
+async function pullFromSheet(){
+  badge('busy','⟳ Loading…');
+  try{
+    const res=await fetch(API+'?t='+Date.now(),{method:'GET',mode:'cors'});
+    const text=await res.text();
+    if(text&&text.includes('"weeks"')){
+      S=JSON.parse(text);lsSave();badge('ok','✓ Synced');return true;
     }
-    badge('ok', '✓ Ready (sheet empty)');
-    return false;
-  } catch(err) {
-    dbg('GetResp', '✗ ' + err.message);
-    badge('err', '⚡ Offline mode');
-    return false;
-  }
+    badge('ok','✓ Ready');return false;
+  }catch(e){badge('err','⚡ Offline');return false;}
 }
 
-// Schedule a push 2s after last change
-function schedulePush() {
-  lsSave();
-  clearTimeout(pushTimer);
-  pushTimer = setTimeout(pushToSheet, 2000);
-}
-
-async function manualSync() {
-  pushToSheet();
-}
-
-async function manualLoad() {
+function schedulePush(){lsSave();clearTimeout(pushTimer);pushTimer=setTimeout(pushToSheet,2000);}
+function manualSync(){pushToSheet();showToast('Pushed to Google Sheet ✓','s');}
+async function manualLoad(){
   document.getElementById('loader').classList.remove('hide');
-  document.getElementById('loaderTxt').textContent = 'Pulling from Google Sheet…';
-  const ok = await pullFromSheet();
-  render();
+  const ok=await pullFromSheet();if(ok)render();
   document.getElementById('loader').classList.add('hide');
-  showToast(ok ? 'Loaded from Google Sheet ✓' : 'Sheet is empty — using local data', ok?'s':'e');
+  showToast(ok?'Loaded from Sheet ✓':'Sheet empty — using local','s');
 }
 
-async function testConnection() {
-  badge('busy', '⟳ Testing…');
-  showToast('Testing connection…', 's');
-  try {
-    const url = API + '?t=' + Date.now();
-    const res = await fetch(url, {mode:'cors'});
-    const text = await res.text();
-    badge('ok', '✓ Connected');
-    showToast('Connection OK! Response: ' + text.substr(0,50), 's');
-    dbg('GetResp', text.substr(0,80));
-  } catch(err) {
-    badge('err', '⚡ Failed: '+err.message);
-    showToast('Connection failed: ' + err.message, 'e');
-  }
-}
-
-// ─── SCORING ───────────────────────────────────────────────────────────────────
-function scoreW(n) {
-  const w=S.weeks[n]; if(!w) return {done:0,total:0,pct:0,bc:{}};
-  let done=0,total=0; const bc={};
-  CATS.forEach(c => {
-    const cd=w.cats[c.id]; if(!cd){bc[c.id]={done:0,total:0,pct:0};return;}
-    const ts=cd.tactics.filter(t=>t.text.trim());
+// ─── SCORING ──────────────────────────────────────────────────────────────────
+function scoreW(n){
+  const w=S.weeks[n];if(!w)return{done:0,total:0,pct:0,bc:{}};
+  let done=0,total=0;const bc={};
+  CATS.forEach(c=>{
+    const cd=w.cats[c.id];if(!cd){bc[c.id]={done:0,total:0,pct:0};return;}
+    const ts=cd.tactics.filter(t=>t.text&&t.text.trim());
     const d=ts.filter(t=>t.status==='done').length;
-    bc[c.id]={done:d,total:ts.length,pct:ts.length?Math.round(d/ts.length*100):0};
-    done+=d; total+=ts.length;
+    const del=ts.filter(t=>t.status==='delegated').length;
+    bc[c.id]={done:d,delegated:del,total:ts.length,pct:ts.length?Math.round((d+del)/ts.length*100):0};
+    done+=d+del;total+=ts.length;
   });
   return{done,total,pct:total?Math.round(done/total*100):0,bc};
 }
-function allS(){ return Array.from({length:12},(_,i)=>scoreW(i+1)); }
+function allS(){return Array.from({length:12},(_,i)=>scoreW(i+1));}
 
-// ─── RENDER ────────────────────────────────────────────────────────────────────
-function render(){ rTl(); rTabs(); rScores(); rBd(); rWG(); rGrid(); }
+// Delegation counts for this week
+function delegCounts(n){
+  const w=S.weeks[n];if(!w)return{total:0,done:0,pending:0};
+  let total=0,done=0,pending=0;
+  CATS.forEach(c=>{
+    const cd=w.cats[c.id];if(!cd)return;
+    cd.tactics.forEach(t=>{
+      if(t.status==='delegated'){total++;pending++;}
+      // We count delegated as pending until manually marked done
+    });
+  });
+  return{total,done,pending};
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────────────
+function render(){rTl();rTabs();rScores();rBd();rDeleg();rWG();rGrid();}
 
 function rTl(){
   const sc=allS();
   document.getElementById('tlBar').innerHTML=Array.from({length:12},(_,i)=>{
-    const w=i+1,s=sc[i]; let cls='ts';
-    if(w===S.view) cls+=' viewing';
-    if(w===S.cur) cls+=' current';
-    else if(w<S.cur&&s.total>0) cls+=s.pct>=75?' great':' past';
-    else if(w<S.cur) cls+=' past';
+    const w=i+1,s=sc[i];let cls='ts';
+    if(w===S.view)cls+=' viewing';
+    if(w===S.cur)cls+=' current';
+    else if(w<S.cur&&s.total>0)cls+=s.pct>=75?' great':' past';
+    else if(w<S.cur)cls+=' past';
     return `<div class="${cls}" onclick="selW(${w})" title="W${w} (${WEEK_DATES[w]}): ${s.pct}%"></div>`;
   }).join('');
   document.getElementById('tlNums').innerHTML=Array.from({length:12},(_,i)=>`<span>${i+1}</span>`).join('');
@@ -410,12 +385,12 @@ function rTabs(){
 }
 
 function rScores(){
-  const s=scoreW(S.view); const p=s.pct;
+  const s=scoreW(S.view);const p=s.pct;
   const el=document.getElementById('sval');
-  el.textContent=p+'%'; el.style.color=p>=85?'var(--hc)':p>=70?'var(--gold)':'var(--ac2)';
+  el.textContent=p+'%';el.style.color=p>=85?'var(--hc)':p>=70?'var(--gold)':'var(--ac2)';
   document.getElementById('ssub').textContent=`${s.done} of ${s.total} done`;
   const b=document.getElementById('sbar');
-  b.style.width=p+'%'; b.style.background=p>=85?'var(--hc)':p>=70?'var(--gold)':'var(--ac)';
+  b.style.width=p+'%';b.style.background=p>=85?'var(--hc)':p>=70?'var(--gold)':'var(--ac)';
   const all=allS().filter(x=>x.total>0);
   const avg=all.length?Math.round(all.reduce((a,b)=>a+b.pct,0)/all.length):0;
   document.getElementById('avgv').textContent=avg+'%';
@@ -437,9 +412,14 @@ function rBd(){
   }).join('');
 }
 
-function rWG(){
-  document.getElementById('wgInp').value = getW(S.view).goal||'';
+function rDeleg(){
+  const dc=delegCounts(S.view);
+  document.getElementById('dTotal').textContent=dc.total;
+  document.getElementById('dDone').textContent=dc.done;
+  document.getElementById('dPending').textContent=dc.pending;
 }
+
+function rWG(){document.getElementById('wgInp').value=getW(S.view).goal||'';}
 
 function rGrid(){
   const w=getW(S.view);
@@ -448,15 +428,40 @@ function rGrid(){
     const open=!S.col[c.id];
     const s=(scoreW(S.view).bc[c.id])||{pct:0};
     const pc=s.pct>=85?'var(--hc)':s.pct>=70?'var(--gold)':'var(--t3)';
-    const rows=cd.tactics.map(t=>`
-      <div class="trow">
-        <input class="tinp${t.status==='done'?' sx':''}" type="text" value="${esc(t.text)}" placeholder="Add tactic…"
-          onchange="upT('${c.id}','${t.id}',this.value)" oninput="ltT('${c.id}','${t.id}',this.value)">
-        <button class="stbtn ${t.status}" onclick="togT('${c.id}','${t.id}')">
-          ${t.status==='done'?'✓ Done':'○ To do'}
-        </button>
-        <button class="dbtn" onclick="delT('${c.id}','${t.id}')">×</button>
-      </div>`).join('');
+
+    const teamOptions=TEAM.map(t=>`<option value="${t}">${t}</option>`).join('');
+
+    const rows=cd.tactics.map(t=>{
+      const isDel=t.status==='delegated';
+      const isDone=t.status==='done';
+      let stClass=t.status==='done'?'done':t.status==='delegated'?'delegated':'todo';
+      let stLabel=t.status==='done'?'✓ Done':t.status==='delegated'?'→ Delegated':'○ To do';
+      let inpClass=isDone?'sx':isDel?'delegated-inp':'';
+
+      const delegPanel=isDel?`
+        <div class="deleg-panel">
+          <div class="deleg-assigned">→ Assigned to ${t.delegatedTo||'—'}${t.dueDate?' · Due '+t.dueDate:''}</div>
+          <div class="deleg-panel-row">
+            <select class="deleg-select" onchange="upDelegTo('${c.id}','${t.id}',this.value)">
+              <option value="">Assign to…</option>
+              ${TEAM.map(m=>`<option value="${m}"${t.delegatedTo===m?' selected':''}>${m}</option>`).join('')}
+            </select>
+            <input class="deleg-date" type="date" value="${t.dueDate||''}" onchange="upDelegDate('${c.id}','${t.id}',this.value)">
+          </div>
+          <textarea class="deleg-ctx" placeholder="Context / instructions for this person…" onchange="upDelegCtx('${c.id}','${t.id}',this.value)">${esc(t.delegationContext||'')}</textarea>
+        </div>`:''
+
+      return `<div class="trow">
+        <div class="trow-main">
+          <input class="tinp ${inpClass}" type="text" value="${esc(t.text)}" placeholder="Add tactic…"
+            onchange="upT('${c.id}','${t.id}',this.value)" oninput="ltT('${c.id}','${t.id}',this.value)">
+          <button class="stbtn ${stClass}" onclick="cycleStatus('${c.id}','${t.id}')" title="Click to cycle: To do → Done → Delegated">${stLabel}</button>
+          <button class="dbtn" onclick="delT('${c.id}','${t.id}')">×</button>
+        </div>
+        ${delegPanel}
+      </div>`;
+    }).join('');
+
     return `<div class="cc${c.full?' cfull':''}">
       <div class="cc-head" onclick="togCat('${c.id}')">
         <div class="cc-hl">
@@ -475,74 +480,80 @@ function rGrid(){
         <button class="addbtn" onclick="addT('${c.id}')">＋ Add tactic</button>
         <div class="notes-wrap">
           <div class="notes-lbl">Notes / blockers</div>
-          <textarea class="notes-ta" placeholder="What happened? Wins, blockers, learnings…" onchange="upNotes('${c.id}',this.value)">${esc(cd.notes||'')}</textarea>
+          <textarea class="notes-ta" placeholder="Wins, blockers, learnings…" onchange="upNotes('${c.id}',this.value)">${esc(cd.notes||'')}</textarea>
         </div>
       `:''}
     </div>`;
   }).join('');
 }
 
-// ─── ACTIONS ───────────────────────────────────────────────────────────────────
-function selW(w){ S.view=w; render(); }
-function setCur(){ S.cur=S.view; schedulePush(); render(); showToast(`Week ${S.view} set as current`, 's'); }
-function togCat(id){ S.col[id]=!S.col[id]; render(); }
-function updateWG(val){ getW(S.view).goal=val; schedulePush(); }
+// ─── ACTIONS ──────────────────────────────────────────────────────────────────
+function selW(w){S.view=w;render();}
+function setCur(){S.cur=S.view;schedulePush();render();showToast(`Week ${S.view} set as current`,'s');}
+function togCat(id){S.col[id]=!S.col[id];render();}
+function updateWG(val){getW(S.view).goal=val;schedulePush();}
 
-function togT(cid,tid){
+// Cycle: todo → done → delegated → todo
+function cycleStatus(cid,tid){
   const t=getW(S.view).cats[cid].tactics.find(x=>x.id===tid);
-  if(t){ t.status=t.status==='done'?'todo':'done'; schedulePush(); render(); }
+  if(!t)return;
+  if(t.status==='todo')t.status='done';
+  else if(t.status==='done')t.status='delegated';
+  else t.status='todo';
+  schedulePush();render();
+  if(t.status==='delegated') showToast('Marked as Delegated — assign a person and due date below','d');
 }
+
 function upT(cid,tid,val){
   const t=getW(S.view).cats[cid].tactics.find(x=>x.id===tid);
-  if(t){ t.text=val; schedulePush(); rScores(); rBd(); rTl(); rTabs(); }
+  if(t){t.text=val;schedulePush();rScores();rBd();rTl();rTabs();}
 }
-function ltT(cid,tid,val){
+function ltT(cid,tid,val){const t=getW(S.view).cats[cid].tactics.find(x=>x.id===tid);if(t)t.text=val;}
+
+function upDelegTo(cid,tid,val){
   const t=getW(S.view).cats[cid].tactics.find(x=>x.id===tid);
-  if(t) t.text=val;
+  if(t){t.delegatedTo=val;schedulePush();rDeleg();}
 }
+function upDelegDate(cid,tid,val){
+  const t=getW(S.view).cats[cid].tactics.find(x=>x.id===tid);
+  if(t){t.dueDate=val;schedulePush();}
+}
+function upDelegCtx(cid,tid,val){
+  const t=getW(S.view).cats[cid].tactics.find(x=>x.id===tid);
+  if(t){t.delegationContext=val;schedulePush();}
+}
+
 function addT(cid){
-  getW(S.view).cats[cid].tactics.push({id:uid(),text:'',status:'todo'});
-  schedulePush(); render();
-  setTimeout(()=>{ const r=document.querySelectorAll('.tinp'); r[r.length-1]?.focus(); },50);
+  getW(S.view).cats[cid].tactics.push({id:uid(),text:'',status:'todo',delegatedTo:'',dueDate:'',delegationContext:''});
+  schedulePush();render();
+  setTimeout(()=>{const r=document.querySelectorAll('.tinp');r[r.length-1]?.focus();},50);
 }
 function delT(cid,tid){
   const cat=getW(S.view).cats[cid];
-  if(cat.tactics.length<=1){ cat.tactics[0]={id:uid(),text:'',status:'todo'}; schedulePush(); render(); return; }
-  cat.tactics=cat.tactics.filter(x=>x.id!==tid); schedulePush(); render();
+  if(cat.tactics.length<=1){cat.tactics[0]={id:uid(),text:'',status:'todo',delegatedTo:'',dueDate:'',delegationContext:''};schedulePush();render();return;}
+  cat.tactics=cat.tactics.filter(x=>x.id!==tid);schedulePush();render();
 }
-function upGoal(cid,val){ getW(S.view).cats[cid].goal=val; schedulePush(); }
-function upNotes(cid,val){ getW(S.view).cats[cid].notes=val; schedulePush(); }
+function upGoal(cid,val){getW(S.view).cats[cid].goal=val;schedulePush();}
+function upNotes(cid,val){getW(S.view).cats[cid].notes=val;schedulePush();}
 function clrWeek(){
-  if(!confirm(`Clear all data for Week ${S.view}?`)) return;
-  delete S.weeks[S.view]; schedulePush(); render(); showToast('Week cleared','e');
+  if(!confirm(`Clear all data for Week ${S.view}?`))return;
+  delete S.weeks[S.view];schedulePush();render();showToast('Week cleared','e');
 }
 
 function showToast(msg,type='s'){
   const t=document.getElementById('toast');
-  t.textContent=msg; t.className=`toast ${type} show`;
-  clearTimeout(window._tt);
-  window._tt=setTimeout(()=>t.classList.remove('show'),3000);
+  t.textContent=msg;t.className=`toast ${type} show`;
+  clearTimeout(window._tt);window._tt=setTimeout(()=>t.classList.remove('show'),3000);
 }
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
-// Tap title 5x to show debug panel
-document.addEventListener('DOMContentLoaded',()=>{
-  document.querySelector('.title').addEventListener('click',()=>{
-    tapCount++;
-    if(tapCount>=5){ document.getElementById('debugPanel').classList.toggle('show'); tapCount=0; }
-  });
-});
-
-function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-// ─── INIT ──────────────────────────────────────────────────────────────────────
+// ─── INIT ─────────────────────────────────────────────────────────────────────
 async function init(){
-  lsLoad();
-  render();
-  const ok = await pullFromSheet();
-  if(ok) render();
+  lsLoad();render();
+  const ok=await pullFromSheet();
+  if(ok)render();
   document.getElementById('loader').classList.add('hide');
 }
-
 init();
 </script>
 </body>
