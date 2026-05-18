@@ -133,7 +133,12 @@ body{background:var(--bg);background-image:radial-gradient(ellipse 70% 50% at 5%
 .date-badge{flex-shrink:0;font-size:10px;color:var(--t3);background:var(--s2);border:1px solid var(--b2);border-radius:5px;padding:2px 7px;cursor:pointer;white-space:nowrap;transition:all .15s;}
 .date-badge:hover{border-color:var(--gold);color:var(--gold);}
 .date-badge.set{color:var(--gold);border-color:rgba(245,200,66,.3);background:rgba(245,200,66,.06);}
-.date-input-hidden{position:absolute;opacity:0;pointer-events:none;width:0;height:0;}
+.date-inp-wrap{display:none;position:absolute;z-index:50;background:var(--s2);border:1px solid var(--b3);border-radius:8px;padding:8px;box-shadow:0 8px 24px rgba(0,0,0,.4);}
+.date-inp-wrap.show{display:block;}
+.date-inp-real{background:var(--s2);border:1px solid var(--b2);border-radius:6px;color:var(--t1);font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;padding:6px 10px;outline:none;width:160px;}
+.date-inp-real:focus{border-color:var(--gold);}
+.date-inp-clear{font-size:10px;color:var(--red);cursor:pointer;margin-top:6px;display:block;text-align:right;}
+.trow-main{position:relative;}
 
 /* STATUS BTN — 4 states */
 .stbtn{flex-shrink:0;width:86px;padding:4px 0;border-radius:6px;border:1px solid;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;font-size:10px;font-weight:600;text-align:center;transition:all .15s;}
@@ -558,8 +563,12 @@ function rGrid(){
         <div class="trow-main">
           <input class="tinp ${inpCls}" type="text" value="${esc(t.text)}" placeholder="Add tactic…"
             onchange="upT('${c.id}','${t.id}',this.value)" oninput="ltT('${c.id}','${t.id}',this.value)">
-          <span class="date-badge${dateSet?' set':''}" onclick="pickDate('${c.id}','${t.id}')" title="Set start date">${dateLbl}</span>
-          <input type="date" id="dp_${t.id}" class="date-input-hidden" value="${t.startDate||''}" onchange="upStart('${c.id}','${t.id}',this.value)">
+          <span class="date-badge${dateSet?' set':''}" onclick="toggleDatePicker('${t.id}')" title="Set start date">${dateLbl}</span>
+          <div class="date-inp-wrap" id="dp_${t.id}">
+            <input class="date-inp-real" type="date" value="${t.startDate||''}"
+              onchange="upStart('${c.id}','${t.id}',this.value);toggleDatePicker('${t.id}')">
+            ${t.startDate?`<span class="date-inp-clear" onclick="upStart('${c.id}','${t.id}','');toggleDatePicker('${t.id}')">✕ Clear date</span>`:''}
+          </div>
           <button class="stbtn ${st.cls}" onclick="cycleStatus('${c.id}','${t.id}')">${st.lbl}</button>
           <button class="copy-btn" onclick="copyToNext('${c.id}','${t.id}')" title="Copy to next week">↗</button>
           <button class="dbtn" onclick="delT('${c.id}','${t.id}')">×</button>
@@ -639,10 +648,26 @@ function setCur(){S.cur=S.view;schedulePush();render();showToast(`Week ${S.view}
 function togCat(id){S.col[id]=!S.col[id];render();}
 function updateWG(val){getW(S.view).goal=val;schedulePush();}
 
-function pickDate(cid,tid){
+function toggleDatePicker(tid){
+  // Close all other open pickers first
+  document.querySelectorAll('.date-inp-wrap.show').forEach(el=>{
+    if(el.id!=='dp_'+tid) el.classList.remove('show');
+  });
   const el=document.getElementById('dp_'+tid);
-  if(el){el.style.pointerEvents='auto';el.style.opacity='1';el.click();setTimeout(()=>{el.style.pointerEvents='none';el.style.opacity='0';},300);}
+  if(el){
+    el.classList.toggle('show');
+    if(el.classList.contains('show')){
+      // Focus the input inside
+      setTimeout(()=>el.querySelector('input')?.focus(),50);
+    }
+  }
 }
+// Close date pickers when clicking outside
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.date-inp-wrap')&&!e.target.classList.contains('date-badge')){
+    document.querySelectorAll('.date-inp-wrap.show').forEach(el=>el.classList.remove('show'));
+  }
+});
 function upStart(cid,tid,val){
   const t=getW(S.view).cats[cid].tactics.find(x=>x.id===tid);
   if(t){t.startDate=val;schedulePush();rGrid();rDeleg();showToast('Start date set ✓','s');}
