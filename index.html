@@ -566,8 +566,12 @@ function rGrid(){
           <span class="date-badge${dateSet?' set':''}" onclick="toggleDatePicker('${t.id}')" title="Set start date">${dateLbl}</span>
           <div class="date-inp-wrap" id="dp_${t.id}">
             <input class="date-inp-real" type="date" value="${t.startDate||''}"
-              onchange="upStart('${c.id}','${t.id}',this.value);toggleDatePicker('${t.id}')">
-            ${t.startDate?`<span class="date-inp-clear" onclick="upStart('${c.id}','${t.id}','');toggleDatePicker('${t.id}')">✕ Clear date</span>`:''}
+              oninput="upStart('${c.id}','${t.id}',this.value)"
+              onchange="upStart('${c.id}','${t.id}',this.value)">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">
+              <span style="font-size:10px;color:var(--t3)">Tap date then Done/✓</span>
+              ${t.startDate?`<span class="date-inp-clear" onclick="upStart('${c.id}','${t.id}','')">✕ Clear</span>`:''}
+            </div>
           </div>
           <button class="stbtn ${st.cls}" onclick="cycleStatus('${c.id}','${t.id}')">${st.lbl}</button>
           <button class="copy-btn" onclick="copyToNext('${c.id}','${t.id}')" title="Copy to next week">↗</button>
@@ -670,7 +674,30 @@ document.addEventListener('click',function(e){
 });
 function upStart(cid,tid,val){
   const t=getW(S.view).cats[cid].tactics.find(x=>x.id===tid);
-  if(t){t.startDate=val;schedulePush();rGrid();rDeleg();showToast('Start date set ✓','s');}
+  if(!t)return;
+  t.startDate=val;
+  schedulePush();
+  // Update badge text in place without re-rendering whole grid
+  const picker=document.getElementById('dp_'+tid);
+  if(picker){
+    const badge=picker.previousElementSibling;
+    if(badge&&badge.classList.contains('date-badge')){
+      if(val){
+        badge.textContent=fmtDate(val);
+        badge.classList.add('set');
+      } else {
+        badge.textContent='+ Date';
+        badge.classList.remove('set');
+      }
+    }
+    // Close picker after short delay so user sees the update
+    setTimeout(()=>{
+      picker.classList.remove('show');
+      // Refresh deleg section only
+      rDeleg();
+    },300);
+  }
+  if(val) showToast('Start date set: '+fmtDate(val),'s');
 }
 
 function cycleStatus(cid,tid){
