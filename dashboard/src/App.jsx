@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { PROGRAMS } from './config.js';
-import { loadAllData, getSampleData } from './utils/sheets.js';
+import { loadMarketingData, getMarketingSample } from './utils/sheets.js';
 import { todayISO, monthStartISO, fmtDisplay } from './utils/dates.js';
 import { inr, num } from './utils/format.js';
 import Header from './components/Header.jsx';
@@ -18,12 +18,12 @@ export default function App() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const result = await loadAllData();
+      const result = await loadMarketingData();
       setData(result);
       setDemo(false);
     } catch (err) {
       console.warn('Falling back to sample data:', err.message);
-      setData(getSampleData());
+      setData(getMarketingSample());
       setDemo(true);
     } finally {
       setLoading(false);
@@ -45,10 +45,9 @@ export default function App() {
   const todayRows = adSpend.filter(r => r.date === selDate);
   const ms = monthStartISO();
 
-  // Aggregate per program
   const byProg = {};
   for (const p of PROGRAMS) {
-    const rows = todayRows.filter(r => r.program === p.key);
+    const rows     = todayRows.filter(r => r.program === p.key);
     const spend    = rows.reduce((s, r) => s + r.spend, 0);
     const leadsAd  = rows.reduce((s, r) => s + r.leadsAd, 0);
     const lSheet   = sheetLeads[p.key]?.today || 0;
@@ -58,11 +57,11 @@ export default function App() {
     const mtdCpl   = lMtd   > 0 ? Math.round(spendMtd / lMtd) : null;
     const gap      = leadsAd - lSheet;
     const gapPct   = leadsAd > 0 ? Math.round((gap / leadsAd) * 100) : 0;
-    byProg[p.key] = { spend, leadsAd, lSheet, lMtd, cpl, mtdCpl, gap, gapPct, spendMtd };
+    byProg[p.key]  = { spend, leadsAd, lSheet, lMtd, cpl, mtdCpl, gap, gapPct, spendMtd };
   }
 
-  const totSpend  = todayRows.reduce((s, r) => s + r.spend, 0);
-  const totLeads  = PROGRAMS.reduce((s, p) => s + byProg[p.key].lSheet, 0);
+  const totSpend   = todayRows.reduce((s, r) => s + r.spend, 0);
+  const totLeads   = PROGRAMS.reduce((s, p) => s + byProg[p.key].lSheet, 0);
   const blendedCpl = totLeads > 0 ? Math.round(totSpend / totLeads) : null;
 
   return (
@@ -74,13 +73,7 @@ export default function App() {
         onDateChange={setSelDate}
         onRefresh={load}
       />
-
-      <SummaryStrip
-        totSpend={totSpend}
-        totLeads={totLeads}
-        blendedCpl={blendedCpl}
-      />
-
+      <SummaryStrip totSpend={totSpend} totLeads={totLeads} blendedCpl={blendedCpl} />
       <div style={{ padding: '0 24px 32px' }}>
         <div style={{ fontSize: 11, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 14 }}>
           Program performance — {fmtDisplay(selDate)}
@@ -90,9 +83,7 @@ export default function App() {
             <ProgramCard key={p.key} program={p} data={byProg[p.key]} />
           ))}
         </div>
-
         <SpendTable rows={todayRows} selDate={selDate} />
-
         {demo && (
           <div style={{ marginTop: 16, fontSize: 12, color: 'var(--text3)' }}>
             Showing sample data. Share all 4 sheets as "Anyone with link → Viewer" to see live data.
