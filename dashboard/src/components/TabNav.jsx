@@ -18,8 +18,7 @@ export default function TabNav({ active, onChange }) {
             key={tab.key}
             onClick={() => onChange(tab.key)}
             style={{
-              background: 'none',
-              border: 'none',
+              background: 'none', border: 'none',
               borderBottom: isActive ? '2px solid var(--tarot)' : '2px solid transparent',
               color: isActive ? 'var(--text)' : 'var(--text3)',
               fontWeight: isActive ? 500 : 400,
