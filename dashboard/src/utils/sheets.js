@@ -25,7 +25,7 @@ async function fetchCSV(sheetId, tab) {
   return parseCSV(await res.text());
 }
 
-export async function loadAllData() {
+export async function loadMarketingData() {
   const [spendRows, tarotRows, reikiRows, pcosRows] = await Promise.all([
     fetchCSV(SHEETS.adSpend.id, SHEETS.adSpend.tab),
     fetchCSV(SHEETS.tarot.id, SHEETS.tarot.tab),
@@ -33,24 +33,27 @@ export async function loadAllData() {
     fetchCSV(SHEETS.pcos.id, SHEETS.pcos.tab),
   ]);
 
-  // Parse ad spend — detect if Google Form added Timestamp as col 0
+  // Detect offset: skip Timestamp col if present, then skip Email col if present
   const header = spendRows[0] || [];
-  const off = header[0]?.toLowerCase().includes('timestamp') ? 1 : 0;
+  let off = header[0]?.toLowerCase().includes('timestamp') ? 1 : 0;
+  if (header[off]?.toLowerCase().includes('email')) off += 1;
+  // Columns from off: Date | Program | Platform | Account | Spend | Leads
+
   const adSpend = spendRows.slice(1)
     .filter(r => r[off])
     .map(r => ({
-      date: toISO(r[off]),           // Ad_Spend uses date picker → auto-detect fine
-      program: r[off + 1]?.trim(),
-      account: r[off + 2]?.trim(),
-      platform: r[off + 3]?.trim(),
-      spend: parseFloat(String(r[off + 4] || '').replace(/[₹,\s]/g, '')) || 0,
-      leadsAd: parseInt(r[off + 5]) || 0,
+      date:     toISO(r[off], true),         // forceDDMM — Indian DD/MM/YYYY
+      program:  r[off + 1]?.trim(),
+      platform: r[off + 2]?.trim(),          // Platform before Account
+      account:  r[off + 3]?.trim(),
+      spend:    parseFloat(String(r[off + 4] || '').replace(/[₹,\s]/g, '')) || 0,
+      leadsAd:  parseInt(r[off + 5]) || 0,
     }));
 
   const today = todayISO();
-  const ms = monthStartISO();
+  const ms    = monthStartISO();
 
-  // forceDDMM = true — all 3 lead sheets are Indian DD/MM/YYYY format
+  // forceDDMM = true — all 3 lead sheets are Indian DD/MM/YYYY
   const countLeads = (rows, col) => {
     let td = 0, mtd = 0;
     for (let i = 1; i < rows.length; i++) {
@@ -68,7 +71,6 @@ export async function loadAllData() {
     PCOS:  countLeads(pcosRows,  SHEETS.pcos.dateCol),
   };
 
-  // MTD spend per program
   const mtdSpend = { Tarot: 0, Reiki: 0, PCOS: 0 };
   for (const r of adSpend) {
     if (r.date >= ms && r.date <= today && mtdSpend[r.program] !== undefined)
@@ -78,15 +80,15 @@ export async function loadAllData() {
   return { adSpend, sheetLeads, mtdSpend };
 }
 
-export function getSampleData() {
+export function getMarketingSample() {
   const today = todayISO();
   return {
     adSpend: [
-      { date: today, program: 'Tarot', account: 'FunnelTraffic', platform: 'Meta', spend: 12000, leadsAd: 45 },
-      { date: today, program: 'Tarot', account: 'Internal',      platform: 'Meta', spend: 8500,  leadsAd: 30 },
-      { date: today, program: 'Reiki', account: 'Internal',      platform: 'Meta', spend: 5200,  leadsAd: 18 },
-      { date: today, program: 'PCOS',  account: 'FunnelTraffic', platform: 'Meta', spend: 9800,  leadsAd: 35 },
-      { date: today, program: 'PCOS',  account: 'Internal',      platform: 'Meta', spend: 4200,  leadsAd: 15 },
+      { date: today, program: 'Tarot', platform: 'Meta', account: 'FunnelTraffic', spend: 12000, leadsAd: 45 },
+      { date: today, program: 'Tarot', platform: 'Meta', account: 'Internal',      spend: 8500,  leadsAd: 30 },
+      { date: today, program: 'Reiki', platform: 'Meta', account: 'Internal',      spend: 5200,  leadsAd: 18 },
+      { date: today, program: 'PCOS',  platform: 'Meta', account: 'FunnelTraffic', spend: 9800,  leadsAd: 35 },
+      { date: today, program: 'PCOS',  platform: 'Meta', account: 'Internal',      spend: 4200,  leadsAd: 15 },
     ],
     sheetLeads: {
       Tarot: { today: 38,  mtd: 1240 },
