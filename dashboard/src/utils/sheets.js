@@ -1,7 +1,7 @@
 import { toISO, todayISO, monthStartISO } from './dates.js';
-import { SHEETS, SALES_SHEET, FINANCE_URL } from '../config.js';
+import { SHEETS, SALES_SHEET, FINANCE_URL, EMI_URL } from '../config.js';
 
-// ─── Shared CSV fetch/parse ───────────────────────────────────────────────────
+// ─── Shared CSV helpers ───────────────────────────────────────────────────────
 export function parseCSV(text) {
   const rows = [];
   for (const line of text.split('\n')) {
@@ -25,7 +25,7 @@ export async function fetchCSV(sheetId, tab) {
   return parseCSV(await res.text());
 }
 
-// ─── Marketing data ───────────────────────────────────────────────────────────
+// ─── Marketing ────────────────────────────────────────────────────────────────
 export async function loadMarketingData() {
   const [spendRows, tarotRows, reikiRows, pcosRows] = await Promise.all([
     fetchCSV(SHEETS.adSpend.id, SHEETS.adSpend.tab),
@@ -33,11 +33,9 @@ export async function loadMarketingData() {
     fetchCSV(SHEETS.reiki.id,   SHEETS.reiki.tab),
     fetchCSV(SHEETS.pcos.id,    SHEETS.pcos.tab),
   ]);
-
   const header = spendRows[0] || [];
   let off = header[0]?.toLowerCase().includes('timestamp') ? 1 : 0;
   if (header[off]?.toLowerCase().includes('email')) off += 1;
-
   const adSpend = spendRows.slice(1).filter(r => r[off]).map(r => ({
     date:     toISO(r[off], true),
     program:  r[off + 1]?.trim(),
@@ -46,7 +44,6 @@ export async function loadMarketingData() {
     spend:    parseFloat(String(r[off + 4] || '').replace(/[₹,\s]/g, '')) || 0,
     leadsAd:  parseInt(r[off + 5]) || 0,
   }));
-
   const today = todayISO(), ms = monthStartISO();
   const countLeads = (rows, col) => {
     let td = 0, mtd = 0;
@@ -58,19 +55,16 @@ export async function loadMarketingData() {
     }
     return { today: td, mtd };
   };
-
   const sheetLeads = {
     Tarot: countLeads(tarotRows, SHEETS.tarot.dateCol),
     Reiki: countLeads(reikiRows, SHEETS.reiki.dateCol),
     PCOS:  countLeads(pcosRows,  SHEETS.pcos.dateCol),
   };
-
   const mtdSpend = { Tarot: 0, Reiki: 0, PCOS: 0 };
   for (const r of adSpend) {
     if (r.date >= ms && r.date <= today && mtdSpend[r.program] !== undefined)
       mtdSpend[r.program] += r.spend;
   }
-
   return { adSpend, sheetLeads, mtdSpend };
 }
 
@@ -84,19 +78,15 @@ export function getMarketingSample() {
       { date: today, program: 'PCOS',  platform: 'Meta', account: 'FunnelTraffic', spend: 9800,  leadsAd: 35 },
       { date: today, program: 'PCOS',  platform: 'Meta', account: 'Internal',      spend: 4200,  leadsAd: 15 },
     ],
-    sheetLeads: {
-      Tarot: { today: 38, mtd: 1240 },
-      Reiki: { today: 16, mtd: 520  },
-      PCOS:  { today: 43, mtd: 1380 },
-    },
-    mtdSpend: { Tarot: 382000, Reiki: 156000, PCOS: 418000 },
+    sheetLeads: { Tarot: { today: 38, mtd: 1240 }, Reiki: { today: 16, mtd: 520 }, PCOS: { today: 43, mtd: 1380 } },
+    mtdSpend:   { Tarot: 382000, Reiki: 156000, PCOS: 418000 },
   };
 }
 
-// ─── Sales data ───────────────────────────────────────────────────────────────
+// ─── Sales ────────────────────────────────────────────────────────────────────
 export async function loadSalesData() {
   const rows = await fetchCSV(SALES_SHEET.id, SALES_SHEET.tab);
-  const enrollments = rows.slice(1).filter(r => r[1]?.trim()).map(r => ({
+  return rows.slice(1).filter(r => r[1]?.trim()).map(r => ({
     date:          toISO(r[1], true),
     name:          r[2]?.trim() || '',
     email:         r[3]?.trim()?.toLowerCase() || '',
@@ -110,20 +100,15 @@ export async function loadSalesData() {
     amtDue:        parseFloat(r[11]) || 0,
     closedBy:      r[12]?.trim() || 'Unknown',
   }));
-  return enrollments;
 }
 
-// ─── Duplicate detection ──────────────────────────────────────────────────────
 export function detectDuplicates(enrollments) {
   const byPhone = {}, byEmail = {};
   for (const e of enrollments) {
     if (e.phone) { if (!byPhone[e.phone]) byPhone[e.phone] = []; byPhone[e.phone].push(e); }
     if (e.email) { if (!byEmail[e.email]) byEmail[e.email] = []; byEmail[e.email].push(e); }
   }
-
-  const type1 = [], type2 = [];
-  const seen1 = new Set(), seen2 = new Set();
-
+  const type1 = [], type2 = [], seen1 = new Set(), seen2 = new Set();
   const checkGroup = (entries) => {
     const byProg = {};
     for (const e of entries) {
@@ -149,29 +134,27 @@ export function detectDuplicates(enrollments) {
       }
     }
   };
-
   for (const entries of Object.values(byPhone)) if (entries.length > 1) checkGroup(entries);
   for (const entries of Object.values(byEmail)) if (entries.length > 1) checkGroup(entries);
-
   return { type1, type2 };
 }
 
-// ─── Finance data (via Apps Script) ──────────────────────────────────────────
+// ─── Finance ──────────────────────────────────────────────────────────────────
 export async function loadFinanceData() {
   const res = await fetch(FINANCE_URL);
   if (!res.ok) throw new Error(`Finance API ${res.status}`);
   const data = await res.json();
   return data.map(row => ({
-    month:         row.Month                          || '',
-    studentFees:   parseFloat(row.Student_Fees)       || 0,
-    adGoogle:      parseFloat(row.Ad_Google)          || 0,
-    adMeta:        parseFloat(row.Ad_Meta)            || 0,
-    tools:         parseFloat(row.Tools)              || 0,
-    salary:        parseFloat(row.Salary)             || 0,
-    otherPayments: parseFloat(row.Other_Payments)     || 0,
-    gstPaid:       parseFloat(row.GST_Paid)           || 0,
-    tdsPaid:       parseFloat(row.TDS_Paid)           || 0,
-    cashWithdraw:  parseFloat(row.Cash_Withdraw)      || 0,
+    month:         row.Month                      || '',
+    studentFees:   parseFloat(row.Student_Fees)   || 0,
+    adGoogle:      parseFloat(row.Ad_Google)       || 0,
+    adMeta:        parseFloat(row.Ad_Meta)         || 0,
+    tools:         parseFloat(row.Tools)           || 0,
+    salary:        parseFloat(row.Salary)          || 0,
+    otherPayments: parseFloat(row.Other_Payments)  || 0,
+    gstPaid:       parseFloat(row.GST_Paid)        || 0,
+    tdsPaid:       parseFloat(row.TDS_Paid)        || 0,
+    cashWithdraw:  parseFloat(row.Cash_Withdraw)   || 0,
   }));
 }
 
@@ -183,4 +166,28 @@ export function getFinanceSample() {
     { month:'Mar-26', studentFees:3059621, adGoogle:205000, adMeta:1076894, tools:105571, salary:527204, otherPayments:535593, gstPaid:84000,  tdsPaid:485086, cashWithdraw:370000 },
     { month:'Apr-26', studentFees:3611839, adGoogle:200000, adMeta:1069873, tools:59611,  salary:442667, otherPayments:502671, gstPaid:319509, tdsPaid:67556,  cashWithdraw:0      },
   ];
+}
+
+// ─── EMI ──────────────────────────────────────────────────────────────────────
+export async function loadEMIData() {
+  const res = await fetch(EMI_URL);
+  if (!res.ok) throw new Error(`EMI API ${res.status}`);
+  return await res.json();
+}
+
+export function getEMISample() {
+  const today = new Date();
+  const fmt   = (d) => d.toISOString().slice(0, 10);
+  const past  = (n) => fmt(new Date(today.getTime() - n * 86400000));
+  const future = (n) => fmt(new Date(today.getTime() + n * 86400000));
+  return {
+    students: [
+      { batch:'Dec-25', program:'SUPER', name:'Priya Sharma',  phone:'9819906697', programFee:250000, totalPlanned:247500, totalActual:172500, emiDue:75000,  paymentPlan:10,
+        emis:[ {n:0,plannedDate:past(120),plannedAmt:90000,actualDate:past(118),actualAmt:90000}, {n:1,plannedDate:past(90),plannedAmt:15750,actualDate:past(88),actualAmt:15750}, {n:2,plannedDate:past(60),plannedAmt:16500,actualDate:past(55),actualAmt:16500}, {n:3,plannedDate:past(30),plannedAmt:15750,actualDate:null,actualAmt:0}, {n:4,plannedDate:future(1),plannedAmt:15750,actualDate:null,actualAmt:0} ] },
+      { batch:'Dec-25', program:'SUPER', name:'Shivi Gupta',   phone:'9991289434', programFee:250000, totalPlanned:255000, totalActual:82500,  emiDue:172500, paymentPlan:10,
+        emis:[ {n:0,plannedDate:past(120),plannedAmt:30000,actualDate:past(115),actualAmt:30000}, {n:1,plannedDate:past(90),plannedAmt:16500,actualDate:past(85),actualAmt:16500}, {n:2,plannedDate:past(60),plannedAmt:16500,actualDate:past(58),actualAmt:16500}, {n:3,plannedDate:past(35),plannedAmt:16500,actualDate:null,actualAmt:0}, {n:4,plannedDate:future(5),plannedAmt:16500,actualDate:null,actualAmt:0} ] },
+      { batch:'Dec-25', program:'RGM',   name:'Pallavi Handa', phone:'9736183799', programFee:120000, totalPlanned:247500, totalActual:247500, emiDue:0,      paymentPlan:0,
+        emis:[ {n:0,plannedDate:past(90),plannedAmt:90000,actualDate:past(88),actualAmt:90000}, {n:1,plannedDate:past(60),plannedAmt:90000,actualDate:past(58),actualAmt:90000}, {n:2,plannedDate:past(30),plannedAmt:67500,actualDate:past(28),actualAmt:67500} ] },
+    ],
+  };
 }

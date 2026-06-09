@@ -2,7 +2,7 @@
 export const SHEETS = {
   adSpend: { id: '10fhstijcgw_qAKCfoF04i3NIsiFegnlcMgOG3px7BfA', tab: 'Ad_Spend' },
   tarot:   { id: '1K1NqGSAGb7Hc9fSD5EQuBJvsJ8GfFkgwbr1CqJBPX0M', tab: 'LeadsMasterSheet', dateCol: 5 },
-  reiki:   { id: '1F_HLtYFY6g61vVslmMUz64BLHWCvOCc9-A2BG_tOicI', tab: 'Free_Leads',       dateCol: 5 },
+  reiki:   { id: '1F_HLtYFY6g61vVslmMUz64BLHWCvOCc9-A2BG_tOicI', tab: 'Free_Leads',        dateCol: 5 },
   pcos:    { id: '1VumI6g9cr4mHpJPc_CSFrjVkr4jw9iT9NDw6fzJU88E', tab: 'PaymentMasterSheet', dateCol: 18 },
 };
 
@@ -11,6 +11,12 @@ export const SALES_SHEET = {
   id:  '1t_2yP18ErFwfqMWhW2C3yZb1POIxObBK8dhqyQTBOnE',
   tab: 'Dashboard',
 };
+
+// ─── Finance Apps Script URL ──────────────────────────────────────────────────
+export const FINANCE_URL = 'https://script.google.com/macros/s/AKfycbwhmj1f3nhS4mRFzS1fxlf3EeF8Q0BIXhzLDn9BLlgupjFU8WqNJJqC5e9epsP4jVE-/exec';
+
+// ─── EMI Apps Script URL ──────────────────────────────────────────────────────
+export const EMI_URL = 'https://script.google.com/macros/s/AKfycbwgKK2X3PYGLlOOu-D_ZJKvYQKpdPVAtXE3T1bkaybI-IIl5vX0_IU6DktaKdqhZnPg_A/exec';
 
 // ─── Marketing programs ───────────────────────────────────────────────────────
 export const PROGRAMS = [
@@ -50,9 +56,6 @@ export function applyGST(amount, mode) {
 
 // ─── Slack ────────────────────────────────────────────────────────────────────
 export const SLACK = {
-  dollyId:   'U07Q0BNK3L6',
-  channel:   '#delegation',
+  dollyId:  'U07Q0BNK3L6',
+  channel:  '#delegation',
 };
-
-// ─── Finance Apps Script URL ──────────────────────────────────────────────────
-export const FINANCE_URL = 'https://script.google.com/macros/s/AKfycbwhmj1f3nhS4mRFzS1fxlf3EeF8Q0BIXhzLDn9BLlgupjFU8WqNJJqC5e9epsP4jVE-/exec';
