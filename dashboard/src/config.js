@@ -53,3 +53,6 @@ export const SLACK = {
   dollyId:   'U07Q0BNK3L6',
   channel:   '#delegation',
 };
+
+// ─── Finance Apps Script URL ──────────────────────────────────────────────────
+export const FINANCE_URL = 'https://script.google.com/macros/s/AKfycbwhmj1f3nhS4mRFzS1fxlf3EeF8Q0BIXhzLDn9BLlgupjFU8WqNJJqC5e9epsP4jVE-/exec';
