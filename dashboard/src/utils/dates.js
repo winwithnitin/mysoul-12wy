@@ -11,15 +11,33 @@ export function monthStartISO() {
 export function toISO(raw) {
   if (!raw) return null;
   const s = String(raw).replace(/"/g, '').trim();
+
+  // YYYY-MM-DD (with optional time)
   if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+
+  // DD/MM/YYYY or MM/DD/YYYY (with optional time HH:MM or HH:MM:SS or HH:MM AM/PM)
   const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
   if (m) {
     const [, a, b, y] = m;
-    // If first part > 12 it must be DD/MM/YYYY, else assume M/D/YYYY (GHL default)
+    // If first part > 12 it must be DD/MM/YYYY, else assume MM/DD/YYYY
     if (parseInt(a) > 12)
       return `${y}-${b.padStart(2, '0')}-${a.padStart(2, '0')}`;
     return `${y}-${a.padStart(2, '0')}-${b.padStart(2, '0')}`;
   }
+
+  // DD-MM-YYYY or MM-DD-YYYY
+  const m2 = s.match(/^(\d{1,2})-(\d{1,2})-(\d{4})/);
+  if (m2) {
+    const [, a, b, y] = m2;
+    if (parseInt(a) > 12)
+      return `${y}-${b.padStart(2, '0')}-${a.padStart(2, '0')}`;
+    return `${y}-${a.padStart(2, '0')}-${b.padStart(2, '0')}`;
+  }
+
+  // YYYY/MM/DD
+  const m3 = s.match(/^(\d{4})\/(\d{2})\/(\d{2})/);
+  if (m3) return `${m3[1]}-${m3[2]}-${m3[3]}`;
+
   return null;
 }
 
