@@ -8,19 +8,19 @@ export function monthStartISO() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
 }
 
-export function toISO(raw) {
+// forceDDMM: pass true for Indian sheets where format is always DD/MM/YYYY
+export function toISO(raw, forceDDMM = false) {
   if (!raw) return null;
   const s = String(raw).replace(/"/g, '').trim();
 
   // YYYY-MM-DD (with optional time)
   if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
 
-  // DD/MM/YYYY or MM/DD/YYYY (with optional time HH:MM or HH:MM:SS or HH:MM AM/PM)
+  // DD/MM/YYYY or MM/DD/YYYY (with optional HH:MM or HH:MM:SS)
   const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
   if (m) {
     const [, a, b, y] = m;
-    // If first part > 12 it must be DD/MM/YYYY, else assume MM/DD/YYYY
-    if (parseInt(a) > 12)
+    if (parseInt(a) > 12 || forceDDMM)
       return `${y}-${b.padStart(2, '0')}-${a.padStart(2, '0')}`;
     return `${y}-${a.padStart(2, '0')}-${b.padStart(2, '0')}`;
   }
@@ -29,7 +29,7 @@ export function toISO(raw) {
   const m2 = s.match(/^(\d{1,2})-(\d{1,2})-(\d{4})/);
   if (m2) {
     const [, a, b, y] = m2;
-    if (parseInt(a) > 12)
+    if (parseInt(a) > 12 || forceDDMM)
       return `${y}-${b.padStart(2, '0')}-${a.padStart(2, '0')}`;
     return `${y}-${a.padStart(2, '0')}-${b.padStart(2, '0')}`;
   }
