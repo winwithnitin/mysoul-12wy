@@ -39,7 +39,7 @@ export async function loadAllData() {
   const adSpend = spendRows.slice(1)
     .filter(r => r[off])
     .map(r => ({
-      date: toISO(r[off]),
+      date: toISO(r[off]),           // Ad_Spend uses date picker → auto-detect fine
       program: r[off + 1]?.trim(),
       account: r[off + 2]?.trim(),
       platform: r[off + 3]?.trim(),
@@ -47,14 +47,14 @@ export async function loadAllData() {
       leadsAd: parseInt(r[off + 5]) || 0,
     }));
 
-  // Count leads per program — today and MTD
   const today = todayISO();
   const ms = monthStartISO();
 
+  // forceDDMM = true — all 3 lead sheets are Indian DD/MM/YYYY format
   const countLeads = (rows, col) => {
     let td = 0, mtd = 0;
     for (let i = 1; i < rows.length; i++) {
-      const d = toISO(rows[i][col]);
+      const d = toISO(rows[i][col], true);
       if (!d) continue;
       if (d === today) td++;
       if (d >= ms) mtd++;
@@ -78,7 +78,6 @@ export async function loadAllData() {
   return { adSpend, sheetLeads, mtdSpend };
 }
 
-// Sample data for when sheets are not yet public
 export function getSampleData() {
   const today = todayISO();
   return {
