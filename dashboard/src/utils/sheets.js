@@ -1,5 +1,5 @@
 import { toISO, todayISO, monthStartISO } from './dates.js';
-import { SHEETS, SALES_SHEET } from '../config.js';
+import { SHEETS, SALES_SHEET, FINANCE_URL } from '../config.js';
 
 // ─── Shared CSV fetch/parse ───────────────────────────────────────────────────
 export function parseCSV(text) {
@@ -34,11 +34,9 @@ export async function loadMarketingData() {
     fetchCSV(SHEETS.pcos.id,    SHEETS.pcos.tab),
   ]);
 
-  // Detect offset: skip Timestamp, then skip Email if present
   const header = spendRows[0] || [];
   let off = header[0]?.toLowerCase().includes('timestamp') ? 1 : 0;
   if (header[off]?.toLowerCase().includes('email')) off += 1;
-  // Cols from off: Date | Program | Platform | Account | Spend | Leads
 
   const adSpend = spendRows.slice(1).filter(r => r[off]).map(r => ({
     date:     toISO(r[off], true),
@@ -98,31 +96,25 @@ export function getMarketingSample() {
 // ─── Sales data ───────────────────────────────────────────────────────────────
 export async function loadSalesData() {
   const rows = await fetchCSV(SALES_SHEET.id, SALES_SHEET.tab);
-  // Cols: S No(0) | Date(1) | First Name(2) | Email(3) | Phone(4) | Program(5)
-  //       Booking Amt(6) | Paid Through(7) | Program Fee(8) | Pymt Status(9)
-  //       Amt Received(10) | Amt Due(11) | Closed By(12)
-
   const enrollments = rows.slice(1).filter(r => r[1]?.trim()).map(r => ({
-    date:           toISO(r[1], true),
-    name:           r[2]?.trim() || '',
-    email:          r[3]?.trim()?.toLowerCase() || '',
-    phone:          r[4]?.trim()?.replace(/\D/g, '').slice(-10) || '',
-    program:        r[5]?.trim() || '',
-    bookingAmount:  parseFloat(r[6]) || 0,
-    paidThrough:    r[7]?.trim() || '',
-    programFee:     parseFloat(r[8]) || 0,
-    pymtStatus:     r[9]?.trim() || '',
-    amtReceived:    parseFloat(r[10]) || 0,
-    amtDue:         parseFloat(r[11]) || 0,
-    closedBy:       r[12]?.trim() || 'Unknown',
+    date:          toISO(r[1], true),
+    name:          r[2]?.trim() || '',
+    email:         r[3]?.trim()?.toLowerCase() || '',
+    phone:         r[4]?.trim()?.replace(/\D/g, '').slice(-10) || '',
+    program:       r[5]?.trim() || '',
+    bookingAmount: parseFloat(r[6]) || 0,
+    paidThrough:   r[7]?.trim() || '',
+    programFee:    parseFloat(r[8]) || 0,
+    pymtStatus:    r[9]?.trim() || '',
+    amtReceived:   parseFloat(r[10]) || 0,
+    amtDue:        parseFloat(r[11]) || 0,
+    closedBy:      r[12]?.trim() || 'Unknown',
   }));
-
   return enrollments;
 }
 
 // ─── Duplicate detection ──────────────────────────────────────────────────────
 export function detectDuplicates(enrollments) {
-  // Build lookup: phone → [enrollments], email → [enrollments]
   const byPhone = {}, byEmail = {};
   for (const e of enrollments) {
     if (e.phone) { if (!byPhone[e.phone]) byPhone[e.phone] = []; byPhone[e.phone].push(e); }
@@ -133,7 +125,6 @@ export function detectDuplicates(enrollments) {
   const seen1 = new Set(), seen2 = new Set();
 
   const checkGroup = (entries) => {
-    // Type 1: same program appears more than once
     const byProg = {};
     for (const e of entries) {
       const pk = e.program?.toLowerCase();
@@ -148,7 +139,6 @@ export function detectDuplicates(enrollments) {
         }
       }
     }
-    // Type 2: has both Diploma and Mastery
     const programs = entries.map(e => e.program?.toLowerCase() || '');
     const hasDiploma = programs.some(p => p.includes('diploma'));
     const hasMastery = programs.some(p => p.includes('mastery'));
@@ -164,4 +154,33 @@ export function detectDuplicates(enrollments) {
   for (const entries of Object.values(byEmail)) if (entries.length > 1) checkGroup(entries);
 
   return { type1, type2 };
+}
+
+// ─── Finance data (via Apps Script) ──────────────────────────────────────────
+export async function loadFinanceData() {
+  const res = await fetch(FINANCE_URL);
+  if (!res.ok) throw new Error(`Finance API ${res.status}`);
+  const data = await res.json();
+  return data.map(row => ({
+    month:         row.Month                          || '',
+    studentFees:   parseFloat(row.Student_Fees)       || 0,
+    adGoogle:      parseFloat(row.Ad_Google)          || 0,
+    adMeta:        parseFloat(row.Ad_Meta)            || 0,
+    tools:         parseFloat(row.Tools)              || 0,
+    salary:        parseFloat(row.Salary)             || 0,
+    otherPayments: parseFloat(row.Other_Payments)     || 0,
+    gstPaid:       parseFloat(row.GST_Paid)           || 0,
+    tdsPaid:       parseFloat(row.TDS_Paid)           || 0,
+    cashWithdraw:  parseFloat(row.Cash_Withdraw)      || 0,
+  }));
+}
+
+export function getFinanceSample() {
+  return [
+    { month:'Dec-25', studentFees:2656519, adGoogle:226000, adMeta:1032434, tools:100428, salary:477018, otherPayments:758877, gstPaid:0,      tdsPaid:0,      cashWithdraw:0      },
+    { month:'Jan-26', studentFees:2673356, adGoogle:168948, adMeta:1055143, tools:66513,  salary:550192, otherPayments:488073, gstPaid:16172,  tdsPaid:0,      cashWithdraw:0      },
+    { month:'Feb-26', studentFees:1182367, adGoogle:110000, adMeta:803559,  tools:53847,  salary:594038, otherPayments:493572, gstPaid:547873, tdsPaid:0,      cashWithdraw:150000 },
+    { month:'Mar-26', studentFees:3059621, adGoogle:205000, adMeta:1076894, tools:105571, salary:527204, otherPayments:535593, gstPaid:84000,  tdsPaid:485086, cashWithdraw:370000 },
+    { month:'Apr-26', studentFees:3611839, adGoogle:200000, adMeta:1069873, tools:59611,  salary:442667, otherPayments:502671, gstPaid:319509, tdsPaid:67556,  cashWithdraw:0      },
+  ];
 }
