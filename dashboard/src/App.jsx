@@ -5,6 +5,7 @@ import Marketing from './tabs/Marketing.jsx';
 import Sales from './tabs/Sales.jsx';
 import Finance from './tabs/Finance.jsx';
 import EMI from './tabs/EMI.jsx';
+import LTVFunnel from './tabs/LTVFunnel.jsx';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('marketing');
@@ -12,10 +13,11 @@ export default function App() {
     <div style={{ minHeight:'100vh' }}>
       <Header />
       <TabNav active={activeTab} onChange={setActiveTab} />
-      {activeTab === 'marketing' && <Marketing />}
-      {activeTab === 'sales'     && <Sales />}
-      {activeTab === 'finance'   && <Finance />}
-      {activeTab === 'emi'       && <EMI />}
+      {activeTab === 'marketing'  && <Marketing />}
+      {activeTab === 'sales'      && <Sales />}
+      {activeTab === 'finance'    && <Finance />}
+      {activeTab === 'emi'        && <EMI />}
+      {activeTab === 'ltvfunnel'  && <LTVFunnel />}
     </div>
   );
 }

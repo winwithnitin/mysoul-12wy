@@ -1,18 +1,19 @@
 const TABS = [
-  { key: 'marketing', label: 'MySoul Marketing' },
-  { key: 'sales',     label: 'MySoul Sales'     },
-  { key: 'finance',   label: 'MySoul Finance'   },
-  { key: 'emi',       label: 'SUPER & RGM EMI'  },
+  { key: 'marketing', label: 'Marketing'   },
+  { key: 'sales',     label: 'Sales'       },
+  { key: 'finance',   label: 'Finance'     },
+  { key: 'emi',       label: 'SUPER & RGM' },
+  { key: 'ltvfunnel', label: 'LTV & Funnel'},
 ];
 
 export default function TabNav({ active, onChange }) {
   return (
-    <div style={{ display:'flex', gap:0, borderBottom:'1px solid var(--border)', background:'var(--surface2)', padding:'0 24px' }}>
+    <div style={{ display:'flex', gap:0, borderBottom:'1px solid var(--border)', background:'var(--surface2)', padding:'0 24px', overflowX:'auto' }}>
       {TABS.map(tab => {
         const isActive = active === tab.key;
         return (
           <button key={tab.key} onClick={() => onChange(tab.key)} style={{
-            background:'none', border:'none',
+            background:'none', border:'none', whiteSpace:'nowrap',
             borderBottom: isActive ? '2px solid var(--tarot)' : '2px solid transparent',
             color: isActive ? 'var(--text)' : 'var(--text3)',
             fontWeight: isActive ? 500 : 400,

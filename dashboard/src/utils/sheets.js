@@ -198,3 +198,33 @@ export function getEMISample() {
     ],
   };
 }
+
+// ─── LTV & Funnel data ────────────────────────────────────────────────────────
+export async function loadLTVFunnelData() {
+  const [tarotRows, reikiRows, pcosRows, salesRows, emiResp] = await Promise.all([
+    fetchCSV(SHEETS.tarot.id, SHEETS.tarot.tab),
+    fetchCSV(SHEETS.reiki.id, SHEETS.reiki.tab),
+    fetchCSV(SHEETS.pcos.id,  SHEETS.pcos.tab),
+    fetchCSV(SALES_SHEET.id,  SALES_SHEET.tab),
+    fetch(EMI_URL).then(r => r.json()).catch(() => ({ v2: [] })),
+  ]);
+
+  // All-time lead counts (row 0 = header)
+  const leadCounts = {
+    Tarot: Math.max(0, tarotRows.length - 1),
+    Reiki: Math.max(0, reikiRows.length - 1),
+    PCOS:  Math.max(0, pcosRows.length  - 1),
+  };
+
+  // Sales enrollments
+  const sales = salesRows.slice(1).filter(r => r[1]?.trim()).map(r => ({
+    date:       toISO(r[1], true),
+    name:       r[2]?.trim() || '',
+    email:      r[3]?.toLowerCase().trim() || '',
+    phone:      r[4]?.replace(/\D/g,'').slice(-10) || '',
+    program:    r[5]?.trim() || '',
+    programFee: parseFloat(r[8]) || 0,
+  }));
+
+  return { leadCounts, sales, emiV2: emiResp.v2 || [] };
+}
