@@ -25,7 +25,7 @@ export async function fetchCSV(sheetId, tab) {
   return parseCSV(await res.text());
 }
 
-// ─── Marketing (returns raw lead rows for attribution reuse) ──────────────────
+// ─── Marketing ────────────────────────────────────────────────────────────────
 export async function loadMarketingData() {
   const [spendRows, tarotRows, reikiRows, pcosRows] = await Promise.all([
     fetchCSV(SHEETS.adSpend.id, SHEETS.adSpend.tab),
@@ -33,12 +33,9 @@ export async function loadMarketingData() {
     fetchCSV(SHEETS.reiki.id,   SHEETS.reiki.tab),
     fetchCSV(SHEETS.pcos.id,    SHEETS.pcos.tab),
   ]);
-
-  // Ad spend parsing
   const header = spendRows[0] || [];
   let off = header[0]?.toLowerCase().includes('timestamp') ? 1 : 0;
   if (header[off]?.toLowerCase().includes('email')) off += 1;
-
   const adSpend = spendRows.slice(1).filter(r => r[off]).map(r => ({
     date:     toISO(r[off], true),
     program:  r[off + 1]?.trim(),
@@ -47,7 +44,6 @@ export async function loadMarketingData() {
     spend:    parseFloat(String(r[off + 4] || '').replace(/[₹,\s]/g, '')) || 0,
     leadsAd:  parseInt(r[off + 5]) || 0,
   }));
-
   const today = todayISO(), ms = monthStartISO();
   const countLeads = (rows, col) => {
     let td = 0, mtd = 0;
@@ -59,20 +55,16 @@ export async function loadMarketingData() {
     }
     return { today: td, mtd };
   };
-
   const sheetLeads = {
     Tarot: countLeads(tarotRows, SHEETS.tarot.dateCol),
     Reiki: countLeads(reikiRows, SHEETS.reiki.dateCol),
     PCOS:  countLeads(pcosRows,  SHEETS.pcos.dateCol),
   };
-
   const mtdSpend = { Tarot: 0, Reiki: 0, PCOS: 0 };
   for (const r of adSpend) {
     if (r.date >= ms && r.date <= today && mtdSpend[r.program] !== undefined)
       mtdSpend[r.program] += r.spend;
   }
-
-  // Return raw rows too — reused by Attribution (zero extra fetches)
   return { adSpend, sheetLeads, mtdSpend, tarotRows, reikiRows, pcosRows };
 }
 
@@ -186,45 +178,60 @@ export async function loadEMIData() {
 
 export function getEMISample() {
   const today = new Date();
-  const fmt   = (d) => d.toISOString().slice(0, 10);
-  const past  = (n) => fmt(new Date(today.getTime() - n * 86400000));
-  const future = (n) => fmt(new Date(today.getTime() + n * 86400000));
+  const past  = (n) => new Date(today.getTime() - n*86400000).toISOString().slice(0,10);
   return {
     students: [],
     v2: [
-      { batch:'Dec-25', program:'SUPER', name:'Priya Sharma',  phone:'9819906697', email:'priya@gmail.com', programFee:250000, totalPlanned:247500, totalActual:172500, emiDue:75000, paymentPlan:10, timestamp: past(90) },
-      { batch:'Dec-25', program:'SUPER', name:'Shivi Gupta',   phone:'9991289434', email:'shivi@gmail.com', programFee:250000, totalPlanned:255000, totalActual:82500,  emiDue:172500, paymentPlan:10, timestamp: past(85) },
-      { batch:'Dec-25', program:'RGM',   name:'Pallavi Handa', phone:'9736183799', email:'pallavi@gmail.com', programFee:120000, totalPlanned:247500, totalActual:247500, emiDue:0, paymentPlan:0, timestamp: past(80) },
+      { batch:'Aug-2025', program:'SUPER', name:'Priya Sharma',  phone:'9819906697', email:'priya@gmail.com',   programFee:250000, totalPlanned:247500, totalActual:172500, emiDue:75000,  paymentPlan:10, timestamp:past(200) },
+      { batch:'Aug-2025', program:'SUPER', name:'Shivi Gupta',   phone:'9991289434', email:'shivi@gmail.com',   programFee:250000, totalPlanned:255000, totalActual:82500,  emiDue:172500, paymentPlan:10, timestamp:past(195) },
+      { batch:'Aug-2025', program:'RGM',   name:'Pallavi Handa', phone:'9736183799', email:'pallavi@gmail.com', programFee:120000, totalPlanned:120000, totalActual:120000, emiDue:0,      paymentPlan:0,  timestamp:past(190) },
     ],
   };
 }
 
-// ─── LTV & Funnel data ────────────────────────────────────────────────────────
+// ─── LTV & Funnel (includes ad spend for ROAS) ────────────────────────────────
 export async function loadLTVFunnelData() {
-  const [tarotRows, reikiRows, pcosRows, salesRows, emiResp] = await Promise.all([
-    fetchCSV(SHEETS.tarot.id, SHEETS.tarot.tab),
-    fetchCSV(SHEETS.reiki.id, SHEETS.reiki.tab),
-    fetchCSV(SHEETS.pcos.id,  SHEETS.pcos.tab),
-    fetchCSV(SALES_SHEET.id,  SALES_SHEET.tab),
+  const [tarotRows, reikiRows, pcosRows, salesRows, spendRows, emiResp] = await Promise.all([
+    fetchCSV(SHEETS.tarot.id,   SHEETS.tarot.tab),
+    fetchCSV(SHEETS.reiki.id,   SHEETS.reiki.tab),
+    fetchCSV(SHEETS.pcos.id,    SHEETS.pcos.tab),
+    fetchCSV(SALES_SHEET.id,    SALES_SHEET.tab),
+    fetchCSV(SHEETS.adSpend.id, SHEETS.adSpend.tab),
     fetch(EMI_URL).then(r => r.json()).catch(() => ({ v2: [] })),
   ]);
 
-  // All-time lead counts (row 0 = header)
+  // Lead counts
   const leadCounts = {
     Tarot: Math.max(0, tarotRows.length - 1),
     Reiki: Math.max(0, reikiRows.length - 1),
     PCOS:  Math.max(0, pcosRows.length  - 1),
   };
 
-  // Sales enrollments
+  // Sales enrollments (with amount received for ROAS)
   const sales = salesRows.slice(1).filter(r => r[1]?.trim()).map(r => ({
-    date:       toISO(r[1], true),
-    name:       r[2]?.trim() || '',
-    email:      r[3]?.toLowerCase().trim() || '',
-    phone:      r[4]?.replace(/\D/g,'').slice(-10) || '',
-    program:    r[5]?.trim() || '',
-    programFee: parseFloat(r[8]) || 0,
+    date:        toISO(r[1], true),
+    name:        r[2]?.trim() || '',
+    email:       r[3]?.toLowerCase().trim() || '',
+    phone:       r[4]?.replace(/\D/g,'').slice(-10) || '',
+    program:     r[5]?.trim() || '',
+    programFee:  parseFloat(r[8])  || 0,
+    amtReceived: parseFloat(r[10]) || 0,   // cash basis for ROAS
   }));
 
-  return { leadCounts, sales, emiV2: emiResp.v2 || [] };
+  // Ad spend — parse with same offset logic as Marketing tab
+  const hdr = spendRows[0] || [];
+  let off = hdr[0]?.toLowerCase().includes('timestamp') ? 1 : 0;
+  if (hdr[off]?.toLowerCase().includes('email')) off += 1;
+  const adSpend = spendRows.slice(1).filter(r => r[off]).map(r => ({
+    date:    toISO(r[off], true),
+    program: r[off + 1]?.trim(),
+    spend:   parseFloat(String(r[off + 4] || '').replace(/[₹,\s]/g, '')) || 0,
+  }));
+
+  return {
+    leadCounts,
+    sales,
+    adSpend,
+    emiV2: emiResp.v2 || [],
+  };
 }

@@ -140,8 +140,32 @@ function WaterfallBar({ label, count, maxCount, convPct, convLabel, color, break
   );
 }
 
+// ─── ROAS helpers ─────────────────────────────────────────────────────────────
+function addMonthsISO(iso, n) {
+  const d = new Date(iso + 'T12:00:00');
+  d.setMonth(d.getMonth() + n);
+  return d.toISOString().slice(0, 10);
+}
+function roasColor(v) {
+  if (!v && v!==0) return 'var(--text3)';
+  if (v >= 3)   return 'var(--success)';
+  if (v >= 1.5) return 'var(--warning)';
+  return 'var(--danger)';
+}
+const TAROT_SALE_PROGS = ['tarot - mastery','tarot - diploma','tarot - health','30 days mani'];
+const REIKI_SALE_PROGS = ['reiki - l1/l2','reiki - l3','money reiki',"ho'oponopono",'hooponopono'];
+const PCOS_SALE_PROGS  = ['pcos','pcod','endometriosis','fertility','hormonal'];
+function spendForProgram(adSpend, progKey, from, to) {
+  return (adSpend||[]).filter(r=>r.program===progKey&&r.date>=from&&r.date<=to).reduce((s,r)=>s+r.spend,0);
+}
+function revenueForFunnel(sales, emiV2, funnelProgs, htProg, from, to) {
+  const l1Rev = (sales||[]).filter(e=>e.date>=from&&e.date<=to&&funnelProgs.some(fp=>e.program?.toLowerCase().includes(fp))).reduce((s,e)=>s+e.amtReceived,0);
+  const htRev = htProg ? (emiV2||[]).filter(s=>s.program===htProg&&s.timestamp>=from&&s.timestamp<=to).reduce((s,e)=>s+(e.totalActual||0),0) : 0;
+  return l1Rev + htRev;
+}
+
 // ─── Funnel Waterfall View ────────────────────────────────────────────────────
-function FunnelView({ leadCounts, sales, emiV2 }) {
+function FunnelView({ leadCounts, sales, emiV2, adSpend }) {
   const tarotL1 = sales.filter(e => classifyProgram(e.program)==='Tarot_L1').length;
   const reikiL1 = sales.filter(e => classifyProgram(e.program)==='Reiki_L1').length;
   const pcosL1  = sales.filter(e => classifyProgram(e.program)==='PCOS_L1').length;
@@ -186,8 +210,99 @@ function FunnelView({ leadCounts, sales, emiV2 }) {
     },
   ];
 
+
+  // ── ROAS calculations ──
+  const today = (() => { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })();
+  const ms    = (() => { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`; })();
+  const d90   = addMonthsISO(today, -3);
+
+  const roasFunnels = ['Tarot','Reiki','PCOS'].map(prog => {
+    const progKey  = prog; // matches adSpend program field
+    const fProgs   = prog==='Tarot' ? TAROT_SALE_PROGS : prog==='Reiki' ? REIKI_SALE_PROGS : PCOS_SALE_PROGS;
+    const htProg   = prog==='Tarot' ? 'SUPER' : prog==='Reiki' ? 'RGM' : null;
+    const color    = prog==='Tarot' ? 'var(--tarot)' : prog==='Reiki' ? 'var(--reiki)' : 'var(--pcos)';
+
+    const spendMtd  = spendForProgram(adSpend, progKey, ms, today);
+    const spend90   = spendForProgram(adSpend, progKey, d90, today);
+    const revMtd    = revenueForFunnel(sales, emiV2, fProgs, htProg, ms, today);
+    const rev90     = revenueForFunnel(sales, emiV2, fProgs, htProg, d90, today);
+
+    return { prog, color, spendMtd, spend90, revMtd, rev90 };
+  });
+
   return (
     <div>
+      {/* ROAS by Funnel */}
+      <div style={{ padding:'20px 24px 0' }}>
+        <div style={{ fontSize:11, color:'var(--text3)', textTransform:'uppercase', letterSpacing:.5, marginBottom:12 }}>Funnel ROAS — cash received ÷ ad spend</div>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16, marginBottom:28 }}>
+          <div style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:12, padding:'8px 16px', marginBottom:0 }}>
+            <div style={{ display:'flex', borderBottom:'1px solid var(--border)', paddingBottom:8, marginBottom:8 }}>
+              <span style={{ flex:1, fontSize:11, color:'var(--text3)' }}></span>
+              <span style={{ width:80, textAlign:'right', fontSize:11, color:'var(--text3)', fontWeight:600 }}>MTD</span>
+              <span style={{ width:80, textAlign:'right', fontSize:11, color:'var(--text3)', fontWeight:600 }}>90 days</span>
+            </div>
+            {roasFunnels.map(({ prog, color, spendMtd, spend90, revMtd, rev90 }) => {
+              const rMtd = spendMtd>0 ? (revMtd/spendMtd) : null;
+              const r90  = spend90>0  ? (rev90/spend90)   : null;
+              return (
+                <div key={prog} style={{ marginBottom:14 }}>
+                  <div style={{ fontSize:12, fontWeight:600, color, marginBottom:6 }}>{prog} Funnel</div>
+                  <div style={{ display:'flex', alignItems:'center' }}>
+                    <span style={{ flex:1, fontSize:11, color:'var(--text3)' }}>Ad Spend</span>
+                    <span style={{ width:80, textAlign:'right', fontSize:12, color:'var(--text2)' }}>{spendMtd>0?inr(Math.round(spendMtd)):'—'}</span>
+                    <span style={{ width:80, textAlign:'right', fontSize:12, color:'var(--text2)' }}>{spend90>0?inr(Math.round(spend90)):'—'}</span>
+                  </div>
+                  <div style={{ display:'flex', alignItems:'center' }}>
+                    <span style={{ flex:1, fontSize:11, color:'var(--text3)' }}>Cash Received</span>
+                    <span style={{ width:80, textAlign:'right', fontSize:12, color:'var(--success)' }}>{revMtd>0?inr(Math.round(revMtd)):'—'}</span>
+                    <span style={{ width:80, textAlign:'right', fontSize:12, color:'var(--success)' }}>{rev90>0?inr(Math.round(rev90)):'—'}</span>
+                  </div>
+                  <div style={{ display:'flex', alignItems:'center', marginTop:4 }}>
+                    <span style={{ flex:1, fontSize:11, color:'var(--text3)', fontWeight:600 }}>ROAS</span>
+                    <span style={{ width:80, textAlign:'right', fontSize:14, fontWeight:700, color:roasColor(rMtd) }}>{rMtd!==null?rMtd.toFixed(2)+'x':'—'}</span>
+                    <span style={{ width:80, textAlign:'right', fontSize:14, fontWeight:700, color:roasColor(r90) }}>{r90!==null?r90.toFixed(2)+'x':'—'}</span>
+                  </div>
+                  <div style={{ height:1, background:'var(--border)', margin:'8px 0' }} />
+                </div>
+              );
+            })}
+          </div>
+          <div style={{ gridColumn:'2 / 4', display:'flex', flexDirection:'column', justifyContent:'center', padding:'16px 20px', background:'var(--surface)', border:'1px solid var(--border)', borderRadius:12 }}>
+            <div style={{ fontSize:11, color:'var(--text3)', textTransform:'uppercase', letterSpacing:.5, marginBottom:12 }}>Combined ROAS target</div>
+            {(() => {
+              const totSpendMtd = roasFunnels.reduce((s,r)=>s+r.spendMtd,0);
+              const totRevMtd   = roasFunnels.reduce((s,r)=>s+r.revMtd,0);
+              const totSpend90  = roasFunnels.reduce((s,r)=>s+r.spend90,0);
+              const totRev90    = roasFunnels.reduce((s,r)=>s+r.rev90,0);
+              const rMtd = totSpendMtd>0 ? (totRevMtd/totSpendMtd) : null;
+              const r90  = totSpend90>0  ? (totRev90/totSpend90)  : null;
+              return (
+                <>
+                  <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
+                    <span style={{ fontSize:12, color:'var(--text2)' }}>MTD Spend</span>
+                    <span style={{ fontSize:14, fontWeight:600, color:'var(--text)' }}>{inr(Math.round(totSpendMtd))}</span>
+                  </div>
+                  <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
+                    <span style={{ fontSize:12, color:'var(--text2)' }}>MTD Cash Received</span>
+                    <span style={{ fontSize:14, fontWeight:600, color:'var(--success)' }}>{inr(Math.round(totRevMtd))}</span>
+                  </div>
+                  <div style={{ display:'flex', justifyContent:'space-between', padding:'12px 0', borderTop:'1px solid var(--border)', marginTop:4 }}>
+                    <span style={{ fontSize:13, color:'var(--text2)', fontWeight:600 }}>Overall ROAS (MTD)</span>
+                    <span style={{ fontSize:28, fontWeight:700, color:roasColor(rMtd) }}>{rMtd!==null?rMtd.toFixed(2)+'x':'—'}</span>
+                  </div>
+                  <div style={{ display:'flex', justifyContent:'space-between' }}>
+                    <span style={{ fontSize:12, color:'var(--text3)' }}>Overall ROAS (90 days)</span>
+                    <span style={{ fontSize:18, fontWeight:600, color:roasColor(r90) }}>{r90!==null?r90.toFixed(2)+'x':'—'}</span>
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        </div>
+      </div>
+
+
       {/* Summary strip */}
       <div style={{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:1, background:'var(--border)', marginBottom:28 }}>
         {[
@@ -466,7 +581,7 @@ export default function LTVFunnel() {
 
   if (loading) return <div style={{ padding:'3rem', color:'var(--text3)', textAlign:'center' }}>Building funnel & LTV data...</div>;
 
-  const { leadCounts, sales, emiV2 } = data;
+  const { leadCounts, sales, emiV2, adSpend = [] } = data;
 
   return (
     <div>
@@ -486,7 +601,7 @@ export default function LTVFunnel() {
         <button onClick={load}>↻ Refresh</button>
       </div>
 
-      {view==='funnel' && <FunnelView leadCounts={leadCounts} sales={sales} emiV2={emiV2} />}
+      {view==='funnel' && <FunnelView leadCounts={leadCounts} sales={sales} emiV2={emiV2} adSpend={adSpend} />}
       {view==='ltv'    && <LTVView   sales={sales} emiV2={emiV2} />}
     </div>
   );
