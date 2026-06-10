@@ -1,7 +1,7 @@
 import { toISO, todayISO, monthStartISO } from './dates.js';
 import { SHEETS, SALES_SHEET, FINANCE_URL, EMI_URL } from '../config.js';
 
-// ─── Shared CSV helpers ───────────────────────────────────────────────────────
+// ─── Shared helpers ───────────────────────────────────────────────────────────
 export function parseCSV(text) {
   const rows = [];
   for (const line of text.split('\n')) {
@@ -25,7 +25,7 @@ export async function fetchCSV(sheetId, tab) {
   return parseCSV(await res.text());
 }
 
-// ─── Marketing ────────────────────────────────────────────────────────────────
+// ─── Marketing (returns raw lead rows for attribution reuse) ──────────────────
 export async function loadMarketingData() {
   const [spendRows, tarotRows, reikiRows, pcosRows] = await Promise.all([
     fetchCSV(SHEETS.adSpend.id, SHEETS.adSpend.tab),
@@ -33,9 +33,12 @@ export async function loadMarketingData() {
     fetchCSV(SHEETS.reiki.id,   SHEETS.reiki.tab),
     fetchCSV(SHEETS.pcos.id,    SHEETS.pcos.tab),
   ]);
+
+  // Ad spend parsing
   const header = spendRows[0] || [];
   let off = header[0]?.toLowerCase().includes('timestamp') ? 1 : 0;
   if (header[off]?.toLowerCase().includes('email')) off += 1;
+
   const adSpend = spendRows.slice(1).filter(r => r[off]).map(r => ({
     date:     toISO(r[off], true),
     program:  r[off + 1]?.trim(),
@@ -44,6 +47,7 @@ export async function loadMarketingData() {
     spend:    parseFloat(String(r[off + 4] || '').replace(/[₹,\s]/g, '')) || 0,
     leadsAd:  parseInt(r[off + 5]) || 0,
   }));
+
   const today = todayISO(), ms = monthStartISO();
   const countLeads = (rows, col) => {
     let td = 0, mtd = 0;
@@ -55,17 +59,21 @@ export async function loadMarketingData() {
     }
     return { today: td, mtd };
   };
+
   const sheetLeads = {
     Tarot: countLeads(tarotRows, SHEETS.tarot.dateCol),
     Reiki: countLeads(reikiRows, SHEETS.reiki.dateCol),
     PCOS:  countLeads(pcosRows,  SHEETS.pcos.dateCol),
   };
+
   const mtdSpend = { Tarot: 0, Reiki: 0, PCOS: 0 };
   for (const r of adSpend) {
     if (r.date >= ms && r.date <= today && mtdSpend[r.program] !== undefined)
       mtdSpend[r.program] += r.spend;
   }
-  return { adSpend, sheetLeads, mtdSpend };
+
+  // Return raw rows too — reused by Attribution (zero extra fetches)
+  return { adSpend, sheetLeads, mtdSpend, tarotRows, reikiRows, pcosRows };
 }
 
 export function getMarketingSample() {
@@ -80,6 +88,7 @@ export function getMarketingSample() {
     ],
     sheetLeads: { Tarot: { today: 38, mtd: 1240 }, Reiki: { today: 16, mtd: 520 }, PCOS: { today: 43, mtd: 1380 } },
     mtdSpend:   { Tarot: 382000, Reiki: 156000, PCOS: 418000 },
+    tarotRows: [], reikiRows: [], pcosRows: [],
   };
 }
 
@@ -181,13 +190,11 @@ export function getEMISample() {
   const past  = (n) => fmt(new Date(today.getTime() - n * 86400000));
   const future = (n) => fmt(new Date(today.getTime() + n * 86400000));
   return {
-    students: [
-      { batch:'Dec-25', program:'SUPER', name:'Priya Sharma',  phone:'9819906697', programFee:250000, totalPlanned:247500, totalActual:172500, emiDue:75000,  paymentPlan:10,
-        emis:[ {n:0,plannedDate:past(120),plannedAmt:90000,actualDate:past(118),actualAmt:90000}, {n:1,plannedDate:past(90),plannedAmt:15750,actualDate:past(88),actualAmt:15750}, {n:2,plannedDate:past(60),plannedAmt:16500,actualDate:past(55),actualAmt:16500}, {n:3,plannedDate:past(30),plannedAmt:15750,actualDate:null,actualAmt:0}, {n:4,plannedDate:future(1),plannedAmt:15750,actualDate:null,actualAmt:0} ] },
-      { batch:'Dec-25', program:'SUPER', name:'Shivi Gupta',   phone:'9991289434', programFee:250000, totalPlanned:255000, totalActual:82500,  emiDue:172500, paymentPlan:10,
-        emis:[ {n:0,plannedDate:past(120),plannedAmt:30000,actualDate:past(115),actualAmt:30000}, {n:1,plannedDate:past(90),plannedAmt:16500,actualDate:past(85),actualAmt:16500}, {n:2,plannedDate:past(60),plannedAmt:16500,actualDate:past(58),actualAmt:16500}, {n:3,plannedDate:past(35),plannedAmt:16500,actualDate:null,actualAmt:0}, {n:4,plannedDate:future(5),plannedAmt:16500,actualDate:null,actualAmt:0} ] },
-      { batch:'Dec-25', program:'RGM',   name:'Pallavi Handa', phone:'9736183799', programFee:120000, totalPlanned:247500, totalActual:247500, emiDue:0,      paymentPlan:0,
-        emis:[ {n:0,plannedDate:past(90),plannedAmt:90000,actualDate:past(88),actualAmt:90000}, {n:1,plannedDate:past(60),plannedAmt:90000,actualDate:past(58),actualAmt:90000}, {n:2,plannedDate:past(30),plannedAmt:67500,actualDate:past(28),actualAmt:67500} ] },
+    students: [],
+    v2: [
+      { batch:'Dec-25', program:'SUPER', name:'Priya Sharma',  phone:'9819906697', email:'priya@gmail.com', programFee:250000, totalPlanned:247500, totalActual:172500, emiDue:75000, paymentPlan:10, timestamp: past(90) },
+      { batch:'Dec-25', program:'SUPER', name:'Shivi Gupta',   phone:'9991289434', email:'shivi@gmail.com', programFee:250000, totalPlanned:255000, totalActual:82500,  emiDue:172500, paymentPlan:10, timestamp: past(85) },
+      { batch:'Dec-25', program:'RGM',   name:'Pallavi Handa', phone:'9736183799', email:'pallavi@gmail.com', programFee:120000, totalPlanned:247500, totalActual:247500, emiDue:0, paymentPlan:0, timestamp: past(80) },
     ],
   };
 }
