@@ -232,6 +232,7 @@ export async function loadLTVFunnelData() {
     leadCounts,
     sales,
     adSpend,
-    emiV2: emiResp.v2 || [],
+    emiV2: emiResp.v2     || [],
+    emiV1: emiResp.students || [],  // V1 includes per-EMI planned dates — needed for forecast
   };
 }
