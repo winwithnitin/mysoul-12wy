@@ -1,4 +1,4 @@
-import { CFG } from '../config.js'
+import { CFG, SUBMITTER_IDS } from '../config.js'
 
 // ─── JSONP fetch — works with Apps Script, no CORS issues ─────────────────────
 export function jsonpFetch(url) {
@@ -117,12 +117,11 @@ export async function callClaude(system, user, maxTokens = 600) {
 
 // ─── Write actions ────────────────────────────────────────────────────────────
 export async function postResolvedToSlack(slip) {
-  const { CFG: c, SUBMITTER_IDS } = await import('../config.js')
   const tag = SUBMITTER_IDS[slip.submittedBy]
     ? `<@${SUBMITTER_IDS[slip.submittedBy]}>`
     : slip.submittedBy
   return callClaude(
     'Post a Slack thread reply using Slack MCP.',
-    `Post to channel ${c.HELP_SLIP_CHANNEL}, thread_ts: ${slip.ts}\nMessage: ✅ *RESOLVED* by <@${c.NITIN_SLACK_ID}>\n\n${tag} — handled. Please confirm with student/team and close out.`
+    `Post to channel ${CFG.HELP_SLIP_CHANNEL}, thread_ts: ${slip.ts}\nMessage: ✅ *RESOLVED* by <@${CFG.NITIN_SLACK_ID}>\n\n${tag} — handled. Please confirm with student/team and close out.`
   )
 }

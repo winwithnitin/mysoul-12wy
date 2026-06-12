@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { T } from '../tokens.js'
+import { TEAM_MEMBERS } from '../config.js'
+import { callClaude } from '../utils/api.js'
 
 export const Pill = ({ label, color, bg }) => (
   <span style={{ background: bg || color+'22', color, border:`1px solid ${color}44`, borderRadius:20, padding:'2px 10px', fontSize:11, fontWeight:600, whiteSpace:'nowrap' }}>
@@ -125,13 +127,10 @@ export function ForwardPanel({ email, onDone }) {
   const [note, setNote] = useState('')
   const [status, setStatus] = useState('idle')
 
-  const { TEAM_MEMBERS } = require('../config.js')
-
   const go = async () => {
     if (!member) return
     setStatus('loading')
     try {
-      const { callClaude } = await import('../utils/api.js')
       await callClaude(
         `Create a Gmail forward draft to ${member.email} and send a Slack DM to ${member.slackId}.`,
         `Forward email from ${email.from} <${email.email}>\nSubject: ${email.subject}\nPreview: ${email.preview}\nTo: ${member.name} (${member.email})\nNote: ${note || 'Please handle this.'}`
