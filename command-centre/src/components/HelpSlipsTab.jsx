@@ -144,7 +144,7 @@ COACH: Is this recurring? Should there be an SOP? Max 100 words.`,
             const st = SLIP_STATUS[resolved[s.id]?'RESOLVED':s.status] || SLIP_STATUS.OPEN
             return (
               <div key={s.id} onClick={() => { setSelected(s); handleCoach(s) }}
-                style={{ padding:'10px 12px', background:selected?.id===s.id?T.surfaceHigh:'transparent', borderLeft:selected?.id===s.id?`3px solid ${T.gold}`:'3px solid transparent', cursor:'pointer', borderBottom:`1px solid ${T.border}` }}>
+                style={{ padding:'10px 12px', background:selected?.id===s.id?'#2E2B4A':'#211F35', borderLeft:selected?.id===s.id?`3px solid ${T.gold}`:'3px solid transparent', cursor:'pointer', borderBottom:`1px solid ${T.border}` }}>
                 <div style={{ display:'flex', justifyContent:'space-between', marginBottom:3 }}>
                   <span style={{ fontSize:12.5, fontWeight:600, color:T.text }}>{s.submittedBy}</span>
                   <div style={{ display:'flex', gap:4, alignItems:'center' }}>

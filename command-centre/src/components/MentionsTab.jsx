@@ -90,7 +90,7 @@ export default function MentionsTab({ decisions, logDecision }) {
             const cs = MENTION_CATS[m.category] || MENTION_CATS['💬 FYI']
             return (
               <div key={m.id} onClick={() => { setSelected(m); handleCoach(m) }}
-                style={{ padding:'10px 12px', background:selected?.id===m.id?T.surfaceHigh:'transparent', borderLeft:selected?.id===m.id?`3px solid ${T.gold}`:'3px solid transparent', cursor:'pointer', borderBottom:`1px solid ${T.border}` }}>
+                style={{ padding:'10px 12px', background:selected?.id===m.id?'#2E2B4A':'#211F35', borderLeft:selected?.id===m.id?`3px solid ${T.gold}`:'3px solid transparent', cursor:'pointer', borderBottom:`1px solid ${T.border}` }}>
                 <div style={{ display:'flex', justifyContent:'space-between', marginBottom:3 }}>
                   <span style={{ fontSize:12.5, fontWeight:600, color:T.text }}>{m.sender}</span>
                   <span style={{ fontSize:10.5, color:T.textDim }}>{m.time}</span>

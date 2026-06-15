@@ -1,20 +1,24 @@
-// ─── Design Tokens — Light Dark Theme (readable, not cave-dark) ──────────────
+// ─── Design Tokens — Medium Dark Theme ───────────────────────────────────────
 export const T = {
-  bg:         '#0F0E1A',      // slightly lighter than pure black
-  surface:    '#1A1828',      // card backgrounds — visible
-  surfaceHigh:'#242235',      // hover / selected states
-  border:     'rgba(255,255,255,0.1)',  // more visible borders
-  gold:       '#D4A843',      // slightly brighter gold
-  goldDim:    'rgba(212,168,67,0.15)',
-  violet:     '#8B6FD4',      // lighter violet — more readable
-  violetDim:  'rgba(139,111,212,0.18)',
-  text:       '#F5F3FF',      // near-white text
-  textMid:    '#B8B0D4',      // secondary text — more contrast
-  textDim:    '#6E6A8A',      // muted — still readable
-  red:        '#F87171',      // softer red
-  amber:      '#FBB040',      // warm amber
-  green:      '#34D399',      // emerald green
-  blue:       '#60A5FA',      // sky blue
+  bg:         '#1C1B2E',      // deep navy-purple — not black
+  surface:    '#252438',      // card surface — clearly visible
+  surfaceHigh:'#2E2C44',      // hover/selected — distinct from surface
+  border:     'rgba(255,255,255,0.12)',
+  gold:       '#E4B84A',      // warm gold — pops on dark bg
+  goldDim:    'rgba(228,184,74,0.15)',
+  violet:     '#9B7FE8',      // soft purple — readable
+  violetDim:  'rgba(155,127,232,0.15)',
+  text:       '#EEEAF8',      // near-white — high contrast
+  textMid:    '#C4BDE0',      // secondary — clearly readable
+  textDim:    '#8B85A8',      // muted — still visible
+  red:        '#F87171',
+  amber:      '#FBB040',
+  green:      '#34D399',
+  blue:       '#60A5FA',
+  // Surface variants for email/slip list items
+  listItem:   '#211F35',
+  listHover:  '#2A2840',
+  listSelected: '#2E2B4A',
 }
 
 export const EMAIL_CATS = {

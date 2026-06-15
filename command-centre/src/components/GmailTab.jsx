@@ -110,7 +110,7 @@ COACH: One blunt push. Max 120 words total. No preamble.`,
             const cat = EMAIL_CATS[e.meta?.category] || EMAIL_CATS['⚙️ Platform']
             return (
               <div key={e.id} onClick={() => { setSelected(e); handleCoach(e) }}
-                style={{ padding:'10px 12px', background:selected?.id===e.id?T.surfaceHigh:'transparent', borderLeft:selected?.id===e.id?`3px solid ${T.gold}`:'3px solid transparent', cursor:'pointer', borderBottom:`1px solid ${T.border}` }}>
+                style={{ padding:'10px 12px', background:selected?.id===e.id?'#2E2B4A':'#211F35', borderLeft:selected?.id===e.id?`3px solid ${T.gold}`:'3px solid transparent', cursor:'pointer', borderBottom:`1px solid ${T.border}` }}>
                 <div style={{ display:'flex', justifyContent:'space-between', marginBottom:3 }}>
                   <span style={{ fontSize:12.5, fontWeight:e.read?400:700, color:T.text }}>{e.from}</span>
                   <span style={{ fontSize:10.5, color:T.textDim }}>{e.time}</span>
