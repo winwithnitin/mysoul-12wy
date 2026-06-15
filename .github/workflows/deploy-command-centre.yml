@@ -11,8 +11,10 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
-      - name: Checkout
+      - name: Checkout main
         uses: actions/checkout@v3
 
       - name: Setup Node
@@ -28,10 +30,11 @@ jobs:
         working-directory: ./command-centre
         run: npm run build
 
-      - name: Deploy to gh-pages
+      - name: Deploy built files to gh-pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./command-centre/dist
           destination_dir: command-centre
           keep_files: true
+          exclude_assets: ''
