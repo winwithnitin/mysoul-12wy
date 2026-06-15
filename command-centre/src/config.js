@@ -1,7 +1,7 @@
 export const CFG = {
   GMAIL_PROXY_URL:   'https://script.google.com/macros/s/AKfycbzn6Wq1lhzjm-ozpI4O1O_rC7dhIWGz8DJGz9xHQYbc3p1UPScAt3n7RAqR60bd7ttM/exec',
   SLACK_PROXY_URL:   'https://script.google.com/macros/s/AKfycbzxoHmyoUa_dFNpDz9lJxNLDgQuW27wS154Yj1nX7psXyG0rE1wOJZvoCkKbvYHGOs/exec',
-  CLAUDE_PROXY_URL:  'https://script.google.com/macros/s/AKfycbypahWSgj5g7ypOkUNTB1DM0YSYOrHQaIn2o0A-KTRadq4OUwPAJX3wPV98H9mUvgAu9g/exec', // PASTE YOUR CLAUDE PROXY URL HERE after deploying CommandCentre_Claude_Proxy.gs
+  CLAUDE_PROXY_URL:  'https://script.google.com/macros/s/AKfycbypahWSgj5g7ypOkUNTB1DM0YSYOrHQaIn2o0A-KTRadq4OUwPAJX3wPV98H9mUvgAu9g/exec',
   TODOIST_API_TOKEN: '7a24e875c4ccada361c0e429982534ed5482a451',
   TWWY_SHEET_ID:     '1su4-zzoORh6g3ALmJyU2FZ2GcC6RLO2DYCN-ifqor6E',
   NITIN_SLACK_ID:           'U023ZE57KUZ',
