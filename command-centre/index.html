@@ -8,9 +8,32 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <style>
-      * { box-sizing: border-box; margin: 0; padding: 0; }
-      body { background: #09080F; font-family: 'Inter', system-ui, sans-serif; color: #F0EEFF; overflow: hidden; }
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { height: 100%; }
+      body {
+        background: #0F0E1A;
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        color: #F5F3FF;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
       #root { height: 100vh; display: flex; flex-direction: column; }
+
+      /* Scrollbar styling */
+      ::-webkit-scrollbar { width: 5px; height: 5px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+      ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
+
+      /* Input placeholders */
+      ::placeholder { color: #6E6A8A; opacity: 1; }
+
+      /* Textarea resize */
+      textarea { resize: vertical; }
+
+      /* Remove button defaults */
+      button { font-family: inherit; }
     </style>
   </head>
   <body>

@@ -5,15 +5,17 @@ export function jsonpFetch(url) {
   return new Promise((resolve, reject) => {
     const cbName = 'cb_' + Math.random().toString(36).slice(2)
     const script = document.createElement('script')
-    const timer  = setTimeout(() => { cleanup(); reject(new Error('Timeout')) }, 25000)
+    const timer  = setTimeout(() => { cleanup(); reject(new Error('Timeout after 25s')) }, 25000)
     const cleanup = () => {
       clearTimeout(timer)
       delete window[cbName]
       if (script.parentNode) script.parentNode.removeChild(script)
     }
     window[cbName] = (data) => { cleanup(); resolve(data) }
-    script.src     = url + (url.includes('?') ? '&' : '?') + 'callback=' + cbName
-    script.onerror = () => { cleanup(); reject(new Error('Script load failed')) }
+    // Always use & to append callback since Apps Script URLs already have base params
+    const sep = url.includes('?') ? '&' : '?'
+    script.src     = url + sep + 'callback=' + cbName
+    script.onerror = () => { cleanup(); reject(new Error('Script load failed — check proxy URL')) }
     document.head.appendChild(script)
   })
 }
