@@ -1,0 +1,2131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reiki & Energy Shift Workshop | MySoulSchool | Sneha Deore</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<!--
+═══════════════════════════════════════════════════
+  FLEXIFUNNELS IMPLEMENTATION GUIDE
+═══════════════════════════════════════════════════
+
+  FONTS — Add in Settings > Custom Code > <head>:
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  JS ANIMATIONS — Add in Settings > Custom Code > Before </body>:
+  Copy the full <script> block at the bottom of this file.
+
+  SECTIONS — Each ═══ heading = one FlexiFunnels section block.
+  Use "Custom HTML" elements for complex components (countdown,
+  ticker, particles, cards). Use standard FF blocks for text/image.
+
+  COUNTDOWN — Use FF's native countdown widget OR paste the
+  custom HTML block from the HERO section.
+
+  FORM POPUP — Replace all href="#register" with your FF popup trigger.
+
+  COLOR TOKENS (set as FF brand colors):
+    Primary:  #2D1B69  (deep indigo)
+    Accent:   #D4A017  (gold)
+    Dark BG:  #1A0F3C
+    Light BG: #FFFDF7
+
+═══════════════════════════════════════════════════
+-->
+
+<style>
+/* ═══ RESET & ROOT ═════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --indigo:       #2D1B69;
+  --indigo-mid:   #4A2F8C;
+  --indigo-light: #6B4DB0;
+  --indigo-dark:  #1A0F3C;
+  --gold:         #D4A017;
+  --gold-light:   #F0C040;
+  --gold-pale:    #FDF3DC;
+  --warm-white:   #FFFDF7;
+  --off-white:    #F7F4EF;
+  --text-dark:    #1A1235;
+  --text-mid:     #3D3456;
+  --text-muted:   #7A6E8A;
+  --teal:         #0F7B6C;
+  --rose:         #C1396B;
+  --border:       #E8E2F4;
+  --r:            12px;
+  --r-lg:         20px;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--warm-white);
+  color: var(--text-dark);
+  line-height: 1.65;
+  overflow-x: hidden;
+}
+
+h1,h2,h3,h4 {
+  font-family: 'Playfair Display', Georgia, serif;
+  line-height: 1.25;
+  color: var(--text-dark);
+}
+
+/* ═══ SCROLL REVEAL (JS applies these) ══════════════ */
+.reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.7s cubic-bezier(.22,1,.36,1), transform 0.7s cubic-bezier(.22,1,.36,1);
+}
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-delay-1 { transition-delay: 0.1s; }
+.reveal-delay-2 { transition-delay: 0.2s; }
+.reveal-delay-3 { transition-delay: 0.3s; }
+.reveal-delay-4 { transition-delay: 0.4s; }
+.reveal-delay-5 { transition-delay: 0.5s; }
+
+/* ═══ ANNOUNCEMENT BAR ════════════════════════════════ */
+.topbar {
+  background: var(--indigo);
+  color: #fff;
+  text-align: center;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  position: relative;
+  overflow: hidden;
+}
+.topbar::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+  animation: shimmer 3s infinite;
+}
+@keyframes shimmer { to { left: 150%; } }
+.topbar span { color: var(--gold-light); font-weight: 700; }
+
+/* ═══ HERO ════════════════════════════════════════════ */
+.hero {
+  background: linear-gradient(145deg, #0F0820 0%, #1A0F3C 30%, #2D1B69 65%, #3D1A50 100%);
+  padding: 60px 20px 64px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Floating energy particles canvas sits behind everything */
+#particles-canvas {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Slow-rotating glow orbs */
+.glow-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  pointer-events: none;
+  z-index: 0;
+  animation: float-orb 8s ease-in-out infinite;
+}
+.glow-orb-1 {
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(212,160,23,0.18), transparent 70%);
+  top: -80px; right: 5%;
+  animation-duration: 9s;
+}
+.glow-orb-2 {
+  width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(107,77,176,0.35), transparent 70%);
+  bottom: -40px; left: 8%;
+  animation-duration: 11s;
+  animation-delay: -3s;
+}
+.glow-orb-3 {
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, rgba(193,57,107,0.2), transparent 70%);
+  top: 40%; left: 45%;
+  animation-duration: 13s;
+  animation-delay: -6s;
+}
+@keyframes float-orb {
+  0%,100% { transform: translateY(0) scale(1); }
+  50%      { transform: translateY(-30px) scale(1.08); }
+}
+
+.hero-inner {
+  max-width: 1080px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 48px;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+}
+@media (max-width: 820px) {
+  .hero-inner { grid-template-columns: 1fr; }
+  .hero-photo-col { order: -1; }
+}
+
+/* Hero left */
+.hero-badge {
+  display: inline-block;
+  background: rgba(212,160,23,0.15);
+  border: 1px solid rgba(212,160,23,0.45);
+  color: var(--gold-light);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 6px 18px;
+  border-radius: 50px;
+  margin-bottom: 22px;
+  animation: badge-pulse 3s ease-in-out infinite;
+}
+@keyframes badge-pulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(212,160,23,0.0); }
+  50%      { box-shadow: 0 0 0 6px rgba(212,160,23,0.12); }
+}
+
+.hero h1 {
+  font-size: clamp(28px, 4.5vw, 50px);
+  color: #fff;
+  margin-bottom: 18px;
+  line-height: 1.2;
+}
+.hero h1 em { font-style: italic; color: var(--gold-light); }
+
+.hero-sub {
+  font-size: clamp(15px, 2vw, 19px);
+  color: rgba(255,255,255,0.78);
+  margin-bottom: 28px;
+  font-weight: 300;
+  line-height: 1.65;
+}
+.hero-sub strong { color: #fff; font-weight: 600; }
+
+.event-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+.event-pill {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.18);
+  color: rgba(255,255,255,0.9);
+  padding: 9px 18px;
+  border-radius: 50px;
+  font-size: 13.5px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  backdrop-filter: blur(4px);
+}
+
+.price-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 26px;
+  flex-wrap: wrap;
+}
+.price-original {
+  font-size: 22px;
+  color: rgba(255,255,255,0.35);
+  text-decoration: line-through;
+}
+.price-current {
+  font-size: 38px;
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
+  color: var(--gold-light);
+  line-height: 1;
+}
+.price-note {
+  font-size: 13px;
+  color: rgba(255,255,255,0.5);
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(135deg, #E8A800, #C4850A);
+  color: #1A0F3C;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  padding: 17px 40px;
+  border-radius: 50px;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  letter-spacing: 0.01em;
+  box-shadow: 0 6px 30px rgba(212,160,23,0.45);
+  transition: transform 0.18s, box-shadow 0.18s;
+  position: relative;
+  overflow: hidden;
+}
+.btn-primary::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+  animation: btn-shimmer 2.5s infinite;
+}
+@keyframes btn-shimmer { to { left: 150%; } }
+.btn-primary:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(212,160,23,0.55); }
+
+.hero-microcopy {
+  margin-top: 12px;
+  font-size: 13px;
+  color: rgba(255,255,255,0.42);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* Countdown */
+.countdown-box {
+  margin-top: 32px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--r-lg);
+  padding: 20px 24px;
+  display: inline-block;
+  backdrop-filter: blur(6px);
+}
+.cd-label { font-size: 11px; color: rgba(255,255,255,0.45); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 12px; }
+.countdown { display: flex; align-items: center; gap: 8px; }
+.cd-block {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  padding: 12px 16px;
+  min-width: 62px;
+  text-align: center;
+}
+.cd-num {
+  font-family: 'Playfair Display', serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--gold-light);
+  line-height: 1;
+  display: block;
+  transition: transform 0.15s;
+}
+.cd-flip { transform: scale(1.25); }
+.cd-unit { font-size: 10px; color: rgba(255,255,255,0.45); text-transform: uppercase; letter-spacing: 0.06em; }
+.cd-sep { font-size: 26px; color: var(--gold); font-weight: 700; padding-bottom: 4px; }
+
+/* Hero photo column */
+.hero-photo-col { position: relative; }
+.hero-photo-frame {
+  position: relative;
+  border-radius: 28px;
+  overflow: hidden;
+  border: 2px solid rgba(212,160,23,0.3);
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 40px 80px rgba(0,0,0,0.5);
+  aspect-ratio: 3/4;
+  max-width: 360px;
+  margin: 0 auto;
+  background: linear-gradient(160deg, #2D1B69 0%, #3D0E4A 60%, #1A0F3C 100%);
+}
+.hero-photo-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  display: block;
+}
+/* Placeholder shown when no real image */
+.photo-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  background: linear-gradient(160deg, #2D1B69, #4A1845);
+}
+.photo-placeholder-icon { font-size: 64px; opacity: 0.35; }
+.photo-placeholder-text {
+  font-size: 13px;
+  color: rgba(255,255,255,0.5);
+  text-align: center;
+  border: 1px dashed rgba(255,255,255,0.2);
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-style: italic;
+  width: 100%;
+}
+
+/* Floating name card */
+.hero-name-card {
+  position: absolute;
+  bottom: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(26,15,60,0.92);
+  border: 1px solid rgba(212,160,23,0.4);
+  border-radius: 14px;
+  padding: 14px 24px;
+  text-align: center;
+  white-space: nowrap;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+.hero-name-card strong {
+  display: block;
+  color: #fff;
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+  margin-bottom: 3px;
+}
+.hero-name-card span {
+  font-size: 11.5px;
+  color: var(--gold-light);
+  letter-spacing: 0.04em;
+}
+
+/* Rotating energy ring */
+.energy-ring {
+  position: absolute;
+  top: -20px; left: -20px; right: -20px; bottom: -20px;
+  border-radius: 32px;
+  border: 1.5px dashed rgba(212,160,23,0.2);
+  animation: spin-slow 20s linear infinite;
+  pointer-events: none;
+}
+.energy-ring-2 {
+  top: -40px; left: -40px; right: -40px; bottom: -40px;
+  border-radius: 40px;
+  border: 1px dashed rgba(107,77,176,0.2);
+  animation: spin-slow 30s linear infinite reverse;
+}
+@keyframes spin-slow { to { transform: rotate(360deg); } }
+
+/* Live ticker */
+.live-ticker {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--r);
+  padding: 11px 18px;
+  font-size: 13px;
+  color: rgba(255,255,255,0.6);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+  width: 100%;
+  max-width: 480px;
+}
+.live-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #4ADE80;
+  flex-shrink: 0;
+  animation: blink 2s infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* ═══ SECTION SHELLS ══════════════════════════════════ */
+.section { padding: 76px 20px; }
+.section--alt { background: var(--off-white); }
+.section--dark { background: var(--indigo-dark); }
+.section--dark-mid { background: var(--indigo); }
+.section--dark h2, .section--dark h3,
+.section--dark-mid h2, .section--dark-mid h3 { color: #fff; }
+
+.container     { max-width: 860px;  margin: 0 auto; }
+.container--wide { max-width: 1060px; margin: 0 auto; }
+
+.eyebrow {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--indigo-light);
+  margin-bottom: 10px;
+}
+.section--dark .eyebrow,
+.section--dark-mid .eyebrow { color: var(--gold-light); }
+
+.section-title { font-size: clamp(26px,4vw,40px); margin-bottom: 14px; }
+.section-sub {
+  font-size: 17px;
+  color: var(--text-muted);
+  max-width: 620px;
+  margin-bottom: 48px;
+  line-height: 1.65;
+}
+.section--dark .section-sub,
+.section--dark-mid .section-sub { color: rgba(255,255,255,0.6); }
+
+.divider {
+  width: 48px; height: 3px;
+  background: linear-gradient(90deg, var(--gold), var(--indigo-light));
+  border-radius: 2px;
+  margin: 14px 0 32px;
+}
+.text-center { text-align: center; }
+.text-center .divider { margin-left: auto; margin-right: auto; }
+.mt-8  { margin-top: 8px; }
+.mt-16 { margin-top: 16px; }
+.mt-32 { margin-top: 32px; }
+
+/* ═══ STATS BAR ══════════════════════════════════════ */
+.stats-bar {
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+  padding: 28px 20px;
+}
+.stats-inner {
+  max-width: 860px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0;
+}
+.stat-item {
+  padding: 0 36px;
+  border-right: 1px solid var(--border);
+  text-align: center;
+}
+.stat-item:last-child { border-right: none; }
+.stat-num {
+  font-family: 'Playfair Display', serif;
+  font-size: 34px;
+  font-weight: 700;
+  color: var(--indigo);
+  display: block;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.stat-desc { font-size: 12.5px; color: var(--text-muted); }
+@media(max-width:520px){
+  .stat-item { padding: 12px 20px; border-right: none; border-bottom: 1px solid var(--border); width: 50%; }
+  .stat-item:nth-child(odd) { border-right: 1px solid var(--border); }
+  .stat-item:last-child { border-bottom: none; }
+}
+
+/* ═══ PAIN POINTS ══════════════════════════════════════ */
+.pain-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin-bottom: 36px;
+}
+.pain-card {
+  background: #fff;
+  border: 1.5px solid var(--border);
+  border-left: 4px solid var(--rose);
+  border-radius: var(--r);
+  padding: 20px 22px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.pain-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(193,57,107,0.1); }
+.pain-icon { font-size: 22px; flex-shrink: 0; margin-top: 2px; }
+.pain-text { font-size: 14.5px; line-height: 1.55; color: var(--text-mid); }
+
+.yes-box {
+  background: linear-gradient(135deg, #1A0F3C, #2D1B69);
+  border-radius: var(--r-lg);
+  padding: 30px 36px;
+  text-align: center;
+  margin-top: 28px;
+}
+.yes-box p {
+  font-family: 'Playfair Display', serif;
+  font-size: 20px;
+  font-style: italic;
+  color: #fff;
+  line-height: 1.55;
+}
+.yes-box strong { color: var(--gold-light); font-style: normal; }
+
+/* ═══ THREE PILLARS ══════════════════════════════════ */
+.pillars-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 24px;
+}
+.pillar-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 36px 26px;
+  text-align: center;
+  transition: transform 0.25s, box-shadow 0.25s;
+  position: relative;
+  overflow: hidden;
+}
+.pillar-card:hover { transform: translateY(-6px); box-shadow: 0 16px 48px rgba(45,27,105,0.1); }
+.pillar-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+}
+.pillar-card:nth-child(1)::before { background: linear-gradient(90deg, #6B4DB0, #4A2F8C); }
+.pillar-card:nth-child(2)::before { background: linear-gradient(90deg, #D4A017, #F0C040); }
+.pillar-card:nth-child(3)::before { background: linear-gradient(90deg, #0F7B6C, #1AAFA0); }
+.pillar-icon {
+  width: 76px; height: 76px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 34px;
+  margin: 0 auto 20px;
+  position: relative;
+}
+.pillar-card:nth-child(1) .pillar-icon { background: #EDE8FC; }
+.pillar-card:nth-child(2) .pillar-icon { background: var(--gold-pale); }
+.pillar-card:nth-child(3) .pillar-icon { background: #E0F4F1; }
+.pillar-icon::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px dashed rgba(107,77,176,0.2);
+  animation: spin-slow 12s linear infinite;
+}
+.pillar-card:nth-child(2) .pillar-icon::after { border-color: rgba(212,160,23,0.25); }
+.pillar-card:nth-child(3) .pillar-icon::after { border-color: rgba(15,123,108,0.25); }
+.pillar-card h3 { font-size: 21px; margin-bottom: 10px; }
+.pillar-card p  { font-size: 14.5px; color: var(--text-muted); line-height: 1.6; }
+
+/* ═══ CURRICULUM ══════════════════════════════════════ */
+.curriculum-list { display: flex; flex-direction: column; gap: 16px; }
+.curriculum-item {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 22px 26px;
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+  transition: transform 0.2s, border-color 0.2s;
+}
+.curriculum-item:hover { transform: translateX(6px); border-color: var(--indigo-light); }
+.curr-num {
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  background: var(--indigo);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Playfair Display', serif;
+  font-size: 16px; font-weight: 700;
+  flex-shrink: 0;
+  box-shadow: 0 4px 16px rgba(45,27,105,0.3);
+}
+.curr-body h4 { font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 600; margin-bottom: 5px; }
+.curr-body p  { font-size: 14px; color: var(--text-muted); line-height: 1.55; }
+.curr-tag {
+  display: inline-block;
+  background: var(--gold-pale);
+  color: #7A5000;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 50px;
+  margin-top: 8px;
+  letter-spacing: 0.02em;
+}
+
+/* ═══ COMPARISON ══════════════════════════════════════ */
+.compare-wrap {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+  margin-top: 40px;
+}
+@media(max-width:600px) { .compare-wrap { grid-template-columns: 1fr; } }
+
+.compare-col { border-radius: var(--r-lg); padding: 32px 28px; }
+.compare-col--old {
+  background: #FFF7F5;
+  border: 1.5px solid #F5C4B3;
+}
+.compare-col--new {
+  background: linear-gradient(160deg, #1A0F3C, #2D1B69 60%, #3D1A50 100%);
+  color: #fff;
+  box-shadow: 0 20px 60px rgba(45,27,105,0.35);
+}
+.compare-col-header {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 22px;
+  font-size: 15px; font-weight: 700;
+}
+.compare-col--old  .compare-col-header { color: #A32D2D; }
+.compare-col--new  .compare-col-header { color: var(--gold-light); }
+.compare-badge {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px;
+}
+.compare-col--old .compare-badge { background: #F0957B; }
+.compare-col--new .compare-badge { background: rgba(240,192,64,0.22); }
+.compare-list { list-style: none; display: flex; flex-direction: column; gap: 14px; }
+.compare-list li {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 14.5px; line-height: 1.5;
+}
+.compare-col--old .compare-list li { color: var(--text-mid); }
+.compare-col--new .compare-list li { color: rgba(255,255,255,0.88); }
+.compare-list li::before {
+  content: '';
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 1px;
+  background-size: 11px;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.compare-col--old .compare-list li::before {
+  background-color: #F0957B;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3' stroke-linecap='round'%3E%3Cline x1='18' y1='6' x2='6' y2='18'/%3E%3Cline x1='6' y1='6' x2='18' y2='18'/%3E%3C/svg%3E");
+}
+.compare-col--new .compare-list li::before {
+  background-color: var(--gold);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
+}
+
+/* ═══ TESTIMONIALS (new section) ═════════════════════ */
+/* Grid of cards + a featured quote */
+.testi-section-header { text-align: center; }
+
+.featured-quote {
+  background: linear-gradient(135deg, #1A0F3C, #3D1A50);
+  border-radius: var(--r-lg);
+  padding: 40px 44px;
+  margin-bottom: 32px;
+  position: relative;
+  overflow: hidden;
+}
+.featured-quote::before {
+  content: '"';
+  position: absolute;
+  top: -20px; left: 20px;
+  font-family: 'Playfair Display', serif;
+  font-size: 160px;
+  color: rgba(212,160,23,0.12);
+  line-height: 1;
+  pointer-events: none;
+}
+.featured-quote blockquote {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(18px, 2.5vw, 24px);
+  color: #fff;
+  font-style: italic;
+  line-height: 1.55;
+  margin-bottom: 24px;
+  position: relative;
+  z-index: 1;
+}
+.featured-quote blockquote em { color: var(--gold-light); font-style: normal; }
+.featured-author {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.featured-avatar {
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  background: var(--indigo-light);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 18px; color: #fff;
+  border: 2px solid rgba(212,160,23,0.5);
+  flex-shrink: 0;
+}
+.featured-author-name { font-size: 15px; font-weight: 600; color: #fff; }
+.featured-author-role { font-size: 12.5px; color: rgba(255,255,255,0.5); }
+.featured-stars { font-size: 15px; color: var(--gold-light); margin-bottom: 4px; }
+
+/* Testimonial card grid */
+.testi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 18px;
+  margin-bottom: 28px;
+}
+.testi-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 26px 22px;
+  transition: transform 0.22s, box-shadow 0.22s;
+}
+.testi-card:hover { transform: translateY(-4px); box-shadow: 0 12px 36px rgba(45,27,105,0.1); }
+.testi-stars { color: var(--gold); font-size: 15px; margin-bottom: 12px; }
+.testi-text {
+  font-size: 14.5px;
+  color: var(--text-mid);
+  line-height: 1.65;
+  margin-bottom: 18px;
+  font-style: italic;
+  position: relative;
+}
+.testi-text::before { content: '"'; color: var(--indigo-light); font-size: 28px; font-family: 'Playfair Display', serif; line-height: 0; vertical-align: -8px; margin-right: 2px; }
+.testi-author { display: flex; align-items: center; gap: 10px; }
+.testi-avatar {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: var(--indigo);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 14px; color: #fff;
+  flex-shrink: 0;
+}
+.testi-name  { font-size: 14px; font-weight: 600; color: var(--text-dark); }
+.testi-role  { font-size: 12px; color: var(--text-muted); }
+
+/* Video testimonial placeholder */
+.video-testi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-top: 28px;
+}
+.video-testi-thumb {
+  background: linear-gradient(135deg, #2D1B69, #4A1845);
+  border-radius: var(--r);
+  aspect-ratio: 9/16;
+  max-height: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  cursor: pointer;
+  border: 1px solid rgba(212,160,23,0.2);
+  transition: transform 0.2s, box-shadow 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.video-testi-thumb::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 50%);
+}
+.video-testi-thumb:hover { transform: translateY(-4px); box-shadow: 0 12px 36px rgba(45,27,105,0.3); }
+.play-btn {
+  width: 54px; height: 54px;
+  border-radius: 50%;
+  background: rgba(212,160,23,0.9);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  color: #1A0F3C;
+  position: relative;
+  z-index: 1;
+  transition: transform 0.15s;
+}
+.video-testi-thumb:hover .play-btn { transform: scale(1.1); }
+.video-label {
+  position: absolute;
+  bottom: 14px;
+  left: 0; right: 0;
+  text-align: center;
+  z-index: 1;
+}
+.video-label strong { display: block; font-size: 14px; color: #fff; font-weight: 600; }
+.video-label span   { font-size: 12px; color: rgba(255,255,255,0.65); }
+.video-placeholder-note {
+  font-size: 12px;
+  color: rgba(255,255,255,0.3);
+  position: absolute;
+  top: 12px;
+  font-style: italic;
+}
+
+/* ═══ BONUS STACK ══════════════════════════════════════ */
+.bonus-list { display: flex; flex-direction: column; gap: 14px; margin-top: 36px; }
+.bonus-item {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 20px 22px;
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.bonus-item:hover { transform: translateX(4px); box-shadow: 4px 0 0 var(--gold) inset; }
+.bonus-icon {
+  width: 54px; height: 54px;
+  border-radius: 14px;
+  background: var(--gold-pale);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px;
+  flex-shrink: 0;
+}
+.bonus-body { flex: 1; }
+.bonus-title { font-size: 15.5px; font-weight: 600; margin-bottom: 4px; }
+.bonus-desc  { font-size: 13.5px; color: var(--text-muted); line-height: 1.5; }
+.bonus-value { font-size: 12.5px; color: #9E4A1B; text-decoration: line-through; margin-top: 5px; display: block; }
+.bonus-free {
+  background: #E0F4F1;
+  color: var(--teal);
+  font-size: 12px; font-weight: 700;
+  padding: 5px 14px;
+  border-radius: 50px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.value-summary {
+  background: linear-gradient(135deg, #1A0F3C, #3D1A50);
+  border-radius: var(--r-lg);
+  padding: 32px;
+  text-align: center;
+  margin-top: 24px;
+}
+.value-summary p  { font-size: 15px; color: rgba(255,255,255,0.6); margin-bottom: 6px; }
+.value-crossed    { font-size: 22px; color: rgba(255,255,255,0.35); text-decoration: line-through; display: block; margin-bottom: 4px; }
+.value-free {
+  font-family: 'Playfair Display', serif;
+  font-size: 44px; font-weight: 700;
+  color: var(--gold-light);
+  display: block;
+  line-height: 1;
+}
+.value-note { font-size: 13px; color: rgba(255,255,255,0.45); margin-top: 10px; display: block; }
+
+/* ═══ WHO IS THIS FOR ═════════════════════════════════ */
+.who-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-top: 36px;
+}
+.who-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 22px 18px;
+  text-align: center;
+  transition: transform 0.22s, border-color 0.22s;
+}
+.who-card:hover { transform: translateY(-4px); border-color: var(--indigo-light); }
+.who-emoji  { font-size: 32px; margin-bottom: 12px; }
+.who-card h4 { font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+.who-card p  { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+
+/* ═══ MENTOR ══════════════════════════════════════════ */
+.mentor-grid {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 52px;
+  align-items: start;
+  margin-top: 36px;
+}
+@media(max-width:700px){ .mentor-grid { grid-template-columns: 1fr; } }
+
+.mentor-photo-frame {
+  border-radius: 24px;
+  overflow: hidden;
+  border: 2px solid rgba(45,27,105,0.15);
+  box-shadow: 0 20px 60px rgba(45,27,105,0.15);
+  aspect-ratio: 3/4;
+  background: linear-gradient(160deg, #EDE8FC, #F7F4EF);
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+}
+.mentor-photo-frame img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: top;
+  display: block;
+}
+.mentor-photo-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 24px;
+  text-align: center;
+  width: 100%;
+}
+.mentor-photo-placeholder .emoji { font-size: 60px; opacity: 0.25; }
+.mentor-photo-placeholder .note {
+  font-size: 12px;
+  font-style: italic;
+  color: var(--text-muted);
+  border: 1px dashed var(--border);
+  padding: 10px 14px;
+  border-radius: 8px;
+}
+
+.mentor-name  { font-size: 32px; margin-bottom: 4px; }
+.mentor-title { font-size: 15px; color: var(--indigo-light); font-weight: 500; margin-bottom: 20px; }
+
+.mentor-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+.mentor-stat {
+  background: var(--off-white);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 10px 16px;
+  text-align: center;
+  min-width: 96px;
+}
+.mentor-stat-num {
+  font-family: 'Playfair Display', serif;
+  font-size: 21px; font-weight: 700;
+  color: var(--indigo);
+  display: block;
+  line-height: 1;
+}
+.mentor-stat-label { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+
+.mentor-credentials { display: flex; flex-direction: column; gap: 8px; margin-bottom: 22px; }
+.cred-item {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 14px; color: var(--text-mid);
+}
+.cred-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--gold);
+  flex-shrink: 0;
+}
+
+.mentor-bio { font-size: 15px; line-height: 1.75; color: var(--text-mid); }
+.mentor-bio strong { color: var(--indigo); font-weight: 600; }
+
+/* ═══ FAQ ═════════════════════════════════════════════ */
+.faq-list { margin-top: 36px; }
+.faq-item { border-bottom: 1px solid var(--border); }
+.faq-q {
+  width: 100%;
+  background: none; border: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 22px 4px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 16px; font-weight: 600;
+  color: var(--text-dark);
+  cursor: pointer;
+  text-align: left;
+  gap: 16px;
+}
+.faq-toggle {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--off-white);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; color: var(--indigo);
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+.faq-a {
+  padding: 0 4px 20px;
+  font-size: 15px;
+  color: var(--text-muted);
+  line-height: 1.7;
+  display: none;
+}
+.faq-item.open .faq-a { display: block; }
+.faq-item.open .faq-toggle { background: var(--indigo); color: #fff; transform: rotate(45deg); }
+
+/* ═══ FINAL CTA ═══════════════════════════════════════ */
+.final-cta {
+  background: linear-gradient(145deg, #0F0820 0%, #1A0F3C 35%, #2D1B69 70%, #3D1A50 100%);
+  padding: 88px 20px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.final-cta .glow-orb-1 { opacity: 0.5; }
+.final-cta h2 {
+  color: #fff;
+  font-size: clamp(26px, 4vw, 44px);
+  max-width: 680px;
+  margin: 0 auto 14px;
+}
+.final-cta h2 em { color: var(--gold-light); font-style: italic; }
+.final-cta > div > p { color: rgba(255,255,255,0.62); font-size: 17px; max-width: 560px; margin: 0 auto 32px; }
+
+.final-price-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(212,160,23,0.35);
+  border-radius: 50px;
+  padding: 12px 28px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.final-crossed { font-size: 20px; color: rgba(255,255,255,0.35); text-decoration: line-through; }
+.final-price   { font-family: 'Playfair Display', serif; font-size: 34px; font-weight: 700; color: var(--gold-light); }
+.final-bonus   { font-size: 13px; color: rgba(255,255,255,0.5); }
+
+footer {
+  background: #080514;
+  color: rgba(255,255,255,0.35);
+  text-align: center;
+  padding: 28px 20px;
+  font-size: 13px;
+  line-height: 1.85;
+}
+footer a { color: rgba(255,255,255,0.45); }
+
+@media(max-width:480px){
+  .hero  { padding: 44px 16px 48px; }
+  .section { padding: 52px 16px; }
+  .btn-primary { font-size: 15px; padding: 15px 28px; }
+  .featured-quote { padding: 28px 22px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════
+  ANNOUNCEMENT BAR
+  FF: Use a "Sticky Bar" or "Header Row" block.
+  Background: #2D1B69 | Text: white | Highlight: #F0C040
+══════════════════════════════════════════════ -->
+<div class="topbar">
+  🔥 Early Bird Offer — Register Now for Just <span>₹49</span>&nbsp; &nbsp;·&nbsp; &nbsp;Normal Price ₹999 &nbsp;·&nbsp; Seats Filling Fast!
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+  HERO SECTION
+  FF: Use a 2-column row.
+  LEFT col = text stack. RIGHT col = image block.
+  For particles: add Custom HTML below the hero row
+  and paste the <canvas> + JS from the script block.
+══════════════════════════════════════════════ -->
+<section class="hero">
+  <canvas id="particles-canvas"></canvas>
+  <div class="glow-orb glow-orb-1"></div>
+  <div class="glow-orb glow-orb-2"></div>
+  <div class="glow-orb glow-orb-3"></div>
+
+  <div class="hero-inner">
+
+    <!-- LEFT: Text -->
+    <div class="hero-text-col reveal">
+      <div class="hero-badge">✦ Live 3-Hour Workshop · Limited Seats Only</div>
+
+      <h1>
+        Heal Your Body,<br>Shift Your Energy &<br>
+        <em>Feel Reiki in Your Hands</em><br>
+        — In Just 3 Hours
+      </h1>
+
+      <p class="hero-sub">
+        Join <strong>Grandmaster Sneha Deore</strong> — India's Leading Reiki Healer — in a live, hands-on workshop where you'll feel real healing energy, unlock blocked chakras, and discover the science of manifestation.
+      </p>
+
+      <div class="event-strip">
+        <div class="event-pill">📅 <strong>Date TBD</strong></div>
+        <div class="event-pill">⏰ 7:00 PM IST</div>
+        <div class="event-pill">🗣️ Hindi / English</div>
+        <div class="event-pill">⏱️ 3 Hours · Live</div>
+      </div>
+
+      <div class="price-row">
+        <span class="price-original">₹999</span>
+        <span class="price-current">₹49</span>
+        <span class="price-note">One-time registration · No hidden charges</span>
+      </div>
+
+      <div>
+        <a href="#register" class="btn-primary">🌟 Secure My Spot for ₹49 →</a>
+      </div>
+
+      <p class="hero-microcopy">
+        <span>✓ No prior experience needed</span>&nbsp;
+        <span>✓ Join from home on Zoom</span>&nbsp;
+        <span>✓ Certification included</span>
+      </p>
+
+      <div class="countdown-box">
+        <p class="cd-label">⏳ Offer Expires In</p>
+        <div class="countdown">
+          <div class="cd-block"><span class="cd-num" id="cd-d">02</span><span class="cd-unit">Days</span></div>
+          <span class="cd-sep">:</span>
+          <div class="cd-block"><span class="cd-num" id="cd-h">14</span><span class="cd-unit">Hrs</span></div>
+          <span class="cd-sep">:</span>
+          <div class="cd-block"><span class="cd-num" id="cd-m">32</span><span class="cd-unit">Min</span></div>
+          <span class="cd-sep">:</span>
+          <div class="cd-block"><span class="cd-num" id="cd-s">07</span><span class="cd-unit">Sec</span></div>
+        </div>
+      </div>
+
+      <div class="live-ticker">
+        <span class="live-dot"></span>
+        <span id="ticker-text">Priya from Mumbai just registered for the workshop</span>
+      </div>
+    </div>
+
+    <!-- RIGHT: Sneha's Photo -->
+    <!-- FF: Replace this block with an Image element.
+         Upload Sneha's photo. Apply border-radius: 28px.
+         Add a text overlay at the bottom for the name card. -->
+    <div class="hero-photo-col reveal reveal-delay-2">
+      <div class="hero-photo-frame">
+        <div class="energy-ring"></div>
+        <div class="energy-ring energy-ring-2"></div>
+
+        <!-- ⬇️ REPLACE: swap this div with <img> tag once you have Sneha's photo -->
+        <div class="photo-placeholder">
+          <div class="photo-placeholder-icon">🌸</div>
+          <div class="photo-placeholder-text">
+            📸 Upload Sneha Deore's photo here<br>
+            Recommended: 3:4 ratio, white/light bg,<br>head-to-waist shot
+          </div>
+        </div>
+
+        <!-- Floating name card -->
+        <div class="hero-name-card">
+          <strong>Grandmaster Sneha Deore</strong>
+          <span>India's Leading Reiki Healer</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+  STATS BAR — FF: 4-column stat row, dark border bottom
+══════════════════════════════════════════════ -->
+<div class="stats-bar">
+  <div class="stats-inner">
+    <div class="stat-item reveal">
+      <span class="stat-num counter" data-target="30000">0</span><span class="stat-num" style="font-size:20px">+</span>
+      <span class="stat-desc">Students Trained</span>
+    </div>
+    <div class="stat-item reveal reveal-delay-1">
+      <span class="stat-num">4.9★</span>
+      <span class="stat-desc">Average Rating</span>
+    </div>
+    <div class="stat-item reveal reveal-delay-2">
+      <span class="stat-num counter" data-target="70000">0</span><span class="stat-num" style="font-size:20px">+</span>
+      <span class="stat-desc">Healed Worldwide</span>
+    </div>
+    <div class="stat-item reveal reveal-delay-3">
+      <span class="stat-num counter" data-target="60">0</span><span class="stat-num" style="font-size:20px">+</span>
+      <span class="stat-desc">Countries Reached</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+  PAIN POINTS
+══════════════════════════════════════════════ -->
+<section class="section">
+  <div class="container text-center">
+    <p class="eyebrow reveal">Sound Familiar?</p>
+    <h2 class="section-title reveal">Are These Holding You Back?</h2>
+    <div class="divider reveal"></div>
+    <p class="section-sub reveal" style="margin: 0 auto 40px;">If you nodded at even one of these, your energy needs a reset — and Reiki is the most natural tool to do it.</p>
+
+    <div class="pain-grid">
+      <div class="pain-card reveal reveal-delay-1">
+        <span class="pain-icon">😓</span>
+        <p class="pain-text">Feeling chronically exhausted, drained, no energy no matter how much you sleep?</p>
+      </div>
+      <div class="pain-card reveal reveal-delay-2">
+        <span class="pain-icon">😰</span>
+        <p class="pain-text">Stress, anxiety or emotional heaviness that refuses to leave no matter what you try?</p>
+      </div>
+      <div class="pain-card reveal reveal-delay-3">
+        <span class="pain-icon">🔄</span>
+        <p class="pain-text">Stuck in the same painful patterns — same money problems, same relationship conflicts?</p>
+      </div>
+      <div class="pain-card reveal reveal-delay-1">
+        <span class="pain-icon">💔</span>
+        <p class="pain-text">Chronic pain, hormonal imbalance or health issues that medicine hasn't fully resolved?</p>
+      </div>
+      <div class="pain-card reveal reveal-delay-2">
+        <span class="pain-icon">🌫️</span>
+        <p class="pain-text">A deep feeling that something is energetically blocked inside you — but you don't know what?</p>
+      </div>
+      <div class="pain-card reveal reveal-delay-3">
+        <span class="pain-icon">🙏</span>
+        <p class="pain-text">Wanting a natural healing tool to use on yourself, your children, and your family?</p>
+      </div>
+    </div>
+
+    <div class="yes-box reveal">
+      <p>If you said <strong>"YES"</strong> to even one of these — this 3-hour workshop<br>will give you the shift you've been searching for.</p>
+    </div>
+
+    <div class="mt-32 reveal">
+      <a href="#register" class="btn-primary">Register for Just ₹49 →</a>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+  THREE PILLARS
+══════════════════════════════════════════════ -->
+<section class="section section--alt">
+  <div class="container text-center">
+    <p class="eyebrow reveal">What This Workshop Covers</p>
+    <h2 class="section-title reveal">Three Pillars of Complete Transformation</h2>
+    <div class="divider reveal"></div>
+    <p class="section-sub reveal" style="margin: 0 auto 48px;">This is not a theory class. This is a 3-hour live immersion into healing, mind power, and manifestation — all working together.</p>
+
+    <div class="pillars-grid">
+      <div class="pillar-card reveal reveal-delay-1">
+        <div class="pillar-icon">🌊</div>
+        <h3>Reiki</h3>
+        <p>Feel universal life force energy flow through your own hands — even in your very first session. This is not belief-based. It works like gravity, regardless of whether you believe it.</p>
+      </div>
+      <div class="pillar-card reveal reveal-delay-2">
+        <div class="pillar-icon">🧠</div>
+        <h3>Mind Power</h3>
+        <p>90% of diseases are psychosomatic — rooted in unresolved emotions and negative thought patterns. Learn to identify and clear the mental root behind your physical problems.</p>
+      </div>
+      <div class="pillar-card reveal reveal-delay-3">
+        <div class="pillar-icon">✨</div>
+        <h3>Manifestation</h3>
+        <p>Whatever you want from the universe, you must first become. Learn the energetic system that attracts health, wealth, love and peace — using your own hands and intention.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+  CURRICULUM
+══════════════════════════════════════════════ -->
+<section class="section">
+  <div class="container">
+    <p class="eyebrow text-center reveal">Live Session Breakdown</p>
+    <h2 class="section-title text-center reveal">What You Will Experience — Step by Step</h2>
+    <div class="divider text-center reveal"></div>
+    <p class="section-sub text-center reveal" style="margin: 0 auto 44px;">Every segment is live and hands-on. You will practice — not just watch and listen.</p>
+
+    <div class="curriculum-list">
+      <div class="curriculum-item reveal">
+        <div class="curr-num">1</div>
+        <div class="curr-body">
+          <h4>Feel the Reiki Energy Ball in Your Own Hands</h4>
+          <p>Within the first 30 minutes, you'll invoke healing energy between your palms and physically feel warmth, tingling or a magnetic resistance. This single moment changes everything — because you'll feel it, not just hear about it.</p>
+          <span class="curr-tag">🔥 #1 Favourite Part Every Batch</span>
+        </div>
+      </div>
+      <div class="curriculum-item reveal reveal-delay-1">
+        <div class="curr-num">2</div>
+        <div class="curr-body">
+          <h4>Change Your Personal Frequency in 5 Minutes</h4>
+          <p>Learn the exact breathing and intention technique that shifts your state from scattered and anxious to centred and calm — in under 5 minutes. You'll take this home and use it every single morning.</p>
+        </div>
+      </div>
+      <div class="curriculum-item reveal reveal-delay-2">
+        <div class="curr-num">3</div>
+        <div class="curr-body">
+          <h4>The Science of All 7 Chakras — Find YOUR Block</h4>
+          <p>Walk through all 7 energy centres (Root to Crown), the life domain each governs, and the specific diseases and problems linked to each blockage. Identify which chakra is causing your specific issue — live, in the session.</p>
+          <span class="curr-tag">🧬 Science-Backed Healing</span>
+        </div>
+      </div>
+      <div class="curriculum-item reveal reveal-delay-3">
+        <div class="curr-num">4</div>
+        <div class="curr-body">
+          <h4>Ho'oponopono Healing Protocol — Live Practice</h4>
+          <p>The powerful Hawaiian 4-phrase healing technique applied to each of your 7 chakras — live, with Grandmaster Sneha guiding every breath. Heal emotional wounds, financial blocks, relationship pain and physical conditions in one guided practice.</p>
+        </div>
+      </div>
+      <div class="curriculum-item reveal reveal-delay-1">
+        <div class="curr-num">5</div>
+        <div class="curr-body">
+          <h4>Love Magnet Exercise — Become a Manifestation Magnet</h4>
+          <p>A 4-stage activation: mentally project → emotionally feel → spiritually believe → anchor with a smile. Learn to turn your own aura into a magnet for what you truly desire — love, abundance, peace and health.</p>
+          <span class="curr-tag">💫 Manifestation in Action</span>
+        </div>
+      </div>
+      <div class="curriculum-item reveal reveal-delay-2">
+        <div class="curr-num">6</div>
+        <div class="curr-body">
+          <h4>Your Personal 10-Minute Daily Self-Healing Protocol</h4>
+          <p>Leave the session with a simple, practical routine you can start the very next morning to maintain your energy, clear blocks consistently, and stay in a high-vibration state every single day.</p>
+          <span class="curr-tag">📅 Use From Day 1</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="text-center mt-32 reveal">
+      <a href="#register" class="btn-primary">I Want This Experience — ₹49 →</a>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+  COMPARISON
+══════════════════════════════════════════════ -->
+<section class="section section--alt">
+  <div class="container">
+    <p class="eyebrow text-center reveal">Why This is Different</p>
+    <h2 class="section-title text-center reveal">Traditional Reiki vs<br>Reiki &amp; Energy Shift Workshop</h2>
+    <div class="divider text-center reveal"></div>
+
+    <div class="compare-wrap">
+      <div class="compare-col compare-col--old reveal reveal-delay-1">
+        <div class="compare-col-header">
+          <div class="compare-badge">✗</div>
+          Traditional Approach
+        </div>
+        <ul class="compare-list">
+          <li>Weeks of theory before you actually feel anything</li>
+          <li>Expensive in-person classes ₹15,000–₹50,000+</li>
+          <li>Chakras as textbook knowledge — not personal to you</li>
+          <li>No guidance on manifestation or mind power</li>
+          <li>No structured daily practice to continue alone</li>
+          <li>Takes months before you can use it on your family</li>
+        </ul>
+      </div>
+
+      <div class="compare-col compare-col--new reveal reveal-delay-2">
+        <div class="compare-col-header">
+          <div class="compare-badge">✓</div>
+          Reiki &amp; Energy Shift Workshop
+        </div>
+        <ul class="compare-list">
+          <li>Feel energy in your hands in the very first 30 minutes</li>
+          <li>Complete live session with a Grandmaster — at just ₹49</li>
+          <li>Identify YOUR specific blocked chakra in real time</li>
+          <li>Integrated Reiki + Mind Power + Manifestation system</li>
+          <li>Daily 10-min self-healing protocol — start tomorrow morning</li>
+          <li>Optional: launch a full Reiki healing career from home</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="text-center mt-32 reveal">
+      <a href="#register" class="btn-primary">Register for ₹49 — Start Your Healing Journey →</a>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+  TESTIMONIALS (NEW SECTION)
+  FF: Featured quote = custom HTML block (dark bg).
+  Cards below = 3-column grid of card elements.
+  Video placeholders = image blocks with play icon overlay.
+══════════════════════════════════════════════ -->
+<section class="section">
+  <div class="container">
+    <div class="testi-section-header">
+      <p class="eyebrow reveal">Real People. Real Shifts.</p>
+      <h2 class="section-title reveal">What Happened When They<br>Felt Reiki for the First Time</h2>
+      <div class="divider reveal"></div>
+      <p class="section-sub reveal" style="margin: 0 auto 36px;">These are students who came in sceptical and left transformed. Their words, not ours.</p>
+    </div>
+
+    <!-- Featured Quote -->
+    <div class="featured-quote reveal">
+      <blockquote>
+        "I honestly came to this workshop not expecting much. But the moment I felt that warm energy between my palms — like a magnetic balloon — <em>I broke down and cried.</em> Because I finally understood: this healing power was inside me the whole time. I just didn't know how to access it. Grandmaster Sneha changed everything for me in 3 hours."
+      </blockquote>
+      <div class="featured-author">
+        <div class="featured-avatar">P</div>
+        <div>
+          <div class="featured-stars">★★★★★</div>
+          <p class="featured-author-name">Priya Sharma</p>
+          <p class="featured-author-role">Homemaker · Pune</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card Grid -->
+    <div class="testi-grid">
+
+      <div class="testi-card reveal reveal-delay-1">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-text">My anxiety of 3 years reduced so much after just that one session. The chakra explanation was like someone finally handed me a map of my own body. I do the 10-minute protocol every morning now.</p>
+        <div class="testi-author">
+          <div class="testi-avatar">R</div>
+          <div>
+            <p class="testi-name">Rashmi Kulkarni</p>
+            <p class="testi-role">Software Engineer · Bangalore</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="testi-card reveal reveal-delay-2">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-text">I am a Tarot student and I added this Reiki workshop. The Ho'oponopono for my money blocks was something I didn't even know I was carrying. The change in my financial situation after practicing this has been real.</p>
+        <div class="testi-author">
+          <div class="testi-avatar">N</div>
+          <div>
+            <p class="testi-name">Neeta Mishra</p>
+            <p class="testi-role">Tarot Reader · Delhi</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="testi-card reveal reveal-delay-3">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-text">I had been living with thyroid issues and joint pain for years. After 2 weeks of the daily protocol Sneha taught us, my energy levels are unrecognisable. I feel like myself again for the first time in years.</p>
+        <div class="testi-author">
+          <div class="testi-avatar">S</div>
+          <div>
+            <p class="testi-name">Seema Joshi</p>
+            <p class="testi-role">Teacher · Jaipur</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="testi-card reveal reveal-delay-1">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-text">The love magnet exercise alone was worth the entire ₹49. I did it before a difficult conversation with my mother-in-law and for the first time in 4 years we actually talked like human beings. Something shifted.</p>
+        <div class="testi-author">
+          <div class="testi-avatar">A</div>
+          <div>
+            <p class="testi-name">Anita Verma</p>
+            <p class="testi-role">Homemaker · Hyderabad</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="testi-card reveal reveal-delay-2">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-text">Sneha ma'am has a gift. She makes you feel safe enough to actually open up your energy. I joined as a complete beginner and by the end of 3 hours I was doing distance healing for my mother who was unwell. Unbelievable.</p>
+        <div class="testi-author">
+          <div class="testi-avatar">K</div>
+          <div>
+            <p class="testi-name">Kavitha Nair</p>
+            <p class="testi-role">HR Professional · Chennai</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="testi-card reveal reveal-delay-3">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-text">I came to heal myself and ended up discovering my life's purpose. 6 months after this workshop I am now a practicing Reiki healer with 40+ clients. All starting from ₹49 and one afternoon on Zoom.</p>
+        <div class="testi-author">
+          <div class="testi-avatar">M</div>
+          <div>
+            <p class="testi-name">Meenu Agarwal</p>
+            <p class="testi-role">Reiki Healer (ex-Teacher) · Lucknow</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Video Testimonial Placeholders -->
+    <!-- FF: Replace these with actual video thumbnail image blocks -->
+    <p class="section-sub text-center reveal" style="margin-top: 36px; margin-bottom: 20px; font-size: 15px;">Watch Their Stories 👇</p>
+    <div class="video-testi-row">
+      <div class="video-testi-thumb reveal reveal-delay-1">
+        <p class="video-placeholder-note">📹 Add video thumbnail</p>
+        <div class="play-btn">▶</div>
+        <div class="video-label">
+          <strong>Priya's Story</strong>
+          <span>Pune · Homemaker</span>
+        </div>
+      </div>
+      <div class="video-testi-thumb reveal reveal-delay-2">
+        <p class="video-placeholder-note">📹 Add video thumbnail</p>
+        <div class="play-btn">▶</div>
+        <div class="video-label">
+          <strong>Meenu's Journey</strong>
+          <span>Lucknow · Now a Healer</span>
+        </div>
+      </div>
+      <div class="video-testi-thumb reveal reveal-delay-3">
+        <p class="video-placeholder-note">📹 Add video thumbnail</p>
+        <div class="play-btn">▶</div>
+        <div class="video-label">
+          <strong>Seema's Healing</strong>
+          <span>Jaipur · Thyroid Relief</span>
+        </div>
+      </div>
+      <div class="video-testi-thumb reveal reveal-delay-4">
+        <p class="video-placeholder-note">📹 Add video thumbnail</p>
+        <div class="play-btn">▶</div>
+        <div class="video-label">
+          <strong>Rashmi's Shift</strong>
+          <span>Bangalore · Anxiety Healed</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="text-center mt-32 reveal">
+      <a href="#register" class="btn-primary">Join Them — Register for ₹49 →</a>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+  BONUS STACK
+══════════════════════════════════════════════ -->
+<section class="section section--alt">
+  <div class="container">
+    <p class="eyebrow text-center reveal">🎁 Exclusive Bonuses</p>
+    <h2 class="section-title text-center reveal">Register Now &amp; Get These FREE Gifts<br><em>Worth ₹2,997</em></h2>
+    <div class="divider text-center reveal"></div>
+    <p class="section-sub text-center reveal" style="margin: 0 auto 8px;">Only for participants who attend the full live session. Delivered in your WhatsApp group immediately after.</p>
+
+    <div class="bonus-list">
+      <div class="bonus-item reveal reveal-delay-1">
+        <div class="bonus-icon">🎧</div>
+        <div class="bonus-body">
+          <p class="bonus-title">Love Magnet Activation Audio</p>
+          <p class="bonus-desc">A guided 5-minute audio you can play every morning to set your aura as a love and abundance magnet. Usable from Day 1, no prior experience needed.</p>
+          <span class="bonus-value">Valued at ₹999</span>
+        </div>
+        <span class="bonus-free">FREE</span>
+      </div>
+
+      <div class="bonus-item reveal reveal-delay-2">
+        <div class="bonus-icon">📔</div>
+        <div class="bonus-body">
+          <p class="bonus-title">30-Day Gratitude Healing Journal</p>
+          <p class="bonus-desc">A structured 30-day journaling system that reinforces your Reiki practice, shifts your money mindset, and anchors positive emotional states every single day.</p>
+          <span class="bonus-value">Valued at ₹999</span>
+        </div>
+        <span class="bonus-free">FREE</span>
+      </div>
+
+      <div class="bonus-item reveal reveal-delay-3">
+        <div class="bonus-icon">🔮</div>
+        <div class="bonus-body">
+          <p class="bonus-title">Chakra Blockage Identifier Guide</p>
+          <p class="bonus-desc">A quick-reference visual map of all 7 chakras — which symptoms, diseases and life problems each governs. Use it after the workshop to diagnose and self-heal any time.</p>
+          <span class="bonus-value">Valued at ₹999</span>
+        </div>
+        <span class="bonus-free">FREE</span>
+      </div>
+    </div>
+
+    <div class="value-summary reveal">
+      <p>Total Bonus Value</p>
+      <span class="value-crossed">₹2,997</span>
+      <span class="value-free">FREE</span>
+      <span class="value-note">When you register for the live workshop · Attend live to unlock all bonuses</span>
+    </div>
+
+    <div class="text-center mt-32 reveal">
+      <a href="#register" class="btn-primary">Claim My Bonuses + Register for ₹49 →</a>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+  WHO IS THIS FOR
+══════════════════════════════════════════════ -->
+<section class="section">
+  <div class="container text-center">
+    <p class="eyebrow reveal">Is This For You?</p>
+    <h2 class="section-title reveal">This Workshop is Perfect For</h2>
+    <div class="divider reveal"></div>
+
+    <div class="who-grid">
+      <div class="who-card reveal reveal-delay-1">
+        <div class="who-emoji">🏡</div>
+        <h4>Homemakers</h4>
+        <p>Wanting a natural healing tool for yourself and your family's wellbeing</p>
+      </div>
+      <div class="who-card reveal reveal-delay-2">
+        <div class="who-emoji">💼</div>
+        <h4>Working Professionals</h4>
+        <p>Dealing with burnout, stress, or career blocks you just can't shake off</p>
+      </div>
+      <div class="who-card reveal reveal-delay-3">
+        <div class="who-emoji">🌿</div>
+        <h4>Wellness Seekers</h4>
+        <p>Exploring natural, holistic healing beyond what mainstream medicine offers</p>
+      </div>
+      <div class="who-card reveal reveal-delay-1">
+        <div class="who-emoji">🔮</div>
+        <h4>Existing Healers</h4>
+        <p>Tarot, Astrology &amp; Numerology practitioners ready to deepen their healing practice</p>
+      </div>
+      <div class="who-card reveal reveal-delay-2">
+        <div class="who-emoji">🌙</div>
+        <h4>Spiritual Seekers</h4>
+        <p>Ready to move from reading about spirituality to actually feeling it in your body</p>
+      </div>
+      <div class="who-card reveal reveal-delay-3">
+        <div class="who-emoji">💸</div>
+        <h4>Future Healers</h4>
+        <p>Wanting to explore Reiki as a genuine career and secondary income from home</p>
+      </div>
+    </div>
+
+    <div class="mt-32 reveal">
+      <a href="#register" class="btn-primary">Yes, This Is For Me — Register →</a>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+  MENTOR — SNEHA DEORE
+  FF: 2-col row. Left = image, Right = text.
+  Use FF's "Bio" or "Team Member" layout.
+══════════════════════════════════════════════ -->
+<section class="section section--alt">
+  <div class="container">
+    <p class="eyebrow reveal">Your Grandmaster</p>
+    <h2 class="section-title reveal">Meet Sneha Deore</h2>
+    <div class="divider reveal"></div>
+
+    <div class="mentor-grid">
+
+      <!-- Photo -->
+      <div class="mentor-photo-frame reveal">
+        <!-- ⬇️ REPLACE: swap with Sneha's actual photo once available -->
+        <div class="mentor-photo-placeholder">
+          <div class="emoji">🌸</div>
+          <div class="note">📸 Upload Sneha Deore's portrait here<br>Recommended: head-to-waist, vertical</div>
+        </div>
+      </div>
+
+      <!-- Text -->
+      <div class="reveal reveal-delay-2">
+        <h3 class="mentor-name">Sneha Deore</h3>
+        <p class="mentor-title">Reiki Grandmaster · India's Leading Reiki Healer &amp; Manifestation Coach</p>
+
+        <div class="mentor-stats">
+          <div class="mentor-stat">
+            <span class="mentor-stat-num">30K+</span>
+            <span class="mentor-stat-label">Students Trained</span>
+          </div>
+          <div class="mentor-stat">
+            <span class="mentor-stat-num">Grandmaster</span>
+            <span class="mentor-stat-label">Reiki Level</span>
+          </div>
+          <div class="mentor-stat">
+            <span class="mentor-stat-num">4.9★</span>
+            <span class="mentor-stat-label">Student Rating</span>
+          </div>
+          <div class="mentor-stat">
+            <span class="mentor-stat-num">60+</span>
+            <span class="mentor-stat-label">Countries</span>
+          </div>
+        </div>
+
+        <div class="mentor-credentials">
+          <div class="cred-item"><span class="cred-dot"></span>Certified Reiki Grandmaster (L1 to L7)</div>
+          <div class="cred-item"><span class="cred-dot"></span>Certified Ho'oponopono Practitioner</div>
+          <div class="cred-item"><span class="cred-dot"></span>Manifestation Coach — MySoulSchool</div>
+          <div class="cred-item"><span class="cred-dot"></span>Energy Healer · Chakra Balancing Expert</div>
+          <div class="cred-item"><span class="cred-dot"></span>Trained 30,000+ students across India &amp; globally</div>
+        </div>
+
+        <p class="mentor-bio">
+          Sneha Deore didn't plan to become a healer. She became one because she desperately needed healing herself.
+          <br><br>
+          After years of struggling with her own health, emotional exhaustion and a deep sense of being disconnected from her own life — she discovered Reiki. The first time she felt energy move through her own hands, she knew her life had changed forever.
+          <br><br>
+          Since then, she has risen to become a <strong>Reiki Grandmaster</strong> — training over <strong>30,000 students across 60+ countries</strong> in the art and science of self-healing. She combines ancient Reiki wisdom with modern mind power techniques, Ho'oponopono, chakra science, and manifestation — creating a complete healing system that is practical, experiential, and deeply transformational.
+          <br><br>
+          In this 3-hour live workshop, Sneha will give you what she gives every student: not theory, not lectures — but an <em>experience you will carry in your body for life.</em>
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+  FAQ
+══════════════════════════════════════════════ -->
+<section class="section">
+  <div class="container">
+    <p class="eyebrow text-center reveal">Any Questions?</p>
+    <h2 class="section-title text-center reveal">Frequently Asked Questions</h2>
+    <div class="divider text-center reveal"></div>
+
+    <div class="faq-list">
+      <div class="faq-item reveal">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Do I need any prior Reiki or spiritual experience?
+          <span class="faq-toggle">+</span>
+        </button>
+        <div class="faq-a">None at all. This workshop is designed for complete beginners. If you can hold your hands out, you can feel Reiki energy. Grandmaster Sneha will guide you step by step from zero.</div>
+      </div>
+      <div class="faq-item reveal">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Will I actually feel energy in the very first session?
+          <span class="faq-toggle">+</span>
+        </button>
+        <div class="faq-a">Most participants feel warmth, tingling or a magnetic sensation between their palms within the first 30 minutes. Reiki is not belief-dependent — it functions like gravity. You don't need to believe in it for it to work. Sneha will walk you through the exact technique to feel it live.</div>
+      </div>
+      <div class="faq-item reveal">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Is this a live session or pre-recorded video?
+          <span class="faq-toggle">+</span>
+        </button>
+        <div class="faq-a">This is 100% live on Zoom. The collective energy in a live room is very different from watching a recording. Attend live for the full healing effect and to receive your three bonuses.</div>
+      </div>
+      <div class="faq-item reveal">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          I pay ₹49 — what exactly am I getting? Are there hidden charges?
+          <span class="faq-toggle">+</span>
+        </button>
+        <div class="faq-a">₹49 secures your seat for the 3-hour live workshop, access to the VIP WhatsApp group, and all 3 bonuses (Love Magnet Audio + Gratitude Journal + Chakra Guide) delivered after the session. Zero hidden charges at registration.</div>
+      </div>
+      <div class="faq-item reveal">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          How do I join the workshop after paying?
+          <span class="faq-toggle">+</span>
+        </button>
+        <div class="faq-a">After registration you'll be added to a VIP WhatsApp group where you'll receive the Zoom link, session reminders, and all bonuses. The workshop runs on Zoom — accessible from any phone, tablet or laptop.</div>
+      </div>
+      <div class="faq-item reveal">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Can I use Reiki on my family after this workshop?
+          <span class="faq-toggle">+</span>
+        </button>
+        <div class="faq-a">This workshop gives you Reiki Level 1 foundations and a daily self-healing protocol for yourself. To formally practice on others and receive L1+L2 certification, Sneha will share details about the full Reiki program during the workshop.</div>
+      </div>
+      <div class="faq-item reveal">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          What language will this be taught in?
+          <span class="faq-toggle">+</span>
+        </button>
+        <div class="faq-a">Conversational Hindi and Hinglish — easy to follow for anyone across India regardless of English proficiency.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+  FINAL CTA
+  FF: Full-width dark section, centered text, CTA button
+══════════════════════════════════════════════ -->
+<section class="final-cta" id="register">
+  <div class="glow-orb glow-orb-1" style="top:-100px; right:10%; opacity:0.4;"></div>
+  <div class="glow-orb glow-orb-2" style="bottom:-80px; left:5%; opacity:0.3;"></div>
+
+  <div class="container" style="position:relative; z-index:1;">
+    <p class="eyebrow reveal" style="color:var(--gold-light); text-align:center;">Ready to Feel the Shift?</p>
+    <h2 class="reveal">Your Healing is <em>Just 3 Hours Away</em></h2>
+    <p class="reveal">Everything you've been searching for — relief from exhaustion, clarity on what's blocked, a tool you can use for the rest of your life — is right here. At ₹49, there's no reason to wait.</p>
+
+    <div class="final-price-row reveal">
+      <span class="final-crossed">₹999</span>
+      <span class="final-price">₹49</span>
+      <span class="final-bonus">+ ₹2,997 of FREE Bonuses</span>
+    </div>
+
+    <div class="reveal">
+      <a href="#" class="btn-primary">🌟 Secure My Spot Now — Just ₹49 →</a>
+    </div>
+    <p style="color:rgba(255,255,255,0.38); font-size:13px; margin-top:14px;" class="reveal">
+      Limited seats · VIP WhatsApp group access immediately after payment
+    </p>
+
+    <div class="live-ticker reveal" style="margin: 20px auto 0; justify-content:center;">
+      <span class="live-dot"></span>
+      <span id="ticker-text-2">Sunita from Jaipur just secured her seat</span>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+  FOOTER
+══════════════════════════════════════════════ -->
+<footer>
+  <p>© 2026 MySoulSchool (Sneha Deore) — All Rights Reserved</p>
+  <p>This website is not affiliated with Facebook Inc. or Google Inc.</p>
+  <p style="margin-top:8px;">
+    <a href="#">Terms &amp; Conditions</a> &nbsp;|&nbsp;
+    <a href="#">Privacy Policy</a> &nbsp;|&nbsp;
+    <a href="#">Refund Policy</a> &nbsp;|&nbsp;
+    <a href="#">Contact Us</a>
+  </p>
+  <p style="margin-top:12px; font-size:11px; max-width:700px; margin-left:auto; margin-right:auto; line-height:1.7;">
+    EARNINGS DISCLAIMER: Any healing outcomes or income examples shown through this page represent what is possible, not a guarantee of individual results. Results will vary based on effort, experience, and other factors. This page is in no way sponsored by, endorsed by, or associated with Facebook, Inc. or Google, Inc.
+  </p>
+</footer>
+
+
+<!-- ══════════════════════════════════════════════
+  JAVASCRIPT
+  ─────────────────────────────────────────────
+  FLEXIFUNNELS: Copy everything inside this <script>
+  block and paste into:
+  Settings > Custom Code > Before </body>
+
+  Individual modules:
+  1. COUNTDOWN TIMER     — lines: countdownInit()
+  2. SCROLL REVEAL       — IntersectionObserver
+  3. COUNTER ANIMATION   — animateCounters()
+  4. FLOATING PARTICLES  — ParticlesCanvas class
+  5. FAQ ACCORDION       — toggleFaq()
+  6. LIVE TICKER         — tickerInit()
+══════════════════════════════════════════════ -->
+<script>
+/* ─── 1. COUNTDOWN TIMER ──────────────────────── */
+(function countdownInit() {
+  var end = new Date(Date.now() + (2*86400 + 14*3600 + 32*60 + 7)*1000);
+  var ids = ['cd-d','cd-h','cd-m','cd-s'];
+
+  function pad(n){ return String(n).padStart(2,'0'); }
+
+  function tick(){
+    var diff = Math.max(0, Math.floor((end - Date.now())/1000));
+    var vals = [
+      Math.floor(diff/86400),
+      Math.floor((diff%86400)/3600),
+      Math.floor((diff%3600)/60),
+      diff%60
+    ];
+    vals.forEach(function(v,i){
+      var el = document.getElementById(ids[i]);
+      if(!el) return;
+      var s = pad(v);
+      if(el.textContent !== s){
+        el.classList.remove('cd-flip');
+        void el.offsetWidth; // reflow
+        el.classList.add('cd-flip');
+        el.textContent = s;
+        setTimeout(function(){ el.classList.remove('cd-flip'); },200);
+      }
+    });
+  }
+  tick();
+  setInterval(tick, 1000);
+})();
+
+/* ─── 2. SCROLL REVEAL ────────────────────────── */
+(function scrollRevealInit() {
+  var obs = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){ e.target.classList.add('visible'); obs.unobserve(e.target); }
+    });
+  }, { threshold: 0.12 });
+
+  document.querySelectorAll('.reveal').forEach(function(el){ obs.observe(el); });
+})();
+
+/* ─── 3. COUNTER ANIMATION ────────────────────── */
+(function counterInit() {
+  function easeOut(t){ return 1 - Math.pow(1-t, 3); }
+
+  var obs = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(!e.isIntersecting) return;
+      var el = e.target;
+      var target = parseInt(el.dataset.target, 10);
+      var duration = 1800;
+      var start = null;
+
+      function step(ts){
+        if(!start) start = ts;
+        var progress = Math.min((ts - start) / duration, 1);
+        el.textContent = Math.floor(easeOut(progress) * target).toLocaleString('en-IN');
+        if(progress < 1) requestAnimationFrame(step);
+        else el.textContent = target.toLocaleString('en-IN');
+      }
+      requestAnimationFrame(step);
+      obs.unobserve(el);
+    });
+  }, { threshold: 0.5 });
+
+  document.querySelectorAll('.counter').forEach(function(el){ obs.observe(el); });
+})();
+
+/* ─── 4. FLOATING PARTICLES ───────────────────── */
+(function particlesInit() {
+  var canvas = document.getElementById('particles-canvas');
+  if(!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var particles = [];
+  var W, H;
+
+  function resize(){
+    W = canvas.width  = canvas.offsetWidth;
+    H = canvas.height = canvas.offsetHeight;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  // Particle types: dots + energy rings
+  function createParticle(){
+    var type = Math.random() < 0.7 ? 'dot' : 'ring';
+    return {
+      type: type,
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: type === 'dot' ? Math.random() * 2 + 0.5 : Math.random() * 20 + 8,
+      vx: (Math.random() - 0.5) * 0.4,
+      vy: -(Math.random() * 0.5 + 0.2),
+      alpha: Math.random() * 0.5 + 0.1,
+      decay: Math.random() * 0.002 + 0.001,
+      hue: Math.random() < 0.5 ? 'gold' : 'violet'
+    };
+  }
+
+  for(var i=0; i<55; i++) particles.push(createParticle());
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    particles.forEach(function(p, idx){
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, p.alpha);
+      if(p.type === 'dot'){
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+        ctx.fillStyle = p.hue === 'gold' ? '#F0C040' : '#A08BE0';
+        ctx.fill();
+      } else {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+        ctx.strokeStyle = p.hue === 'gold' ? '#D4A017' : '#6B4DB0';
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      p.x += p.vx;
+      p.y += p.vy;
+      p.alpha -= p.decay;
+
+      // Drift sideways gently
+      p.vx += (Math.random()-0.5)*0.02;
+
+      if(p.alpha <= 0 || p.y < -40){
+        particles[idx] = createParticle();
+        particles[idx].y = H + 10;
+        particles[idx].alpha = Math.random()*0.4 + 0.1;
+      }
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* ─── 5. FAQ ACCORDION ────────────────────────── */
+function toggleFaq(btn){
+  var item = btn.parentElement;
+  var wasOpen = item.classList.contains('open');
+  document.querySelectorAll('.faq-item.open').forEach(function(i){
+    i.classList.remove('open');
+    i.querySelector('.faq-toggle').textContent='+';
+  });
+  if(!wasOpen){
+    item.classList.add('open');
+    btn.querySelector('.faq-toggle').textContent='−';
+  }
+}
+
+/* ─── 6. LIVE TICKER ──────────────────────────── */
+(function tickerInit() {
+  var messages = [
+    'Priya from Mumbai just registered for the workshop',
+    'Neha from Delhi secured her seat 2 minutes ago',
+    'Sunita from Hyderabad just joined the VIP WhatsApp group',
+    'Ritu from Jaipur just registered for the workshop',
+    'Anjali from Pune secured her spot just now',
+    'Kavitha from Chennai just registered',
+    'Meenu from Lucknow just booked her seat',
+    'Seema from Kolkata just joined — 10 seconds ago',
+  ];
+  var i = 0;
+
+  function rotateTicker(elId){
+    var el = document.getElementById(elId);
+    if(!el) return;
+    el.style.transition = 'opacity 0.35s';
+    setInterval(function(){
+      i = (i+1) % messages.length;
+      el.style.opacity = '0';
+      setTimeout(function(){
+        el.textContent = messages[i];
+        el.style.opacity = '1';
+      }, 380);
+    }, 4000);
+  }
+
+  rotateTicker('ticker-text');
+  rotateTicker('ticker-text-2');
+})();
+
+/* ─── 7. HERO PHOTO PARALLAX (subtle) ────────── */
+(function heroParallax() {
+  var hero = document.querySelector('.hero');
+  if(!hero) return;
+  document.addEventListener('mousemove', function(e){
+    var x = (e.clientX / window.innerWidth  - 0.5) * 12;
+    var y = (e.clientY / window.innerHeight - 0.5) * 8;
+    var orbs = hero.querySelectorAll('.glow-orb');
+    orbs.forEach(function(orb, i){
+      var factor = (i+1) * 0.4;
+      orb.style.transform = 'translate('+(x*factor)+'px,'+(y*factor)+'px)';
+    });
+  });
+})();
+
+/* ─── 8. BUTTON RIPPLE EFFECT ─────────────────── */
+document.querySelectorAll('.btn-primary').forEach(function(btn){
+  btn.addEventListener('click', function(e){
+    var ripple = document.createElement('span');
+    var rect = btn.getBoundingClientRect();
+    var size = Math.max(rect.width, rect.height);
+    ripple.style.cssText = [
+      'position:absolute',
+      'border-radius:50%',
+      'background:rgba(255,255,255,0.3)',
+      'transform:scale(0)',
+      'animation:ripple-expand 0.5s linear',
+      'width:'+size+'px',
+      'height:'+size+'px',
+      'left:'+(e.clientX-rect.left-size/2)+'px',
+      'top:'+(e.clientY-rect.top-size/2)+'px',
+      'pointer-events:none'
+    ].join(';');
+    btn.appendChild(ripple);
+    setTimeout(function(){ ripple.remove(); }, 550);
+  });
+});
+
+// Ripple keyframe injected dynamically
+(function(){
+  var s = document.createElement('style');
+  s.textContent = '@keyframes ripple-expand{to{transform:scale(2.5);opacity:0}}';
+  document.head.appendChild(s);
+})();
+</script>
+
+</body>
+</html>
