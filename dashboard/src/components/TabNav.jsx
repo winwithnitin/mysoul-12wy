@@ -5,10 +5,9 @@ const TABS = [
   { key: 'emi',       label: 'SUPER & RGM' },
   { key: 'ltvfunnel', label: 'LTV & Funnel'},
 ];
-
 export default function TabNav({ active, onChange }) {
   return (
-    <div style={{ display:'flex', gap:0, borderBottom:'1px solid var(--border)', background:'var(--surface2)', padding:'0 24px', overflowX:'auto' }}>
+    <div style={{ display:'flex', borderBottom:'1px solid var(--border)', background:'var(--surface2)', padding:'0 24px', overflowX:'auto' }}>
       {TABS.map(tab => {
         const isActive = active === tab.key;
         return (
@@ -18,9 +17,7 @@ export default function TabNav({ active, onChange }) {
             color: isActive ? 'var(--text)' : 'var(--text3)',
             fontWeight: isActive ? 500 : 400,
             padding:'12px 18px', fontSize:13, cursor:'pointer', borderRadius:0, transition:'color 0.15s',
-          }}>
-            {tab.label}
-          </button>
+          }}>{tab.label}</button>
         );
       })}
     </div>

@@ -25,17 +25,28 @@ export async function fetchCSV(sheetId, tab) {
   return parseCSV(await res.text());
 }
 
-// ─── Marketing ────────────────────────────────────────────────────────────────
+// ─── Count leads in a date range from raw rows ────────────────────────────────
+export function countLeadsInRange(rows, dateCol, from, to) {
+  let count = 0;
+  for (let i = 1; i < rows.length; i++) {
+    const d = toISO(rows[i][dateCol], true);
+    if (d && d >= from && d <= to) count++;
+  }
+  return count;
+}
+
+// ─── Marketing (returns raw lead rows so Marketing tab can count any period) ──
 export async function loadMarketingData() {
-  const [spendRows, tarotRows, reikiRows, pcosRows] = await Promise.all([
+  const [spendRows, tarotRows, reikiRows] = await Promise.all([
     fetchCSV(SHEETS.adSpend.id, SHEETS.adSpend.tab),
     fetchCSV(SHEETS.tarot.id,   SHEETS.tarot.tab),
     fetchCSV(SHEETS.reiki.id,   SHEETS.reiki.tab),
-    fetchCSV(SHEETS.pcos.id,    SHEETS.pcos.tab),
   ]);
+
   const header = spendRows[0] || [];
   let off = header[0]?.toLowerCase().includes('timestamp') ? 1 : 0;
   if (header[off]?.toLowerCase().includes('email')) off += 1;
+
   const adSpend = spendRows.slice(1).filter(r => r[off]).map(r => ({
     date:     toISO(r[off], true),
     program:  r[off + 1]?.trim(),
@@ -44,6 +55,8 @@ export async function loadMarketingData() {
     spend:    parseFloat(String(r[off + 4] || '').replace(/[₹,\s]/g, '')) || 0,
     leadsAd:  parseInt(r[off + 5]) || 0,
   }));
+
+  // Keep legacy today/mtd counts for backward compat
   const today = todayISO(), ms = monthStartISO();
   const countLeads = (rows, col) => {
     let td = 0, mtd = 0;
@@ -55,17 +68,20 @@ export async function loadMarketingData() {
     }
     return { today: td, mtd };
   };
+
   const sheetLeads = {
     Tarot: countLeads(tarotRows, SHEETS.tarot.dateCol),
     Reiki: countLeads(reikiRows, SHEETS.reiki.dateCol),
-    PCOS:  countLeads(pcosRows,  SHEETS.pcos.dateCol),
   };
-  const mtdSpend = { Tarot: 0, Reiki: 0, PCOS: 0 };
+
+  const mtdSpend = { Tarot: 0, Reiki: 0 };
   for (const r of adSpend) {
     if (r.date >= ms && r.date <= today && mtdSpend[r.program] !== undefined)
       mtdSpend[r.program] += r.spend;
   }
-  return { adSpend, sheetLeads, mtdSpend, tarotRows, reikiRows, pcosRows };
+
+  // Return raw rows — Marketing tab uses them for period-based lead counting
+  return { adSpend, sheetLeads, mtdSpend, tarotRows, reikiRows };
 }
 
 export function getMarketingSample() {
@@ -75,12 +91,10 @@ export function getMarketingSample() {
       { date: today, program: 'Tarot', platform: 'Meta', account: 'FunnelTraffic', spend: 12000, leadsAd: 45 },
       { date: today, program: 'Tarot', platform: 'Meta', account: 'Internal',      spend: 8500,  leadsAd: 30 },
       { date: today, program: 'Reiki', platform: 'Meta', account: 'Internal',      spend: 5200,  leadsAd: 18 },
-      { date: today, program: 'PCOS',  platform: 'Meta', account: 'FunnelTraffic', spend: 9800,  leadsAd: 35 },
-      { date: today, program: 'PCOS',  platform: 'Meta', account: 'Internal',      spend: 4200,  leadsAd: 15 },
     ],
-    sheetLeads: { Tarot: { today: 38, mtd: 1240 }, Reiki: { today: 16, mtd: 520 }, PCOS: { today: 43, mtd: 1380 } },
-    mtdSpend:   { Tarot: 382000, Reiki: 156000, PCOS: 418000 },
-    tarotRows: [], reikiRows: [], pcosRows: [],
+    sheetLeads: { Tarot: { today: 38, mtd: 1240 }, Reiki: { today: 16, mtd: 520 } },
+    mtdSpend:   { Tarot: 382000, Reiki: 156000 },
+    tarotRows: [], reikiRows: [],
   };
 }
 
@@ -103,20 +117,36 @@ export async function loadSalesData() {
   }));
 }
 
+// ─── Duplicate detection — FIXED: skip rows with no phone AND no email ────────
 export function detectDuplicates(enrollments) {
   const byPhone = {}, byEmail = {};
+
   for (const e of enrollments) {
-    if (e.phone) { if (!byPhone[e.phone]) byPhone[e.phone] = []; byPhone[e.phone].push(e); }
-    if (e.email) { if (!byEmail[e.email]) byEmail[e.email] = []; byEmail[e.email].push(e); }
+    // FIX: Old rows (pre-2025) have empty phone AND email → skip them entirely
+    // They were all grouping under byPhone[''] causing false positives
+    if (!e.phone && !e.email) continue;
+
+    if (e.phone) {
+      if (!byPhone[e.phone]) byPhone[e.phone] = [];
+      byPhone[e.phone].push(e);
+    }
+    if (e.email) {
+      if (!byEmail[e.email]) byEmail[e.email] = [];
+      byEmail[e.email].push(e);
+    }
   }
-  const type1 = [], type2 = [], seen1 = new Set(), seen2 = new Set();
+
+  const type1 = [], type2 = [];
+  const seen1 = new Set(), seen2 = new Set();
+
   const checkGroup = (entries) => {
     const byProg = {};
     for (const e of entries) {
-      const pk = e.program?.toLowerCase();
+      const pk = e.program?.toLowerCase() || '';
       if (!byProg[pk]) byProg[pk] = [];
       byProg[pk].push(e);
     }
+    // Type 1: same program, same phone/email
     for (const dupes of Object.values(byProg)) {
       if (dupes.length > 1) {
         for (const d of dupes) {
@@ -125,18 +155,22 @@ export function detectDuplicates(enrollments) {
         }
       }
     }
+    // Type 2: has both Diploma and Mastery (Tarot bundle upsell)
     const programs = entries.map(e => e.program?.toLowerCase() || '');
-    const hasDiploma = programs.some(p => p.includes('diploma'));
-    const hasMastery = programs.some(p => p.includes('mastery'));
-    if (hasDiploma && hasMastery) {
-      for (const e of entries.filter(e => e.program?.toLowerCase().includes('diploma') || e.program?.toLowerCase().includes('mastery'))) {
+    if (programs.some(p => p.includes('diploma')) && programs.some(p => p.includes('mastery'))) {
+      for (const e of entries.filter(e => {
+        const p = e.program?.toLowerCase() || '';
+        return p.includes('diploma') || p.includes('mastery');
+      })) {
         const uid = `${e.phone}|${e.program}|${e.date}`;
         if (!seen2.has(uid)) { seen2.add(uid); type2.push(e); }
       }
     }
   };
+
   for (const entries of Object.values(byPhone)) if (entries.length > 1) checkGroup(entries);
   for (const entries of Object.values(byEmail)) if (entries.length > 1) checkGroup(entries);
+
   return { type1, type2 };
 }
 
@@ -146,7 +180,7 @@ export async function loadFinanceData() {
   if (!res.ok) throw new Error(`Finance API ${res.status}`);
   const data = await res.json();
   return data.map(row => ({
-    month:         row.Month                      || '',
+    month:         row.Month                   || '',
     studentFees:   parseFloat(row.Student_Fees)   || 0,
     adGoogle:      parseFloat(row.Ad_Google)       || 0,
     adMeta:        parseFloat(row.Ad_Meta)         || 0,
@@ -177,37 +211,31 @@ export async function loadEMIData() {
 }
 
 export function getEMISample() {
-  const today = new Date();
-  const past  = (n) => new Date(today.getTime() - n*86400000).toISOString().slice(0,10);
+  const past = n => new Date(Date.now()-n*86400000).toISOString().slice(0,10);
   return {
     students: [],
     v2: [
-      { batch:'Aug-2025', program:'SUPER', name:'Priya Sharma',  phone:'9819906697', email:'priya@gmail.com',   programFee:250000, totalPlanned:247500, totalActual:172500, emiDue:75000,  paymentPlan:10, timestamp:past(200) },
-      { batch:'Aug-2025', program:'SUPER', name:'Shivi Gupta',   phone:'9991289434', email:'shivi@gmail.com',   programFee:250000, totalPlanned:255000, totalActual:82500,  emiDue:172500, paymentPlan:10, timestamp:past(195) },
-      { batch:'Aug-2025', program:'RGM',   name:'Pallavi Handa', phone:'9736183799', email:'pallavi@gmail.com', programFee:120000, totalPlanned:120000, totalActual:120000, emiDue:0,      paymentPlan:0,  timestamp:past(190) },
+      { batch:'Aug-2025', program:'SUPER', name:'Priya Sharma',  phone:'9819906697', email:'priya@gmail.com',   totalPlanned:247500, totalActual:172500, emiDue:75000,  timestamp:past(200) },
+      { batch:'Aug-2025', program:'RGM',   name:'Pallavi Handa', phone:'9736183799', email:'pallavi@gmail.com', totalPlanned:120000, totalActual:120000, emiDue:0,      timestamp:past(190) },
     ],
   };
 }
 
-// ─── LTV & Funnel (includes ad spend for ROAS) ────────────────────────────────
+// ─── LTV & Funnel data ────────────────────────────────────────────────────────
 export async function loadLTVFunnelData() {
-  const [tarotRows, reikiRows, pcosRows, salesRows, spendRows, emiResp] = await Promise.all([
+  const [tarotRows, reikiRows, salesRows, spendRows, emiResp] = await Promise.all([
     fetchCSV(SHEETS.tarot.id,   SHEETS.tarot.tab),
     fetchCSV(SHEETS.reiki.id,   SHEETS.reiki.tab),
-    fetchCSV(SHEETS.pcos.id,    SHEETS.pcos.tab),
     fetchCSV(SALES_SHEET.id,    SALES_SHEET.tab),
     fetchCSV(SHEETS.adSpend.id, SHEETS.adSpend.tab),
-    fetch(EMI_URL).then(r => r.json()).catch(() => ({ v2: [] })),
+    fetch(EMI_URL).then(r => r.json()).catch(() => ({ v2: [], students: [] })),
   ]);
 
-  // Lead counts
   const leadCounts = {
     Tarot: Math.max(0, tarotRows.length - 1),
     Reiki: Math.max(0, reikiRows.length - 1),
-    PCOS:  Math.max(0, pcosRows.length  - 1),
   };
 
-  // Sales enrollments (with amount received for ROAS)
   const sales = salesRows.slice(1).filter(r => r[1]?.trim()).map(r => ({
     date:        toISO(r[1], true),
     name:        r[2]?.trim() || '',
@@ -215,10 +243,9 @@ export async function loadLTVFunnelData() {
     phone:       r[4]?.replace(/\D/g,'').slice(-10) || '',
     program:     r[5]?.trim() || '',
     programFee:  parseFloat(r[8])  || 0,
-    amtReceived: parseFloat(r[10]) || 0,   // cash basis for ROAS
+    amtReceived: parseFloat(r[10]) || 0,
   }));
 
-  // Ad spend — parse with same offset logic as Marketing tab
   const hdr = spendRows[0] || [];
   let off = hdr[0]?.toLowerCase().includes('timestamp') ? 1 : 0;
   if (hdr[off]?.toLowerCase().includes('email')) off += 1;
@@ -229,10 +256,8 @@ export async function loadLTVFunnelData() {
   }));
 
   return {
-    leadCounts,
-    sales,
-    adSpend,
-    emiV2: emiResp.v2     || [],
-    emiV1: emiResp.students || [],  // V1 includes per-EMI planned dates — needed for forecast
+    leadCounts, sales, adSpend,
+    emiV2: emiResp.v2       || [],
+    emiV1: emiResp.students || [],
   };
 }

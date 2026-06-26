@@ -1,9 +1,9 @@
-// ─── Ad Spend & Lead Sheets (Marketing tab) ──────────────────────────────────
+// ─── Ad Spend & Lead Sheets ───────────────────────────────────────────────────
 export const SHEETS = {
   adSpend: { id: '10fhstijcgw_qAKCfoF04i3NIsiFegnlcMgOG3px7BfA', tab: 'Ad_Spend' },
   tarot:   { id: '1K1NqGSAGb7Hc9fSD5EQuBJvsJ8GfFkgwbr1CqJBPX0M', tab: 'LeadsMasterSheet', dateCol: 5 },
   reiki:   { id: '1F_HLtYFY6g61vVslmMUz64BLHWCvOCc9-A2BG_tOicI', tab: 'Free_Leads',        dateCol: 5 },
-  pcos:    { id: '1VumI6g9cr4mHpJPc_CSFrjVkr4jw9iT9NDw6fzJU88E', tab: 'PaymentMasterSheet', dateCol: 18 },
+  // PCOS removed — MySoulSpace closed June 2026
 };
 
 // ─── Enrollment Sheet (Sales tab) ────────────────────────────────────────────
@@ -12,17 +12,14 @@ export const SALES_SHEET = {
   tab: 'Dashboard',
 };
 
-// ─── Finance Apps Script URL ──────────────────────────────────────────────────
+// ─── Apps Script URLs ─────────────────────────────────────────────────────────
 export const FINANCE_URL = 'https://script.google.com/macros/s/AKfycbwhmj1f3nhS4mRFzS1fxlf3EeF8Q0BIXhzLDn9BLlgupjFU8WqNJJqC5e9epsP4jVE-/exec';
+export const EMI_URL     = 'https://script.google.com/macros/s/AKfycbwgKK2X3PYGLlOOu-D_ZJKvYQKpdPVAtXE3T1bkaybI-IIl5vX0_IU6DktaKdqhZnPg_A/exec';
 
-// ─── EMI Apps Script URL ──────────────────────────────────────────────────────
-export const EMI_URL = 'https://script.google.com/macros/s/AKfycbwgKK2X3PYGLlOOu-D_ZJKvYQKpdPVAtXE3T1bkaybI-IIl5vX0_IU6DktaKdqhZnPg_A/exec';
-
-// ─── Marketing programs ───────────────────────────────────────────────────────
+// ─── Programs — Tarot & Reiki only (PCOS removed) ────────────────────────────
 export const PROGRAMS = [
   { key: 'Tarot', color: 'var(--tarot)', dim: 'var(--tarot-dim)', cplTarget: 280 },
   { key: 'Reiki', color: 'var(--reiki)', dim: 'var(--reiki-dim)', cplTarget: 750 },
-  { key: 'PCOS',  color: 'var(--pcos)',  dim: 'var(--pcos-dim)',  cplTarget: 700 },
 ];
 
 // ─── Sales funnels ────────────────────────────────────────────────────────────
