@@ -28,18 +28,17 @@ jobs:
         working-directory: dashboard
         run: npm run build
 
-      - name: Prepare deploy folder
+      - name: Copy root pages to docs
         run: |
-          mkdir -p _deploy
-          cp index.html _deploy/
-          cp reiki-optin-page-v2.html _deploy/
-          cp reiki-optin-page.html _deploy/
-          mkdir -p _deploy/dashboard
-          cp -r dashboard/dist/* _deploy/dashboard/
+          mkdir -p docs
+          cp index.html docs/ 2>/dev/null || true
+          cp reiki-optin-page-v2.html docs/ 2>/dev/null || true
+          cp reiki-optin-page.html docs/ 2>/dev/null || true
 
-      - name: Deploy to gh-pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: _deploy
-          force_orphan: true
+      - name: Commit docs to main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/
+          git diff --staged --quiet || git commit -m "Build: update docs/ [skip ci]"
+          git push
