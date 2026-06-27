@@ -98,6 +98,48 @@ export function getMarketingSample() {
   };
 }
 
+// ─── Transaction data — reads BOTH tabs and merges ────────────────────────
+// "All New Booking"  → new enrollment payments (used for Cashflow + Closer commission)
+// "All Due Payment"  → balance/due payments     (used for Cashflow only)
+// Columns: submitter(0) | timestamp DD/MM/YYYY HH:MM:SS(1) | name(2) | email(3)
+//          phone(4) | amount(5) | paidThrough(6) | program(7) | closer(8) | type(9 optional)
+function parseTransactionRow(r, defaultType) {
+  const raw = r[1]?.trim() || '';
+  const m = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  const date = m ? `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}` : null;
+  return {
+    date,
+    name:        r[2]?.trim() || '',
+    email:       r[3]?.trim()?.toLowerCase() || '',
+    phone:       r[4]?.trim()?.replace(/\D/g,'').slice(-10) || '',
+    amount:      parseFloat(String(r[5]||'').replace(/[₹,\s]/g,'')) || 0,
+    paidThrough: r[6]?.trim() || '',
+    program:     r[7]?.trim() || '',
+    closer:      r[8]?.trim() || '',
+    // Col 9 may say type explicitly; fallback to defaultType based on which tab it came from
+    type:        r[9]?.trim() || defaultType,
+  };
+}
+
+export async function loadTransactionData() {
+  const [newRows, dueRows] = await Promise.all([
+    fetchCSV(SALES_SHEET.id, 'All New Booking').catch(() => []),
+    fetchCSV(SALES_SHEET.id, 'All Due Payment').catch(() => []),
+  ]);
+
+  const newTx = newRows.slice(1)
+    .filter(r => r[1]?.trim())
+    .map(r => parseTransactionRow(r, 'New Booking'));
+
+  const dueTx = dueRows.slice(1)
+    .filter(r => r[1]?.trim())
+    .map(r => parseTransactionRow(r, 'Due Payment'));
+
+  return [...newTx, ...dueTx]
+    .filter(r => r.date && r.amount > 0)
+    .sort((a, b) => a.date > b.date ? -1 : 1);
+}
+
 // ─── Sales ────────────────────────────────────────────────────────────────────
 export async function loadSalesData() {
   const rows = await fetchCSV(SALES_SHEET.id, SALES_SHEET.tab);
