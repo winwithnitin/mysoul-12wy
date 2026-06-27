@@ -350,75 +350,83 @@ function CashflowTab({ transactions, period }) {
 }
 
 // -- Closer tab ----------------------------------------------------------------
-function CloserTab({ transactions, enrollments, period }) {
-  const { from, to } = getDR(period);
-
-  const txF = transactions.filter(t => t.date>=from && t.date<=to && t.type==="New Booking" && t.closer);
-  const cTx = {};
-  for (const t of txF) {
-    const c = t.closer.trim();
-    if (!cTx[c]) cTx[c] = { cash:0, deals:0 };
-    cTx[c].cash  += t.amount;
-    cTx[c].deals++;
-  }
-
-  const cEn = {};
+// Data source: Dashboard tab only (enrollments)
+// bookingAmount (col G) = cash collected at time of booking = closer commission base
+// amtReceived   (col K) = total cash received so far (booking + later payments by support)
+// laterPaid     = amtReceived - bookingAmount = collected by support team after booking
+function CloserTab({ enrollments }) {
+  // Build closer stats from Dashboard enrollment records
+  const closerMap = {};
   for (const e of enrollments) {
     const c = e.closedBy && e.closedBy !== "Unknown" ? e.closedBy.trim() : null;
     if (!c) continue;
-    if (!cEn[c]) cEn[c] = { rev:0, count:0 };
-    cEn[c].rev += e.programFee;
-    cEn[c].count++;
+    if (!closerMap[c]) closerMap[c] = {
+      bookingTotal: 0,   // sum of col G - commission base
+      receivedTotal: 0,  // sum of col K - total cash in
+      programFeeTotal: 0,// sum of col I - total deal value
+      count: 0,
+      fullPay: 0,        // amtDue === 0 at booking
+      partPay: 0,        // amtDue > 0 at booking
+    };
+    const m = closerMap[c];
+    m.count++;
+    m.bookingTotal    += e.bookingAmount  || 0;
+    m.receivedTotal   += e.amtReceived    || 0;
+    m.programFeeTotal += e.programFee     || 0;
+    if ((e.amtDue || 0) <= 0) m.fullPay++;
+    else m.partPay++;
   }
 
-  const allNames = new Set([...Object.keys(cTx), ...Object.keys(cEn)]);
-  const closers = [...allNames].map(name => ({
+  const closers = Object.entries(closerMap).map(([name, m]) => ({
     name,
-    cash:    cTx[name]?.cash    || 0,
-    txDeals: cTx[name]?.deals   || 0,
-    rev:     cEn[name]?.rev     || 0,
-    count:   cEn[name]?.count   || 0,
-  })).sort((a,b) => b.cash - a.cash);
+    bookingTotal:    m.bookingTotal,
+    receivedTotal:   m.receivedTotal,
+    programFeeTotal: m.programFeeTotal,
+    laterPaid:       Math.max(0, m.receivedTotal - m.bookingTotal),
+    count:           m.count,
+    fullPay:         m.fullPay,
+    partPay:         m.partPay,
+    fullPct:         m.count > 0 ? Math.round((m.fullPay/m.count)*100) : 0,
+    avgBooking:      m.count > 0 ? Math.round(m.bookingTotal/m.count) : 0,
+  })).sort((a,b) => b.bookingTotal - a.bookingTotal);
 
-  const maxCash = Math.max(...closers.map(c => c.cash), 1);
-  const medals  = ["#1","#2","#3"];
+  const maxBook  = Math.max(...closers.map(c => c.bookingTotal), 1);
+  const medals   = ["#1","#2","#3"];
 
   if (closers.length === 0) {
-    return <div style={{ padding:"3rem", color:"var(--text3)", textAlign:"center", fontSize:13 }}>No closer data for this period.</div>;
+    return <div style={{ padding:"3rem", color:"var(--text3)", textAlign:"center", fontSize:13 }}>No closer data for this period. Check that Closed By column is filled in the Dashboard tab.</div>;
   }
 
   return (
     <div style={{ padding:"0 24px 32px" }}>
+      {/* Top 3 cards */}
       <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:16, marginBottom:28 }}>
         {closers.slice(0,3).map((c,rank) => {
           const col = cc(c.name);
           return (
             <div key={c.name} style={{
-              background:   rank===0 ? col.dim : "var(--surface)",
-              border:       "1px solid var(--border)",
-              borderTop:    "3px solid "+col.bg,
-              borderRadius: 12,
-              padding:      "16px 18px",
-              position:     "relative",
+              background: rank===0 ? col.dim : "var(--surface)",
+              border: "1px solid var(--border)",
+              borderTop: "3px solid "+col.bg,
+              borderRadius: 12, padding: "16px 18px", position: "relative",
             }}>
               {rank === 0 && (
-                <div style={{ position:"absolute", top:10, right:12, fontSize:12, background:col.bg, color:"#fff", padding:"2px 8px", borderRadius:4, fontWeight:700 }}>
-                  TOP
-                </div>
+                <div style={{ position:"absolute", top:10, right:12, fontSize:11, background:col.bg, color:"#fff", padding:"2px 8px", borderRadius:4, fontWeight:700 }}>TOP</div>
               )}
               <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:14 }}>
-                <span style={{ fontSize:14, fontWeight:700, color:"var(--text3)" }}>{medals[rank]||""}</span>
+                <span style={{ fontSize:13, fontWeight:700, color:"var(--text3)" }}>{medals[rank]||""}</span>
                 <span style={{ fontSize:15, fontWeight:700, color:col.bg }}>{c.name}</span>
               </div>
               {[
-                ["Cash Collected",  inr(Math.round(c.cash)), col.bg      ],
-                ["Transactions",    num(c.txDeals),          null        ],
-                ["Enrollments",     num(c.count),            null        ],
-                ["Enr Revenue",     inr(Math.round(c.rev)), "var(--success)"],
-              ].map(([l,v,clr]) => (
+                ["Booking Amount",    inr(Math.round(c.bookingTotal)),  col.bg        ],
+                ["Total Received",    inr(Math.round(c.receivedTotal)), "var(--success)"],
+                ["Collected by Sppt",inr(Math.round(c.laterPaid)),     "var(--reiki)" ],
+                ["Enrollments",       num(c.count),                     null           ],
+                ["Full Payments",     c.fullPct+"%  ("+c.fullPay+"/"+c.count+")", null],
+              ].map(([l,v,cl]) => (
                 <div key={l} style={{ display:"flex", justifyContent:"space-between", padding:"4px 0", borderBottom:"1px solid var(--border2)" }}>
-                  <span style={{ fontSize:12, color:"var(--text2)" }}>{l}</span>
-                  <span style={{ fontSize:13, fontWeight:500, color:clr||"var(--text)" }}>{v}</span>
+                  <span style={{ fontSize:11, color:"var(--text2)" }}>{l}</span>
+                  <span style={{ fontSize:12, fontWeight:500, color:cl||"var(--text)" }}>{v}</span>
                 </div>
               ))}
             </div>
@@ -426,22 +434,23 @@ function CloserTab({ transactions, enrollments, period }) {
         })}
       </div>
 
-      <div style={{ fontSize:11, color:"var(--text3)", textTransform:"uppercase", letterSpacing:.5, marginBottom:10 }}>Full Leaderboard</div>
+      {/* Leaderboard bar chart */}
+      <div style={{ fontSize:11, color:"var(--text3)", textTransform:"uppercase", letterSpacing:.5, marginBottom:10 }}>Leaderboard -- Booking Amount (Commission Base)</div>
       <div style={sbox}>
         {closers.map((c,i) => {
           const col = cc(c.name);
-          const barW = Math.round(maxCash > 0 ? (c.cash/maxCash)*100 : 0);
+          const barW = Math.round(maxBook > 0 ? (c.bookingTotal/maxBook)*100 : 0);
           return (
             <div key={c.name} style={{ padding:"14px 18px", borderBottom:"1px solid var(--border2)", background:i===0?col.dim:"transparent" }}>
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
                 <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                  <span style={{ fontSize:14, color:"var(--text3)" }}>{medals[i]||("#"+(i+1))}</span>
+                  <span style={{ fontSize:13, color:"var(--text3)" }}>{medals[i]||("#"+(i+1))}</span>
                   <span style={{ background:col.bg, color:"#fff", padding:"3px 12px", borderRadius:6, fontWeight:700, fontSize:13 }}>{c.name}</span>
                   {i === 0 && <span style={{ fontSize:11, color:col.bg, fontWeight:600 }}>Winner</span>}
                 </div>
                 <div style={{ textAlign:"right" }}>
-                  <div style={{ fontSize:18, fontWeight:700, color:col.bg }}>{inr(Math.round(c.cash))}</div>
-                  <div style={{ fontSize:11, color:"var(--text3)" }}>{c.txDeals} txn, {c.count} enr</div>
+                  <div style={{ fontSize:18, fontWeight:700, color:col.bg }}>{inr(Math.round(c.bookingTotal))}</div>
+                  <div style={{ fontSize:11, color:"var(--text3)" }}>{c.count} deals, {c.fullPct}% full pay</div>
                 </div>
               </div>
               <div style={{ height:6, background:"var(--border)", borderRadius:3 }}>
@@ -452,10 +461,22 @@ function CloserTab({ transactions, enrollments, period }) {
         })}
       </div>
 
+      {/* Detailed stats table */}
       <div style={{ fontSize:11, color:"var(--text3)", textTransform:"uppercase", letterSpacing:.5, marginBottom:10 }}>Detailed Stats</div>
       <div style={sbox}>
         <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13 }}>
-          <thead><tr>{["Closer","Cash Collected","Transactions","Enrollments","Enr Revenue","Avg Deal"].map((h,i) => <th key={h} style={i===0?thL:th}>{h}</th>)}</tr></thead>
+          <thead>
+            <tr>
+              <th style={thL}>Closer</th>
+              <th style={th}>Deals</th>
+              <th style={{ ...th, color:"var(--tarot)" }}>Booking Amt</th>
+              <th style={{ ...th, color:"var(--success)" }}>Total Recd</th>
+              <th style={{ ...th, color:"var(--reiki)" }}>Later by Sppt</th>
+              <th style={th}>Full Pay</th>
+              <th style={th}>Part Pay</th>
+              <th style={th}>Avg Booking</th>
+            </tr>
+          </thead>
           <tbody>
             {closers.map((c,i) => {
               const col = cc(c.name);
@@ -464,32 +485,63 @@ function CloserTab({ transactions, enrollments, period }) {
                   <td style={tdS("left")}>
                     <span style={{ background:col.bg, color:"#fff", padding:"2px 10px", borderRadius:5, fontWeight:700, fontSize:12 }}>{c.name}</span>
                   </td>
-                  <td style={{ ...tdS(), color:col.bg, fontWeight:700 }}>{inr(Math.round(c.cash))}</td>
-                  <td style={tdS()}>{c.txDeals}</td>
                   <td style={tdS()}>{c.count}</td>
-                  <td style={{ ...tdS(), color:"var(--success)" }}>{inr(Math.round(c.rev))}</td>
-                  <td style={tdS()}>{c.count>0 ? inr(Math.round(c.rev/c.count)) : "--"}</td>
+                  <td style={{ ...tdS(), color:"var(--tarot)", fontWeight:700 }}>{inr(Math.round(c.bookingTotal))}</td>
+                  <td style={{ ...tdS(), color:"var(--success)", fontWeight:700 }}>{inr(Math.round(c.receivedTotal))}</td>
+                  <td style={{ ...tdS(), color:"var(--reiki)" }}>{c.laterPaid>0 ? inr(Math.round(c.laterPaid)) : "--"}</td>
+                  <td style={{ ...tdS(), color:"var(--success)" }}>{c.fullPay} ({c.fullPct}%)</td>
+                  <td style={{ ...tdS(), color:c.partPay>0?"var(--warning)":"var(--text3)" }}>{c.partPay}</td>
+                  <td style={tdS()}>{inr(c.avgBooking)}</td>
                 </tr>
               );
             })}
           </tbody>
         </table>
       </div>
+      <div style={{ fontSize:11, color:"var(--text3)", lineHeight:1.7 }}>
+        Booking Amount = cash collected at enrollment (col G, commission base for closers).
+        Total Received = all cash collected including later payments (col K).
+        Later by Sppt = amount collected after booking by support team = Total Received minus Booking Amount.
+      </div>
     </div>
   );
 }
 
 // -- Company Revenue tab -------------------------------------------------------
+// SUPER/RGM: filter by batch date (parsed from s.batch e.g. "Dec 2025" -> "2025-12-01")
+// s.timestamp is unreliable in real data; batch name is always present
+function parseBatchDate(batchName) {
+  const mo = {jan:"01",feb:"02",mar:"03",apr:"04",may:"05",jun:"06",jul:"07",aug:"08",sep:"09",oct:"10",nov:"11",dec:"12"};
+  const m = (batchName||"").toLowerCase().match(/([a-z]+)\s+(\d{4})/);
+  if (!m) return null;
+  const month = mo[m[1].slice(0,3)];
+  return month ? m[2]+"-"+month+"-01" : null;
+}
+
 function RevTab({ transactions, emiV2, period }) {
   const allPeriods = PERIODS.map(pk => {
     const { from:f, to:t } = getDR(pk.key);
     const tx  = transactions.filter(x => x.date>=f && x.date<=t);
     const tL  = tx.filter(x => ISOT(x.program)).reduce((s,x) => s+x.amount, 0);
     const rL  = tx.filter(x => ISOR(x.program)).reduce((s,x) => s+x.amount, 0);
-    const sup = emiV2.filter(s => s.program==="SUPER" && s.timestamp>=f && s.timestamp<=t).reduce((s,x) => s+(x.totalActual||0), 0);
-    const rgm = emiV2.filter(s => s.program==="RGM"   && s.timestamp>=f && s.timestamp<=t).reduce((s,x) => s+(x.totalActual||0), 0);
+    // Use batch date (from s.batch name) for period matching -- s.timestamp unreliable
+    const sup = emiV2.filter(s => {
+      if (s.program !== "SUPER") return false;
+      const bd = parseBatchDate(s.batch);
+      return bd ? (bd >= f && bd <= t) : false;
+    }).reduce((s,x) => s+(x.totalActual||0), 0);
+    const rgm = emiV2.filter(s => {
+      if (s.program !== "RGM") return false;
+      const bd = parseBatchDate(s.batch);
+      return bd ? (bd >= f && bd <= t) : false;
+    }).reduce((s,x) => s+(x.totalActual||0), 0);
     return { ...pk, tL, rL, sup, rgm, total:tL+rL+sup+rgm };
   });
+
+  // Also compute all-time SUPER/RGM totals for reference
+  const allSuper = emiV2.filter(s=>s.program==="SUPER").reduce((s,x)=>s+(x.totalActual||0),0);
+  const allRGM   = emiV2.filter(s=>s.program==="RGM").reduce((s,x)=>s+(x.totalActual||0),0);
+
   const cur = allPeriods.find(p => p.key===period) || allPeriods[0];
 
   return (
@@ -503,7 +555,8 @@ function RevTab({ transactions, emiV2, period }) {
             <div style={{ fontSize:13, fontWeight:700, color, marginBottom:14 }}>{label} -- {cur.label}</div>
             {[
               ["L1 cash collected",       inr(Math.round(l1)), color],
-              [htLabel+" cash received",  inr(Math.round(ht)), color],
+              [htLabel+" cash (period)",  inr(Math.round(ht)), color],
+              [htLabel+" cash (all time)",inr(Math.round(label==="Tarot Funnel"?allSuper:allRGM)), "var(--text3)"],
             ].map(([l,v,c]) => (
               <div key={l} style={{ display:"flex", justifyContent:"space-between", padding:"5px 0", borderBottom:"1px solid var(--border2)" }}>
                 <span style={{ fontSize:12, color:"var(--text2)" }}>{l}</span>
@@ -555,7 +608,9 @@ function RevTab({ transactions, emiV2, period }) {
         </table>
       </div>
       <div style={{ fontSize:11, color:"var(--text3)", lineHeight:1.7 }}>
-        L1 = actual cash from All New Booking + Due Payment tabs. SUPER/RGM = cash received by enrollment date.
+        L1 = actual cash from All New Booking + Due Payment tabs (real transaction dates).
+        SUPER/RGM = cash received filtered by batch launch date (e.g. "Dec 2025" batch = Dec 2025).
+        All-time totals shown in parentheses on each card for reference.
       </div>
     </div>
   );
@@ -632,7 +687,7 @@ export default function Sales() {
       </div>
       {sub==="overview" && <OverviewTab enr={fEnr} all={enr} />}
       {sub==="cashflow" && <CashflowTab transactions={tx} period={period} />}
-      {sub==="closers"  && <CloserTab   transactions={tx} enrollments={fEnr} period={period} />}
+      {sub==="closers"  && <CloserTab   enrollments={fEnr} />}
       {sub==="revenue"  && <RevTab      transactions={tx} emiV2={emi} period={period} />}
     </div>
   );
