@@ -45,7 +45,9 @@ export function getDateRange(period) {
     case 'thisWeek': { const ws=new Date(today); ws.setDate(today.getDate()-((today.getDay()+6)%7)); return { from:iso(ws), to:todayStr, label:'This Week' }; }
     case 'thisMonth': return { from:`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-01`, to:todayStr, label:'This Month' };
     case 'lastMonth': { const lm=new Date(today.getFullYear(),today.getMonth()-1,1); const lme=new Date(today.getFullYear(),today.getMonth(),0); return { from:iso(lm), to:iso(lme), label:'Last Month' }; }
+    case 'lastWeek':    { const we=new Date(today); we.setDate(today.getDate()-((today.getDay()+6)%7)-1); const ws=new Date(we); ws.setDate(we.getDate()-6); return { from:iso(ws), to:iso(we), label:'Last Week' }; }
     case 'last3months': { const t3=new Date(today); t3.setMonth(t3.getMonth()-3); return { from:iso(t3), to:todayStr, label:'Last 3 Months' }; }
+    case 'last6months': { const t6=new Date(today); t6.setMonth(t6.getMonth()-6); return { from:iso(t6), to:todayStr, label:'Last 6 Months' }; }
     case 'thisYear': return { from:`${today.getFullYear()}-01-01`, to:todayStr, label:`YTD ${today.getFullYear()}` };
     default: return { from:todayStr, to:todayStr, label:'Today' };
   }

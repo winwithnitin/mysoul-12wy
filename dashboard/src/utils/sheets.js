@@ -98,6 +98,34 @@ export function getMarketingSample() {
   };
 }
 
+// ─── Transaction data (All New Booking + All Due Payment unified tab) ────
+// Columns: submitter(0) | timestamp DD/MM/YYYY HH:MM:SS(1) | name(2) | email(3)
+//          phone(4) | amount(5) | paidThrough(6) | program(7) | closer(8) | type(9)
+export async function loadTransactionData() {
+  try {
+    const rows = await fetchCSV(SALES_SHEET.id, 'All New Booking');
+    return rows.slice(1).filter(r => r[1]?.trim()).map(r => {
+      // Parse DD/MM/YYYY HH:MM:SS timestamp
+      const raw = r[1]?.trim() || '';
+      const m = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+      const date = m ? `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}` : null;
+      return {
+        date,
+        name:        r[2]?.trim() || '',
+        email:       r[3]?.trim()?.toLowerCase() || '',
+        phone:       r[4]?.trim()?.replace(/\D/g,'').slice(-10) || '',
+        amount:      parseFloat(String(r[5]||'').replace(/[₹,\s]/g,'')) || 0,
+        paidThrough: r[6]?.trim() || '',
+        program:     r[7]?.trim() || '',
+        closer:      r[8]?.trim() || '',
+        type:        (r[9]?.trim() || 'New Booking'), // "New Booking" or "Due Payment"
+      };
+    }).filter(r => r.date && r.amount > 0);
+  } catch (e) {
+    return [];
+  }
+}
+
 // ─── Sales ────────────────────────────────────────────────────────────────────
 export async function loadSalesData() {
   const rows = await fetchCSV(SALES_SHEET.id, SALES_SHEET.tab);
