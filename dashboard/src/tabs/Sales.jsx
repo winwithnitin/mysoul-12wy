@@ -353,7 +353,6 @@ function CashflowTab({ transactions, period }) {
 function CloserTab({ transactions, enrollments, period }) {
   const { from, to } = getDR(period);
 
-  // Only New Booking transactions for closer commission
   const txF = transactions.filter(t => t.date>=from && t.date<=to && t.type==="New Booking" && t.closer);
   const cTx = {};
   for (const t of txF) {
