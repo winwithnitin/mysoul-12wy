@@ -1,7 +1,7 @@
 import { toISO, todayISO, monthStartISO } from './dates.js';
 import { SHEETS, SALES_SHEET, FINANCE_URL, EMI_URL } from '../config.js';
 
-// ─── Shared helpers ───────────────────────────────────────────────────────────
+// --- Shared helpers -----------------------------------------------------------
 export function parseCSV(text) {
   const rows = [];
   for (const line of text.split('\n')) {
@@ -25,7 +25,7 @@ export async function fetchCSV(sheetId, tab) {
   return parseCSV(await res.text());
 }
 
-// ─── Count leads in a date range from raw rows ────────────────────────────────
+// --- Count leads in a date range from raw rows --------------------------------
 export function countLeadsInRange(rows, dateCol, from, to) {
   let count = 0;
   for (let i = 1; i < rows.length; i++) {
@@ -35,7 +35,7 @@ export function countLeadsInRange(rows, dateCol, from, to) {
   return count;
 }
 
-// ─── Marketing (returns raw lead rows so Marketing tab can count any period) ──
+// --- Marketing ----------------------------------------------------------------
 export async function loadMarketingData() {
   const [spendRows, tarotRows, reikiRows] = await Promise.all([
     fetchCSV(SHEETS.adSpend.id, SHEETS.adSpend.tab),
@@ -52,11 +52,10 @@ export async function loadMarketingData() {
     program:  r[off + 1]?.trim(),
     platform: r[off + 2]?.trim(),
     account:  r[off + 3]?.trim(),
-    spend:    parseFloat(String(r[off + 4] || '').replace(/[₹,\s]/g, '')) || 0,
+    spend:    parseFloat(String(r[off + 4] || '').replace(/[^0-9.]/g, '')) || 0,
     leadsAd:  parseInt(r[off + 5]) || 0,
   }));
 
-  // Keep legacy today/mtd counts for backward compat
   const today = todayISO(), ms = monthStartISO();
   const countLeads = (rows, col) => {
     let td = 0, mtd = 0;
@@ -80,7 +79,6 @@ export async function loadMarketingData() {
       mtdSpend[r.program] += r.spend;
   }
 
-  // Return raw rows — Marketing tab uses them for period-based lead counting
   return { adSpend, sheetLeads, mtdSpend, tarotRows, reikiRows };
 }
 
@@ -98,27 +96,76 @@ export function getMarketingSample() {
   };
 }
 
-// ─── Transaction data — reads BOTH tabs and merges ────────────────────────
-// "All New Booking"  → new enrollment payments (used for Cashflow + Closer commission)
-// "All Due Payment"  → balance/due payments     (used for Cashflow only)
-// Columns: submitter(0) | timestamp DD/MM/YYYY HH:MM:SS(1) | name(2) | email(3)
-//          phone(4) | amount(5) | paidThrough(6) | program(7) | closer(8) | type(9 optional)
-function parseTransactionRow(r, defaultType) {
-  const raw = r[1]?.trim() || '';
-  const m = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-  const date = m ? `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}` : null;
-  return {
-    date,
-    name:        r[2]?.trim() || '',
-    email:       r[3]?.trim()?.toLowerCase() || '',
-    phone:       r[4]?.trim()?.replace(/\D/g,'').slice(-10) || '',
-    amount:      parseFloat(String(r[5]||'').replace(/[₹,\s]/g,'')) || 0,
-    paidThrough: r[6]?.trim() || '',
-    program:     r[7]?.trim() || '',
-    closer:      r[8]?.trim() || '',
-    // Col 9 may say type explicitly; fallback to defaultType based on which tab it came from
-    type:        r[9]?.trim() || defaultType,
+// --- Transaction data -- reads BOTH "All New Booking" + "All Due Payment" ----
+//
+// Confirmed column structure from sheet (screenshots):
+//   r[0] = Timestamp  (DD/MM/YYYY HH:MM:SS)
+//   r[1] = Name
+//   r[2] = Email
+//   r[3] = Phone
+//   r[4] = Program
+//   r[5] = Booking Amount
+//   r[6] = Paid Through
+//   r[7] = Payment Screenshot  (skipped)
+//   r[8] = Form Submitted By   (Closer)
+//
+// Header-based detection is used first; positional fallbacks apply if headers differ.
+
+function detectTxCols(headerRow) {
+  const h = (headerRow || []).map(c => (c || '').toLowerCase().trim());
+  const find = (...terms) => {
+    const i = h.findIndex(c => terms.some(t => c.includes(t)));
+    return i >= 0 ? i : -1;
   };
+  return {
+    ts:      find('timestamp', 'time stamp'),
+    name:    find('student name', 'name'),
+    email:   find('student email', 'email'),
+    phone:   find('phone', 'mobile', '10 digit'),
+    program: find('program'),
+    amount:  find('booking amount', 'amount', 'rs.'),
+    paid:    find('paid through', 'payment mode', 'paid thro'),
+    closer:  find('form submitted by', 'submitted by', 'closed by', 'closer'),
+  };
+}
+
+function parseTransactionRows(rows, defaultType) {
+  if (!rows || rows.length < 2) return [];
+
+  const cols = detectTxCols(rows[0]);
+
+  // Positional fallbacks -- match confirmed All New Booking / All Due Payment structure
+  if (cols.ts      < 0) cols.ts      = 0;
+  if (cols.name    < 0) cols.name    = 1;
+  if (cols.email   < 0) cols.email   = 2;
+  if (cols.phone   < 0) cols.phone   = 3;
+  if (cols.program < 0) cols.program = 4;
+  if (cols.amount  < 0) cols.amount  = 5;
+  if (cols.paid    < 0) cols.paid    = 6;
+  if (cols.closer  < 0) cols.closer  = 8;
+
+  return rows.slice(1)
+    .filter(r => r[cols.ts]?.trim())
+    .map(r => {
+      const raw = r[cols.ts]?.trim() || '';
+      // Parse DD/MM/YYYY HH:MM:SS (Google Form timestamp format)
+      const m = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+      const date = m
+        ? `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`
+        : null;
+      return {
+        date,
+        name:        r[cols.name]?.trim()  || '',
+        email:       (r[cols.email]?.trim()   || '').toLowerCase(),
+        phone:       (r[cols.phone]?.trim()   || '').replace(/\D/g, '').slice(-10),
+        program:     r[cols.program]?.trim()  || '',
+        amount:      parseFloat(String(r[cols.amount] || '').replace(/[^0-9.]/g, '')) || 0,
+        paidThrough: r[cols.paid]?.trim()     || '',
+        closer:      r[cols.closer]?.trim()   || '',
+        type:        defaultType,
+      };
+    })
+    .filter(r => r.date && r.amount > 0);
 }
 
 export async function loadTransactionData() {
@@ -127,47 +174,38 @@ export async function loadTransactionData() {
     fetchCSV(SALES_SHEET.id, 'All Due Payment').catch(() => []),
   ]);
 
-  const newTx = newRows.slice(1)
-    .filter(r => r[1]?.trim())
-    .map(r => parseTransactionRow(r, 'New Booking'));
-
-  const dueTx = dueRows.slice(1)
-    .filter(r => r[1]?.trim())
-    .map(r => parseTransactionRow(r, 'Due Payment'));
+  const newTx = parseTransactionRows(newRows, 'New Booking');
+  const dueTx = parseTransactionRows(dueRows, 'Due Payment');
 
   return [...newTx, ...dueTx]
-    .filter(r => r.date && r.amount > 0)
     .sort((a, b) => a.date > b.date ? -1 : 1);
 }
 
-// ─── Sales ────────────────────────────────────────────────────────────────────
+// --- Sales (Dashboard tab -- master enrollment view) -------------------------
 export async function loadSalesData() {
   const rows = await fetchCSV(SALES_SHEET.id, SALES_SHEET.tab);
   return rows.slice(1).filter(r => r[1]?.trim()).map(r => ({
     date:          toISO(r[1], true),
-    name:          r[2]?.trim() || '',
-    email:         r[3]?.trim()?.toLowerCase() || '',
-    phone:         r[4]?.trim()?.replace(/\D/g, '').slice(-10) || '',
-    program:       r[5]?.trim() || '',
-    bookingAmount: parseFloat(r[6]) || 0,
-    paidThrough:   r[7]?.trim() || '',
-    programFee:    parseFloat(r[8]) || 0,
-    pymtStatus:    r[9]?.trim() || '',
+    name:          r[2]?.trim()  || '',
+    email:         (r[3]?.trim() || '').toLowerCase(),
+    phone:         (r[4]?.trim() || '').replace(/\D/g, '').slice(-10),
+    program:       r[5]?.trim()  || '',
+    bookingAmount: parseFloat(r[6])  || 0,
+    paidThrough:   r[7]?.trim()  || '',
+    programFee:    parseFloat(r[8])  || 0,
+    pymtStatus:    r[9]?.trim()  || '',
     amtReceived:   parseFloat(r[10]) || 0,
     amtDue:        parseFloat(r[11]) || 0,
     closedBy:      r[12]?.trim() || 'Unknown',
   }));
 }
 
-// ─── Duplicate detection — FIXED: skip rows with no phone AND no email ────────
+// --- Duplicate detection -- skips rows with no phone AND no email -------------
 export function detectDuplicates(enrollments) {
   const byPhone = {}, byEmail = {};
 
   for (const e of enrollments) {
-    // FIX: Old rows (pre-2025) have empty phone AND email → skip them entirely
-    // They were all grouping under byPhone[''] causing false positives
     if (!e.phone && !e.email) continue;
-
     if (e.phone) {
       if (!byPhone[e.phone]) byPhone[e.phone] = [];
       byPhone[e.phone].push(e);
@@ -188,23 +226,21 @@ export function detectDuplicates(enrollments) {
       if (!byProg[pk]) byProg[pk] = [];
       byProg[pk].push(e);
     }
-    // Type 1: same program, same phone/email
     for (const dupes of Object.values(byProg)) {
       if (dupes.length > 1) {
         for (const d of dupes) {
-          const uid = `${d.phone}|${d.program}|${d.date}`;
+          const uid = d.phone + '|' + d.program + '|' + d.date;
           if (!seen1.has(uid)) { seen1.add(uid); type1.push(d); }
         }
       }
     }
-    // Type 2: has both Diploma and Mastery (Tarot bundle upsell)
     const programs = entries.map(e => e.program?.toLowerCase() || '');
     if (programs.some(p => p.includes('diploma')) && programs.some(p => p.includes('mastery'))) {
       for (const e of entries.filter(e => {
         const p = e.program?.toLowerCase() || '';
         return p.includes('diploma') || p.includes('mastery');
       })) {
-        const uid = `${e.phone}|${e.program}|${e.date}`;
+        const uid = e.phone + '|' + e.program + '|' + e.date;
         if (!seen2.has(uid)) { seen2.add(uid); type2.push(e); }
       }
     }
@@ -216,13 +252,13 @@ export function detectDuplicates(enrollments) {
   return { type1, type2 };
 }
 
-// ─── Finance ──────────────────────────────────────────────────────────────────
+// --- Finance ------------------------------------------------------------------
 export async function loadFinanceData() {
   const res = await fetch(FINANCE_URL);
-  if (!res.ok) throw new Error(`Finance API ${res.status}`);
+  if (!res.ok) throw new Error('Finance API ' + res.status);
   const data = await res.json();
   return data.map(row => ({
-    month:         row.Month                   || '',
+    month:         row.Month              || '',
     studentFees:   parseFloat(row.Student_Fees)   || 0,
     adGoogle:      parseFloat(row.Ad_Google)       || 0,
     adMeta:        parseFloat(row.Ad_Meta)         || 0,
@@ -245,10 +281,10 @@ export function getFinanceSample() {
   ];
 }
 
-// ─── EMI ──────────────────────────────────────────────────────────────────────
+// --- EMI ----------------------------------------------------------------------
 export async function loadEMIData() {
   const res = await fetch(EMI_URL);
-  if (!res.ok) throw new Error(`EMI API ${res.status}`);
+  if (!res.ok) throw new Error('EMI API ' + res.status);
   return await res.json();
 }
 
@@ -263,7 +299,7 @@ export function getEMISample() {
   };
 }
 
-// ─── LTV & Funnel data ────────────────────────────────────────────────────────
+// --- LTV & Funnel data --------------------------------------------------------
 export async function loadLTVFunnelData() {
   const [tarotRows, reikiRows, salesRows, spendRows, emiResp] = await Promise.all([
     fetchCSV(SHEETS.tarot.id,   SHEETS.tarot.tab),
@@ -281,8 +317,8 @@ export async function loadLTVFunnelData() {
   const sales = salesRows.slice(1).filter(r => r[1]?.trim()).map(r => ({
     date:        toISO(r[1], true),
     name:        r[2]?.trim() || '',
-    email:       r[3]?.toLowerCase().trim() || '',
-    phone:       r[4]?.replace(/\D/g,'').slice(-10) || '',
+    email:       (r[3] || '').toLowerCase().trim(),
+    phone:       (r[4] || '').replace(/\D/g,'').slice(-10),
     program:     r[5]?.trim() || '',
     programFee:  parseFloat(r[8])  || 0,
     amtReceived: parseFloat(r[10]) || 0,
@@ -294,7 +330,7 @@ export async function loadLTVFunnelData() {
   const adSpend = spendRows.slice(1).filter(r => r[off]).map(r => ({
     date:    toISO(r[off], true),
     program: r[off + 1]?.trim(),
-    spend:   parseFloat(String(r[off + 4] || '').replace(/[₹,\s]/g, '')) || 0,
+    spend:   parseFloat(String(r[off + 4] || '').replace(/[^0-9.]/g, '')) || 0,
   }));
 
   return {
