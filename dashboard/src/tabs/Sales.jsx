@@ -148,10 +148,10 @@ function CloserTab({transactions,enrollments,period}){
     <div style={{fontSize:11,color:'var(--text3)',textTransform:'uppercase',letterSpacing:.5,marginBottom:10}}>Full Leaderboard</div>
     <div style={sbox}>{closers.map((c,i)=>{const col=cc(c.name);const pct=maxC>0?(c.cash/maxC)*100:0;return(<div key={c.name} style={{padding:'14px 18px',borderBottom:'1px solid var(--border2)',background:i===0?col.dim:'transparent'}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
-        <div style={{display:'flex',alignItems:'center',gap:8}}><span style={{fontSize:16}}>{medals[i]||`#${i+1}`}</span><span style={{background:col.bg,color:'#fff',padding:'3px 12px',borderRadius:6,fontWeight:700,fontSize:13}}>{c.name}</span>{i===0&&<span style={{fontSize:11,color:col.bg,fontWeight:600}}>⚡ Winner</span>}</div>
+        <div style={{display:'flex',alignItems:'center',gap:8}}><span style={{fontSize:16}}>{medals[i]||('#'+(i+1))}</span><span style={{background:col.bg,color:'#fff',padding:'3px 12px',borderRadius:6,fontWeight:700,fontSize:13}}>{c.name}</span>{i===0&&<span style={{fontSize:11,color:col.bg,fontWeight:600}}>⚡ Winner</span>}</div>
         <div style={{textAlign:'right'}}><div style={{fontSize:18,fontWeight:700,color:col.bg}}>{inr(Math.round(c.cash))}</div><div style={{fontSize:11,color:'var(--text3)'}}>{c.txDeals} txn · {c.count} enr</div></div>
       </div>
-      <div style={{height:6,background:'var(--border)',borderRadius:3}}><div style={{height:6,width:`${pct}%`,background:col.bg,borderRadius:3}}/></div>
+      <div style={{height:6,background:'var(--border)',borderRadius:3}}><div style={{height:6,width:(pct+'%'),background:col.bg,borderRadius:3}}/></div>
     </div>);})</div>
     <div style={{fontSize:11,color:'var(--text3)',textTransform:'uppercase',letterSpacing:.5,marginBottom:10}}>Detailed Stats</div>
     <div style={sbox}><table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}><thead><tr>{['Closer','Cash Collected','Transactions','Enrollments','Enr Revenue','Avg Deal'].map((h,i)=><th key={h} style={i===0?thL:th}>{h}</th>)}</tr></thead>
