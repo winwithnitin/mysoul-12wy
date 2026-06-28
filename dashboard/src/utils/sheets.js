@@ -249,66 +249,19 @@ export function detectDuplicates(enrollments) {
   return { type1, type2 };
 }
 
-// --- All Batch Data -- reads "Resp EMI" tab from EVERY batch sheet directly --
-// Bypasses the Apps Script to guarantee ALL 7 batches are combined correctly.
-// Resp EMI tab confirmed column structure (same across all batches):
-//   r[0]=Timestamp | r[1]=Email address (submitter) | r[2]=Name (student)
-//   r[3]=Helper Column | r[4]=Email (student) | r[5]=Amount Received
-//   r[6]=Amount Received On Date | r[7]=Screenshot | r[8]=Via | r[9]=Which EMI
-
-const BATCH_REGISTRY_ID = '1b3IZYUmRlG9nHp27b3i1ObxfUIV1Zq9jmzNtnN_iyYg';
+// --- All Batch Data -- calls the Batch EMI Apps Script -----------------------
+// The Apps Script runs server-side with Google credentials, so it can access
+// ALL restricted batch sheets. Returns per-batch breakdown + combined totals.
+// Response shape: { batches: [{batch, program, students, received}], superTotal, rgmTotal }
 
 export async function loadAllBatchData() {
-  // Step 1: Read Batch Registry -> get all active batch sheet IDs
-  const regRows = await fetchCSV(BATCH_REGISTRY_ID, 'Sheet1').catch(() => []);
-  const batches = regRows.slice(1)
-    .filter(r => r[0]?.trim() && r[3]?.trim().toUpperCase() === 'Y')
-    .map(r => ({ name: r[0].trim(), program: r[1].trim(), sheetId: r[2].trim() }))
-    .filter(b => b.sheetId);
-
-  // Step 2: For each batch read "Resp EMI" tab and sum Amount Received per student
-  const results = await Promise.all(batches.map(async b => {
-    try {
-      const rows = await fetchCSV(b.sheetId, 'Resp EMI');
-      if (rows.length < 2) return { batch: b.name, program: b.program, students: 0, received: 0 };
-
-      const h = rows[0].map(x => (x || '').toLowerCase().trim());
-
-      // Header-based column detection with positional fallbacks
-      const eIdx = (() => { const i = h.findIndex(x => x === 'email'); return i >= 0 ? i : 4; })();
-      const nIdx = (() => { const i = h.findIndex(x => x === 'name'); return i >= 0 ? i : 2; })();
-      const aIdx = (() => {
-        const i = h.findIndex(x => x.includes('amount received') && !x.includes('date'));
-        return i >= 0 ? i : 5;
-      })();
-
-      // Sum payments per student (keyed by email)
-      const sm = {};
-      rows.slice(1).filter(r => r[aIdx]?.trim()).forEach(r => {
-        const email = (r[eIdx] || '').toLowerCase().trim();
-        const name  = (r[nIdx] || '').trim();
-        const amt   = parseFloat(String(r[aIdx] || '').replace(/[^0-9.]/g, '')) || 0;
-        if (amt <= 0) return;
-        const key = email || name;
-        if (!key) return;
-        if (!sm[key]) sm[key] = { name, email, received: 0 };
-        sm[key].received += amt;
-      });
-
-      const studentList = Object.values(sm);
-      return {
-        batch:       b.name,
-        program:     b.program,
-        students:    studentList.length,
-        received:    studentList.reduce((t, s) => t + s.received, 0),
-        studentList,
-      };
-    } catch (_) {
-      return { batch: b.name, program: b.program, students: 0, received: 0, studentList: [] };
-    }
-  }));
-
-  return results;
+  const { BATCH_EMI_URL } = await import('../config.js');
+  const res = await fetch(BATCH_EMI_URL);
+  if (!res.ok) throw new Error('Batch EMI API ' + res.status);
+  const data = await res.json();
+  if (data.error) throw new Error('Batch EMI Script error: ' + data.error);
+  // Normalise to the array shape used by HighTicketTab
+  return Array.isArray(data.batches) ? data.batches : [];
 }
 
 // --- Finance ------------------------------------------------------------------
