@@ -43,6 +43,12 @@ export function getFunnel(program) {
   return 'Other';
 }
 
+// ─── Batch Registry (SUPER & RGM batch sheets) ───────────────────────────────
+export const BATCH_REGISTRY = {
+  id:  '1b3IZYUmRlG9nHp27b3i1ObxfUIV1Zq9jmzNtnN_iyYg',
+  tab: 'Sheet1',
+};
+
 // ─── GST ─────────────────────────────────────────────────────────────────────
 export const GST_RATE = 0.18;
 export function exclGST(amount) { return amount / (1 + GST_RATE); }

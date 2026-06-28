@@ -35,7 +35,7 @@ export function countLeadsInRange(rows, dateCol, from, to) {
   return count;
 }
 
-// --- Marketing ----------------------------------------------------------------
+// --- Marketing (returns raw lead rows so Marketing tab can count any period) --
 export async function loadMarketingData() {
   const [spendRows, tarotRows, reikiRows] = await Promise.all([
     fetchCSV(SHEETS.adSpend.id, SHEETS.adSpend.tab),
@@ -52,10 +52,11 @@ export async function loadMarketingData() {
     program:  r[off + 1]?.trim(),
     platform: r[off + 2]?.trim(),
     account:  r[off + 3]?.trim(),
-    spend:    parseFloat(String(r[off + 4] || '').replace(/[^0-9.]/g, '')) || 0,
+    spend:    parseFloat(String(r[off + 4] || '').replace(/[Rs.,\s]/g, '')) || 0,
     leadsAd:  parseInt(r[off + 5]) || 0,
   }));
 
+  // Keep legacy today/mtd counts for backward compat
   const today = todayISO(), ms = monthStartISO();
   const countLeads = (rows, col) => {
     let td = 0, mtd = 0;
@@ -79,6 +80,7 @@ export async function loadMarketingData() {
       mtdSpend[r.program] += r.spend;
   }
 
+  // Return raw rows -- Marketing tab uses them for period-based lead counting
   return { adSpend, sheetLeads, mtdSpend, tarotRows, reikiRows };
 }
 
@@ -96,27 +98,19 @@ export function getMarketingSample() {
   };
 }
 
-// --- Transaction data -- reads BOTH "All New Booking" + "All Due Payment" ----
+// --- Transaction data -- reads BOTH tabs and merges ------------------------
+// "All New Booking"  -> new enrollment payments (used for Cashflow + Closer commission)
+// "All Due Payment"  -> balance/due payments     (used for Cashflow only)
 //
-// Confirmed column structure from sheet (screenshots):
-//   r[0] = Timestamp  (DD/MM/YYYY HH:MM:SS)
-//   r[1] = Name
-//   r[2] = Email
-//   r[3] = Phone
-//   r[4] = Program
-//   r[5] = Booking Amount
-//   r[6] = Paid Through
-//   r[7] = Payment Screenshot  (skipped)
-//   r[8] = Form Submitted By   (Closer)
+// Actual column structure (confirmed from sheet screenshots):
+// r[0]=Timestamp | r[1]=Name | r[2]=Email | r[3]=Phone | r[4]=Program
+// r[5]=Amount    | r[6]=Paid Through | r[7]=Screenshot | r[8]=Form Submitted By (Closer)
 //
-// Header-based detection is used first; positional fallbacks apply if headers differ.
+// Uses header-based detection so it adapts if columns shift.
 
 function detectTxCols(headerRow) {
   const h = (headerRow || []).map(c => (c || '').toLowerCase().trim());
-  const find = (...terms) => {
-    const i = h.findIndex(c => terms.some(t => c.includes(t)));
-    return i >= 0 ? i : -1;
-  };
+  const find = (...terms) => { const i = h.findIndex(c => terms.some(t => c.includes(t))); return i >= 0 ? i : -1; };
   return {
     ts:      find('timestamp', 'time stamp'),
     name:    find('student name', 'name'),
@@ -134,7 +128,7 @@ function parseTransactionRows(rows, defaultType) {
 
   const cols = detectTxCols(rows[0]);
 
-  // Positional fallbacks -- match confirmed All New Booking / All Due Payment structure
+  // Positional fallbacks matching confirmed sheet structure
   if (cols.ts      < 0) cols.ts      = 0;
   if (cols.name    < 0) cols.name    = 1;
   if (cols.email   < 0) cols.email   = 2;
@@ -150,18 +144,16 @@ function parseTransactionRows(rows, defaultType) {
       const raw = r[cols.ts]?.trim() || '';
       // Parse DD/MM/YYYY HH:MM:SS (Google Form timestamp format)
       const m = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-      const date = m
-        ? `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`
-        : null;
+      const date = m ? `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}` : null;
       return {
         date,
         name:        r[cols.name]?.trim()  || '',
-        email:       (r[cols.email]?.trim()   || '').toLowerCase(),
-        phone:       (r[cols.phone]?.trim()   || '').replace(/\D/g, '').slice(-10),
-        program:     r[cols.program]?.trim()  || '',
+        email:       (r[cols.email]?.trim() || '').toLowerCase(),
+        phone:       (r[cols.phone]?.trim() || '').replace(/\D/g,'').slice(-10),
+        program:     r[cols.program]?.trim() || '',
         amount:      parseFloat(String(r[cols.amount] || '').replace(/[^0-9.]/g, '')) || 0,
-        paidThrough: r[cols.paid]?.trim()     || '',
-        closer:      r[cols.closer]?.trim()   || '',
+        paidThrough: r[cols.paid]?.trim()   || '',
+        closer:      r[cols.closer]?.trim() || '',
         type:        defaultType,
       };
     })
@@ -181,31 +173,34 @@ export async function loadTransactionData() {
     .sort((a, b) => a.date > b.date ? -1 : 1);
 }
 
-// --- Sales (Dashboard tab -- master enrollment view) -------------------------
+// --- Sales --------------------------------------------------------------------
 export async function loadSalesData() {
   const rows = await fetchCSV(SALES_SHEET.id, SALES_SHEET.tab);
   return rows.slice(1).filter(r => r[1]?.trim()).map(r => ({
     date:          toISO(r[1], true),
-    name:          r[2]?.trim()  || '',
-    email:         (r[3]?.trim() || '').toLowerCase(),
-    phone:         (r[4]?.trim() || '').replace(/\D/g, '').slice(-10),
-    program:       r[5]?.trim()  || '',
-    bookingAmount: parseFloat(r[6])  || 0,
-    paidThrough:   r[7]?.trim()  || '',
-    programFee:    parseFloat(r[8])  || 0,
-    pymtStatus:    r[9]?.trim()  || '',
+    name:          r[2]?.trim() || '',
+    email:         r[3]?.trim()?.toLowerCase() || '',
+    phone:         r[4]?.trim()?.replace(/\D/g, '').slice(-10) || '',
+    program:       r[5]?.trim() || '',
+    bookingAmount: parseFloat(r[6]) || 0,
+    paidThrough:   r[7]?.trim() || '',
+    programFee:    parseFloat(r[8]) || 0,
+    pymtStatus:    r[9]?.trim() || '',
     amtReceived:   parseFloat(r[10]) || 0,
     amtDue:        parseFloat(r[11]) || 0,
     closedBy:      r[12]?.trim() || 'Unknown',
   }));
 }
 
-// --- Duplicate detection -- skips rows with no phone AND no email -------------
+// --- Duplicate detection -- FIXED: skip rows with no phone AND no email --------
 export function detectDuplicates(enrollments) {
   const byPhone = {}, byEmail = {};
 
   for (const e of enrollments) {
+    // FIX: Old rows (pre-2025) have empty phone AND email -> skip them entirely
+    // They were all grouping under byPhone[''] causing false positives
     if (!e.phone && !e.email) continue;
+
     if (e.phone) {
       if (!byPhone[e.phone]) byPhone[e.phone] = [];
       byPhone[e.phone].push(e);
@@ -226,21 +221,23 @@ export function detectDuplicates(enrollments) {
       if (!byProg[pk]) byProg[pk] = [];
       byProg[pk].push(e);
     }
+    // Type 1: same program, same phone/email
     for (const dupes of Object.values(byProg)) {
       if (dupes.length > 1) {
         for (const d of dupes) {
-          const uid = d.phone + '|' + d.program + '|' + d.date;
+          const uid = `${d.phone}|${d.program}|${d.date}`;
           if (!seen1.has(uid)) { seen1.add(uid); type1.push(d); }
         }
       }
     }
+    // Type 2: has both Diploma and Mastery (Tarot bundle upsell)
     const programs = entries.map(e => e.program?.toLowerCase() || '');
     if (programs.some(p => p.includes('diploma')) && programs.some(p => p.includes('mastery'))) {
       for (const e of entries.filter(e => {
         const p = e.program?.toLowerCase() || '';
         return p.includes('diploma') || p.includes('mastery');
       })) {
-        const uid = e.phone + '|' + e.program + '|' + e.date;
+        const uid = `${e.phone}|${e.program}|${e.date}`;
         if (!seen2.has(uid)) { seen2.add(uid); type2.push(e); }
       }
     }
@@ -252,13 +249,75 @@ export function detectDuplicates(enrollments) {
   return { type1, type2 };
 }
 
+// --- All Batch Data -- reads "Resp EMI" tab from EVERY batch sheet directly --
+// Bypasses the Apps Script to guarantee ALL 7 batches are combined correctly.
+// Resp EMI tab confirmed column structure (same across all batches):
+//   r[0]=Timestamp | r[1]=Email address (submitter) | r[2]=Name (student)
+//   r[3]=Helper Column | r[4]=Email (student) | r[5]=Amount Received
+//   r[6]=Amount Received On Date | r[7]=Screenshot | r[8]=Via | r[9]=Which EMI
+
+const BATCH_REGISTRY_ID = '1b3IZYUmRlG9nHp27b3i1ObxfUIV1Zq9jmzNtnN_iyYg';
+
+export async function loadAllBatchData() {
+  // Step 1: Read Batch Registry -> get all active batch sheet IDs
+  const regRows = await fetchCSV(BATCH_REGISTRY_ID, 'Sheet1').catch(() => []);
+  const batches = regRows.slice(1)
+    .filter(r => r[0]?.trim() && r[3]?.trim().toUpperCase() === 'Y')
+    .map(r => ({ name: r[0].trim(), program: r[1].trim(), sheetId: r[2].trim() }))
+    .filter(b => b.sheetId);
+
+  // Step 2: For each batch read "Resp EMI" tab and sum Amount Received per student
+  const results = await Promise.all(batches.map(async b => {
+    try {
+      const rows = await fetchCSV(b.sheetId, 'Resp EMI');
+      if (rows.length < 2) return { batch: b.name, program: b.program, students: 0, received: 0 };
+
+      const h = rows[0].map(x => (x || '').toLowerCase().trim());
+
+      // Header-based column detection with positional fallbacks
+      const eIdx = (() => { const i = h.findIndex(x => x === 'email'); return i >= 0 ? i : 4; })();
+      const nIdx = (() => { const i = h.findIndex(x => x === 'name'); return i >= 0 ? i : 2; })();
+      const aIdx = (() => {
+        const i = h.findIndex(x => x.includes('amount received') && !x.includes('date'));
+        return i >= 0 ? i : 5;
+      })();
+
+      // Sum payments per student (keyed by email)
+      const sm = {};
+      rows.slice(1).filter(r => r[aIdx]?.trim()).forEach(r => {
+        const email = (r[eIdx] || '').toLowerCase().trim();
+        const name  = (r[nIdx] || '').trim();
+        const amt   = parseFloat(String(r[aIdx] || '').replace(/[^0-9.]/g, '')) || 0;
+        if (amt <= 0) return;
+        const key = email || name;
+        if (!key) return;
+        if (!sm[key]) sm[key] = { name, email, received: 0 };
+        sm[key].received += amt;
+      });
+
+      const studentList = Object.values(sm);
+      return {
+        batch:       b.name,
+        program:     b.program,
+        students:    studentList.length,
+        received:    studentList.reduce((t, s) => t + s.received, 0),
+        studentList,
+      };
+    } catch (_) {
+      return { batch: b.name, program: b.program, students: 0, received: 0, studentList: [] };
+    }
+  }));
+
+  return results;
+}
+
 // --- Finance ------------------------------------------------------------------
 export async function loadFinanceData() {
   const res = await fetch(FINANCE_URL);
-  if (!res.ok) throw new Error('Finance API ' + res.status);
+  if (!res.ok) throw new Error(`Finance API ${res.status}`);
   const data = await res.json();
   return data.map(row => ({
-    month:         row.Month              || '',
+    month:         row.Month                   || '',
     studentFees:   parseFloat(row.Student_Fees)   || 0,
     adGoogle:      parseFloat(row.Ad_Google)       || 0,
     adMeta:        parseFloat(row.Ad_Meta)         || 0,
@@ -284,7 +343,7 @@ export function getFinanceSample() {
 // --- EMI ----------------------------------------------------------------------
 export async function loadEMIData() {
   const res = await fetch(EMI_URL);
-  if (!res.ok) throw new Error('EMI API ' + res.status);
+  if (!res.ok) throw new Error(`EMI API ${res.status}`);
   return await res.json();
 }
 
@@ -317,8 +376,8 @@ export async function loadLTVFunnelData() {
   const sales = salesRows.slice(1).filter(r => r[1]?.trim()).map(r => ({
     date:        toISO(r[1], true),
     name:        r[2]?.trim() || '',
-    email:       (r[3] || '').toLowerCase().trim(),
-    phone:       (r[4] || '').replace(/\D/g,'').slice(-10),
+    email:       r[3]?.toLowerCase().trim() || '',
+    phone:       r[4]?.replace(/\D/g,'').slice(-10) || '',
     program:     r[5]?.trim() || '',
     programFee:  parseFloat(r[8])  || 0,
     amtReceived: parseFloat(r[10]) || 0,
@@ -330,7 +389,7 @@ export async function loadLTVFunnelData() {
   const adSpend = spendRows.slice(1).filter(r => r[off]).map(r => ({
     date:    toISO(r[off], true),
     program: r[off + 1]?.trim(),
-    spend:   parseFloat(String(r[off + 4] || '').replace(/[^0-9.]/g, '')) || 0,
+    spend:   parseFloat(String(r[off + 4] || '').replace(/[Rs.,\s]/g, '')) || 0,
   }));
 
   return {
