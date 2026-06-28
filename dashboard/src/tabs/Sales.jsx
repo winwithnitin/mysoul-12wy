@@ -511,7 +511,184 @@ function CloserTab({ enrollments }) {
 // Reads directly from Resp EMI tab of ALL batch sheets (via loadAllBatchData)
 // This guarantees ALL 7 batches (5 SUPER + 2 RGM) are combined correctly
 function HighTicketTab({ batchData, emiV1, period }) {
-// -- Main Sales component ------------------------------------------------------
+  const { from, to } = getDR(period);
+  const periodLabel  = PERIODS.find(p => p.key===period)?.label || period;
+
+  const superBatches  = batchData.filter(b => b.program === "SUPER");
+  const rgmBatches    = batchData.filter(b => b.program === "RGM");
+  const superReceived = superBatches.reduce((t,b) => t+b.received, 0);
+  const rgmReceived   = rgmBatches.reduce((t,b) => t+b.received, 0);
+  const superStudents = superBatches.reduce((t,b) => t+b.students, 0);
+  const rgmStudents   = rgmBatches.reduce((t,b) => t+b.students, 0);
+
+  const mo = {jan:"01",feb:"02",mar:"03",apr:"04",may:"05",jun:"06",jul:"07",aug:"08",sep:"09",oct:"10",nov:"11",dec:"12"};
+  const parseBD = name => { const m=name.toLowerCase().match(/([a-z]+)\s+(\d{4})/); return (m&&mo[m[1].slice(0,3)])?m[2]+"-"+mo[m[1].slice(0,3)]+"-01":null; };
+  const batches = [...batchData].map(b => ({ ...b, batchDate:parseBD(b.batch), inPeriod:(()=>{const bd=parseBD(b.batch);return bd?(bd>=from&&bd<=to):false;})() })).sort((a,b)=>(a.batchDate||"")<(b.batchDate||"")?-1:1);
+
+  const today = new Date().toISOString().slice(0,10);
+  const overdue = [];
+  for (const st of emiV1) {
+    for (const emi of (st.emis||[])) {
+      if (emi.plannedDate && emi.plannedDate < today && !emi.actualDate && (emi.plannedAmt||0) > 0) {
+        const days = Math.floor((Date.now()-new Date(emi.plannedDate+"T00:00:00").getTime())/86400000);
+        overdue.push({ name:st.name, phone:st.phone, batch:st.batch, program:st.program, emiNum:emi.n, date:emi.plannedDate, amt:emi.plannedAmt, days });
+      }
+    }
+  }
+  overdue.sort((a,b) => b.days-a.days);
+
+  return (
+    <div style={{ padding:"0 24px 32px" }}>
+      <div style={{ fontSize:11, color:"var(--text3)", textTransform:"uppercase", letterSpacing:.5, margin:"16px 0 10px" }}>
+        All-Time Summary -- Direct from All {batchData.length} Batch Sheets (Resp EMI Tab)
+      </div>
+      {batchData.length===0 && (
+        <div style={{ background:"var(--surface)", border:"1px solid var(--warning)", borderRadius:12, padding:"16px 20px", marginBottom:20, color:"var(--warning)", fontSize:13 }}>
+          Reading all batch sheets... this may take a moment.
+        </div>
+      )}
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginBottom:24 }}>
+        {[{label:"SUPER",color:"var(--tarot)",received:superReceived,students:superStudents,count:superBatches.length},{label:"RGM",color:"var(--reiki)",received:rgmReceived,students:rgmStudents,count:rgmBatches.length}].map(({label,color,received,students,count}) => (
+          <div key={label} style={{ background:"var(--surface)", border:"1px solid var(--border)", borderTop:"3px solid "+color, borderRadius:12, padding:"16px 18px" }}>
+            <div style={{ fontSize:14, fontWeight:700, color, marginBottom:14 }}>{label} Program</div>
+            {[["Batches read",num(count)+" batches",null],["Total students",num(students),null],["Cash received",inr(Math.round(received)),"var(--success)"]].map(([l,v,c]) => (
+              <div key={l} style={{ display:"flex", justifyContent:"space-between", padding:"5px 0", borderBottom:"1px solid var(--border2)" }}>
+                <span style={{ fontSize:12, color:"var(--text2)" }}>{l}</span>
+                <span style={{ fontSize:13, fontWeight:500, color:c||"var(--text)" }}>{v}</span>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+
+      <div style={{ fontSize:11, color:"var(--text3)", textTransform:"uppercase", letterSpacing:.5, marginBottom:10 }}>
+        Per-Batch Breakdown (highlighted = batch launched in {periodLabel})
+      </div>
+      <div style={sbox}>
+        <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13 }}>
+          <thead><tr>{["Batch","Program","Students","Cash Received"].map((h,i)=><th key={h} style={i<2?thL:th}>{h}</th>)}</tr></thead>
+          <tbody>
+            {batches.length===0
+              ? <tr><td colSpan={4} style={{...tdS(),textAlign:"center",padding:"2rem",color:"var(--text3)"}}>Reading batch sheets...</td></tr>
+              : batches.map(b => {
+                  const color = b.program==="SUPER"?"var(--tarot)":"var(--reiki)";
+                  return (
+                    <tr key={b.batch+b.program} style={{ background:b.inPeriod?"rgba(139,92,246,0.07)":"transparent" }}>
+                      <td style={{ ...tdS("left"), color:"var(--text)", fontWeight:b.inPeriod?700:400 }}>
+                        {b.batch}{b.inPeriod&&<span style={{marginLeft:6,fontSize:10,background:"var(--tarot)",color:"#fff",padding:"1px 6px",borderRadius:3}}>In period</span>}
+                      </td>
+                      <td style={{ ...tdS("left"), color, fontWeight:600 }}>{b.program}</td>
+                      <td style={tdS()}>{b.students}</td>
+                      <td style={{ ...tdS(), color:"var(--success)", fontWeight:700 }}>{inr(Math.round(b.received))}</td>
+                    </tr>
+                  );
+                })
+            }
+            <tr style={{ borderTop:"2px solid var(--border)", background:"var(--surface2)" }}>
+              <td style={{ ...tdS("left"), fontWeight:700, color:"var(--text)" }} colSpan={2}>Total</td>
+              <td style={{ ...tdS(), fontWeight:700 }}>{superStudents+rgmStudents}</td>
+              <td style={{ ...tdS(), color:"var(--success)", fontWeight:700 }}>{inr(Math.round(superReceived+rgmReceived))}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style={{ fontSize:11, color:"var(--text3)", textTransform:"uppercase", letterSpacing:.5, marginBottom:10 }}>
+        Overdue EMIs -- {overdue.length>0?overdue.length+" unpaid":"All clear"}
+      </div>
+      <div style={{ ...sbox, border:"1px solid "+(overdue.length>0?"var(--danger)":"var(--border)"), marginBottom:0 }}>
+        {overdue.length===0
+          ? <div style={{ padding:"1.5rem", color:"var(--success)", fontSize:13 }}>No overdue EMIs</div>
+          : <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13 }}>
+              <thead><tr>{["Student","Phone","Batch","Program","EMI #","Due Date","Amount","Days"].map((h,i)=><th key={h} style={i<2?thL:th}>{h}</th>)}</tr></thead>
+              <tbody>
+                {overdue.slice(0,30).map((o,i)=>(
+                  <tr key={i}>
+                    <td style={{ ...tdS("left"), color:"var(--text)", fontWeight:500 }}>{o.name||"--"}</td>
+                    <td style={tdS("left")}>{o.phone||"--"}</td>
+                    <td style={tdS()}>{o.batch}</td>
+                    <td style={{ ...tdS(), color:o.program==="SUPER"?"var(--tarot)":"var(--reiki)" }}>{o.program}</td>
+                    <td style={tdS()}>EMI {o.emiNum}</td>
+                    <td style={tdS()}>{o.date}</td>
+                    <td style={{ ...tdS(), color:"var(--danger)", fontWeight:700 }}>{inr(o.amt)}</td>
+                    <td style={{ ...tdS(), color:o.days>30?"var(--danger)":"var(--warning)", fontWeight:700 }}>{o.days}d</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+        }
+      </div>
+    </div>
+  );
+}
+
+// -- Company Revenue tab -------------------------------------------------------
+function RevTab({ transactions, batchData, period }) {
+  const superReceived = batchData.filter(b=>b.program==="SUPER").reduce((t,b)=>t+b.received,0);
+  const rgmReceived   = batchData.filter(b=>b.program==="RGM").reduce((t,b)=>t+b.received,0);
+
+  const allPeriods = PERIODS.map(pk => {
+    const { from:f, to:t } = getDR(pk.key);
+    const tx = transactions.filter(x => x.date>=f && x.date<=t);
+    const tL = tx.filter(x => ISOT(x.program)).reduce((s,x) => s+x.amount, 0);
+    const rL = tx.filter(x => ISOR(x.program)).reduce((s,x) => s+x.amount, 0);
+    return { ...pk, tL, rL };
+  });
+
+  const { from, to } = getDR(period);
+  const curTL = transactions.filter(x=>x.date>=from&&x.date<=to&&ISOT(x.program)).reduce((t,x)=>t+x.amount,0);
+  const curRL = transactions.filter(x=>x.date>=from&&x.date<=to&&ISOR(x.program)).reduce((t,x)=>t+x.amount,0);
+  const periodLabel = PERIODS.find(p=>p.key===period)?.label||period;
+
+  return (
+    <div style={{ padding:"0 24px 32px" }}>
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginBottom:24 }}>
+        {[{label:"Tarot Funnel",color:"var(--tarot)",l1:curTL,htRec:superReceived,htLabel:"SUPER"},{label:"Reiki Funnel",color:"var(--reiki)",l1:curRL,htRec:rgmReceived,htLabel:"RGM"}].map(({label,color,l1,htRec,htLabel})=>(
+          <div key={label} style={{ background:"var(--surface)", border:"1px solid var(--border)", borderTop:"3px solid "+color, borderRadius:12, padding:"16px 18px" }}>
+            <div style={{ fontSize:13, fontWeight:700, color, marginBottom:14 }}>{label}</div>
+            {[["L1 cash ("+periodLabel+")",inr(Math.round(l1)),color],[htLabel+" received (all batches)",inr(Math.round(htRec)),"var(--success)"]].map(([l,v,c])=>(
+              <div key={l} style={{ display:"flex", justifyContent:"space-between", padding:"5px 0", borderBottom:"1px solid var(--border2)" }}>
+                <span style={{ fontSize:12, color:"var(--text2)" }}>{l}</span>
+                <span style={{ fontSize:13, fontWeight:500, color:c||"var(--text)" }}>{v}</span>
+              </div>
+            ))}
+            <div style={{ marginTop:10, paddingTop:10, borderTop:"1px solid var(--border)", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+              <span style={{ fontSize:12, color:"var(--text2)" }}>L1 + {htLabel}</span>
+              <span style={{ fontSize:20, fontWeight:700, color }}>{inr(Math.round(l1+htRec))}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"20px 24px", marginBottom:24, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+        <div>
+          <div style={{ fontSize:11, color:"var(--text3)", textTransform:"uppercase", letterSpacing:.5, marginBottom:4 }}>Company Cash Total</div>
+          <div style={{ fontSize:11, color:"var(--text3)" }}>L1 ({periodLabel}) + SUPER all batches + RGM all batches</div>
+        </div>
+        <div style={{ fontSize:32, fontWeight:800, color:"var(--success)" }}>{inr(Math.round(curTL+curRL+superReceived+rgmReceived))}</div>
+      </div>
+      <div style={{ fontSize:11, color:"var(--text3)", textTransform:"uppercase", letterSpacing:.5, marginBottom:10 }}>L1 Cash by Period</div>
+      <div style={sbox}>
+        <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13 }}>
+          <thead><tr><th style={thL}>Period</th><th style={{...th,color:"var(--tarot)"}}>Tarot L1</th><th style={{...th,color:"var(--reiki)"}}>Reiki L1</th><th style={{...th,color:"var(--success)"}}>L1 Total</th></tr></thead>
+          <tbody>
+            {allPeriods.map(r=>(
+              <tr key={r.key} style={{ background:r.key===period?"rgba(139,92,246,0.05)":"transparent" }}>
+                <td style={{ ...tdS("left"), color:"var(--text)", fontWeight:r.key===period?700:400 }}>{r.label}</td>
+                <td style={{ ...tdS(), color:"var(--tarot)" }}>{r.tL>0?inr(Math.round(r.tL)):"--"}</td>
+                <td style={{ ...tdS(), color:"var(--reiki)" }}>{r.rL>0?inr(Math.round(r.rL)):"--"}</td>
+                <td style={{ ...tdS(), color:"var(--success)", fontWeight:700 }}>{(r.tL+r.rL)>0?inr(Math.round(r.tL+r.rL)):"--"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div style={{ fontSize:11, color:"var(--text3)", lineHeight:1.8 }}>
+        L1 = actual cash from All New Booking + Due Payment tabs (period-filterable).
+        SUPER/RGM = total received from Resp EMI tab across all batch sheets. See High Ticket tab for per-batch detail.
+      </div>
+    </div>
+  );
+}
 const SUBS = [
   { key:"overview",   label:"Overview"           },
   { key:"cashflow",   label:"Cashflow"           },
