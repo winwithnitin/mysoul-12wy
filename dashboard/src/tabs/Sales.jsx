@@ -507,56 +507,189 @@ function CloserTab({ enrollments }) {
   );
 }
 
-// -- Company Revenue tab -------------------------------------------------------
-// SUPER/RGM: filter by batch date (parsed from s.batch e.g. "Dec 2025" -> "2025-12-01")
-// s.timestamp is unreliable in real data; batch name is always present
-function parseBatchDate(batchName) {
+// -- High Ticket tab -----------------------------------------------------------
+// Exact same data as SUPER & RGM tab (emiV2 totalActual sums) + period selector
+// Period selector highlights which batches launched in that period
+// All-time totals always shown since totalActual is cumulative per student
+function HighTicketTab({ emiV2, emiV1, period }) {
+  const { from, to } = getDR(period);
+  const periodLabel  = PERIODS.find(p => p.key===period)?.label || period;
+
+  // All-time totals -- exact same calc as SUPER & RGM tab V2 view
+  const superAll = emiV2.filter(s => s.program === "SUPER");
+  const rgmAll   = emiV2.filter(s => s.program === "RGM");
+  const S = {
+    enrolled:    superAll.length,
+    planned:     superAll.reduce((t,x) => t+(x.totalPlanned||0), 0),
+    received:    superAll.reduce((t,x) => t+(x.totalActual||0),  0),
+    outstanding: superAll.reduce((t,x) => t+(x.emiDue||0),       0),
+  };
+  const R = {
+    enrolled:    rgmAll.length,
+    planned:     rgmAll.reduce((t,x) => t+(x.totalPlanned||0), 0),
+    received:    rgmAll.reduce((t,x) => t+(x.totalActual||0),  0),
+    outstanding: rgmAll.reduce((t,x) => t+(x.emiDue||0),       0),
+  };
+
+  // Batch breakdown -- all batches, "inPeriod" highlights those launched in selected period
   const mo = {jan:"01",feb:"02",mar:"03",apr:"04",may:"05",jun:"06",jul:"07",aug:"08",sep:"09",oct:"10",nov:"11",dec:"12"};
-  const m = (batchName||"").toLowerCase().match(/([a-z]+)\s+(\d{4})/);
-  if (!m) return null;
-  const month = mo[m[1].slice(0,3)];
-  return month ? m[2]+"-"+month+"-01" : null;
+  const parseBD = name => { const m=name.toLowerCase().match(/([a-z]+)\s+(\d{4})/); return (m&&mo[m[1].slice(0,3)]) ? m[2]+"-"+mo[m[1].slice(0,3)]+"-01" : null; };
+  const batchKeys = [...new Set(emiV2.map(x => x.batch+"||"+x.program))];
+  const batches = batchKeys.map(key => {
+    const [batch, prog] = key.split("||");
+    const students  = emiV2.filter(x => x.batch===batch && x.program===prog);
+    const batchDate = parseBD(batch);
+    return {
+      batch, prog, batchDate,
+      inPeriod:    batchDate ? (batchDate >= from && batchDate <= to) : false,
+      enrolled:    students.length,
+      planned:     students.reduce((t,x) => t+(x.totalPlanned||0), 0),
+      received:    students.reduce((t,x) => t+(x.totalActual||0),  0),
+      outstanding: students.reduce((t,x) => t+(x.emiDue||0),       0),
+    };
+  }).sort((a,b) => (a.batchDate||"") < (b.batchDate||"") ? -1 : 1);
+
+  // Overdue EMIs from V1 data
+  const today = new Date().toISOString().slice(0,10);
+  const overdue = [];
+  for (const st of emiV1) {
+    for (const emi of (st.emis||[])) {
+      if (emi.plannedDate && emi.plannedDate < today && !emi.actualDate && (emi.plannedAmt||0) > 0) {
+        const days = Math.floor((Date.now() - new Date(emi.plannedDate+"T00:00:00").getTime()) / 86400000);
+        overdue.push({ name:st.name, phone:st.phone, batch:st.batch, program:st.program, emiNum:emi.n, date:emi.plannedDate, amt:emi.plannedAmt, days });
+      }
+    }
+  }
+  overdue.sort((a,b) => b.days - a.days);
+
+  return (
+    <div style={{ padding:"0 24px 32px" }}>
+      <div style={{ fontSize:11, color:"var(--text3)", textTransform:"uppercase", letterSpacing:.5, margin:"16px 0 10px" }}>
+        All-Time Summary (same numbers as SUPER & RGM tab)
+      </div>
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginBottom:24 }}>
+        {[{label:"SUPER",color:"var(--tarot)",d:S},{label:"RGM",color:"var(--reiki)",d:R}].map(({label,color,d}) => (
+          <div key={label} style={{ background:"var(--surface)", border:"1px solid var(--border)", borderTop:"3px solid "+color, borderRadius:12, padding:"16px 18px" }}>
+            <div style={{ fontSize:14, fontWeight:700, color, marginBottom:14 }}>{label} Program</div>
+            {[
+              ["Students enrolled",  num(d.enrolled),                null            ],
+              ["Total planned",      inr(Math.round(d.planned)),     null            ],
+              ["Cash received",      inr(Math.round(d.received)),    "var(--success)"],
+              ["Outstanding",        inr(Math.round(d.outstanding)), d.outstanding>0?"var(--warning)":"var(--text3)"],
+              ["Collection %",       d.planned>0 ? Math.round((d.received/d.planned)*100)+"%" : "--", null],
+            ].map(([l,v,c]) => (
+              <div key={l} style={{ display:"flex", justifyContent:"space-between", padding:"5px 0", borderBottom:"1px solid var(--border2)" }}>
+                <span style={{ fontSize:12, color:"var(--text2)" }}>{l}</span>
+                <span style={{ fontSize:13, fontWeight:500, color:c||"var(--text)" }}>{v}</span>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+
+      <div style={{ fontSize:11, color:"var(--text3)", textTransform:"uppercase", letterSpacing:.5, marginBottom:10 }}>
+        Batch Breakdown -- batches launched in {periodLabel} are highlighted
+      </div>
+      <div style={sbox}>
+        <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13 }}>
+          <thead><tr>{["Batch","Program","Enrolled","Planned","Cash Received","Outstanding","Collection%"].map((h,i) => <th key={h} style={i<2?thL:th}>{h}</th>)}</tr></thead>
+          <tbody>
+            {batches.length === 0
+              ? <tr><td colSpan={7} style={{ ...tdS(), textAlign:"center", padding:"2rem", color:"var(--text3)" }}>No batch data yet.</td></tr>
+              : batches.map(b => {
+                  const color = b.prog==="SUPER" ? "var(--tarot)" : "var(--reiki)";
+                  return (
+                    <tr key={b.batch+b.prog} style={{ background:b.inPeriod?"rgba(139,92,246,0.07)":"transparent" }}>
+                      <td style={{ ...tdS("left"), color:"var(--text)", fontWeight:b.inPeriod?700:400 }}>
+                        {b.batch}
+                        {b.inPeriod && <span style={{ marginLeft:6, fontSize:10, background:"var(--tarot)", color:"#fff", padding:"1px 6px", borderRadius:3 }}>In period</span>}
+                      </td>
+                      <td style={{ ...tdS("left"), color, fontWeight:600 }}>{b.prog}</td>
+                      <td style={tdS()}>{b.enrolled}</td>
+                      <td style={tdS()}>{inr(Math.round(b.planned))}</td>
+                      <td style={{ ...tdS(), color:"var(--success)", fontWeight:700 }}>{inr(Math.round(b.received))}</td>
+                      <td style={{ ...tdS(), color:b.outstanding>0?"var(--warning)":"var(--text3)" }}>{b.outstanding>0?inr(Math.round(b.outstanding)):"--"}</td>
+                      <td style={tdS()}>{b.planned>0?Math.round((b.received/b.planned)*100)+"%":"--"}</td>
+                    </tr>
+                  );
+                })
+            }
+            <tr style={{ borderTop:"2px solid var(--border)", background:"var(--surface2)" }}>
+              <td style={{ ...tdS("left"), fontWeight:700, color:"var(--text)" }} colSpan={2}>Total (All Batches)</td>
+              <td style={{ ...tdS(), fontWeight:700 }}>{S.enrolled+R.enrolled}</td>
+              <td style={tdS()}>{inr(Math.round(S.planned+R.planned))}</td>
+              <td style={{ ...tdS(), color:"var(--success)", fontWeight:700 }}>{inr(Math.round(S.received+R.received))}</td>
+              <td style={{ ...tdS(), color:(S.outstanding+R.outstanding)>0?"var(--warning)":"var(--text3)", fontWeight:700 }}>{inr(Math.round(S.outstanding+R.outstanding))}</td>
+              <td style={{ ...tdS(), fontWeight:700 }}>{(S.planned+R.planned)>0?Math.round(((S.received+R.received)/(S.planned+R.planned))*100)+"%":"--"}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style={{ fontSize:11, color:"var(--text3)", textTransform:"uppercase", letterSpacing:.5, marginBottom:10 }}>
+        Overdue EMIs -- {overdue.length > 0 ? overdue.length+" unpaid" : "All clear"}
+      </div>
+      <div style={{ ...sbox, border:"1px solid "+(overdue.length>0?"var(--danger)":"var(--border)"), marginBottom:0 }}>
+        {overdue.length === 0
+          ? <div style={{ padding:"1.5rem", color:"var(--success)", fontSize:13 }}>No overdue EMIs</div>
+          : <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13 }}>
+              <thead><tr>{["Student","Phone","Batch","Program","EMI #","Due Date","Amount","Days"].map((h,i) => <th key={h} style={i<2?thL:th}>{h}</th>)}</tr></thead>
+              <tbody>
+                {overdue.slice(0,30).map((o,i) => (
+                  <tr key={i}>
+                    <td style={{ ...tdS("left"), color:"var(--text)", fontWeight:500 }}>{o.name||"--"}</td>
+                    <td style={tdS("left")}>{o.phone||"--"}</td>
+                    <td style={tdS()}>{o.batch}</td>
+                    <td style={{ ...tdS(), color:o.program==="SUPER"?"var(--tarot)":"var(--reiki)" }}>{o.program}</td>
+                    <td style={tdS()}>EMI {o.emiNum}</td>
+                    <td style={tdS()}>{o.date}</td>
+                    <td style={{ ...tdS(), color:"var(--danger)", fontWeight:700 }}>{inr(o.amt)}</td>
+                    <td style={{ ...tdS(), color:o.days>30?"var(--danger)":"var(--warning)", fontWeight:700 }}>{o.days}d</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+        }
+      </div>
+    </div>
+  );
 }
 
+// -- Company Revenue tab -------------------------------------------------------
+// Uses exact same totalActual sum as SUPER & RGM tab -- matches Rs.3.77L SUPER, Rs.2.33L RGM
+// L1 cash is period-filterable; SUPER/RGM shown as all-time (totalActual is cumulative)
 function RevTab({ transactions, emiV2, period }) {
+  const superRec = emiV2.filter(s=>s.program==="SUPER").reduce((t,x)=>t+(x.totalActual||0),0);
+  const rgmRec   = emiV2.filter(s=>s.program==="RGM").reduce((t,x)=>t+(x.totalActual||0),0);
+  const superDue = emiV2.filter(s=>s.program==="SUPER").reduce((t,x)=>t+(x.emiDue||0),0);
+  const rgmDue   = emiV2.filter(s=>s.program==="RGM").reduce((t,x)=>t+(x.emiDue||0),0);
+
   const allPeriods = PERIODS.map(pk => {
     const { from:f, to:t } = getDR(pk.key);
-    const tx  = transactions.filter(x => x.date>=f && x.date<=t);
-    const tL  = tx.filter(x => ISOT(x.program)).reduce((s,x) => s+x.amount, 0);
-    const rL  = tx.filter(x => ISOR(x.program)).reduce((s,x) => s+x.amount, 0);
-    // Use batch date (from s.batch name) for period matching -- s.timestamp unreliable
-    const sup = emiV2.filter(s => {
-      if (s.program !== "SUPER") return false;
-      const bd = parseBatchDate(s.batch);
-      return bd ? (bd >= f && bd <= t) : false;
-    }).reduce((s,x) => s+(x.totalActual||0), 0);
-    const rgm = emiV2.filter(s => {
-      if (s.program !== "RGM") return false;
-      const bd = parseBatchDate(s.batch);
-      return bd ? (bd >= f && bd <= t) : false;
-    }).reduce((s,x) => s+(x.totalActual||0), 0);
-    return { ...pk, tL, rL, sup, rgm, total:tL+rL+sup+rgm };
+    const tx = transactions.filter(x => x.date>=f && x.date<=t);
+    const tL = tx.filter(x => ISOT(x.program)).reduce((s,x) => s+x.amount, 0);
+    const rL = tx.filter(x => ISOR(x.program)).reduce((s,x) => s+x.amount, 0);
+    return { ...pk, tL, rL };
   });
 
-  // Also compute all-time SUPER/RGM totals for reference
-  const allSuper = emiV2.filter(s=>s.program==="SUPER").reduce((s,x)=>s+(x.totalActual||0),0);
-  const allRGM   = emiV2.filter(s=>s.program==="RGM").reduce((s,x)=>s+(x.totalActual||0),0);
-
-  const cur = allPeriods.find(p => p.key===period) || allPeriods[0];
+  const { from, to } = getDR(period);
+  const curTL = transactions.filter(x => x.date>=from && x.date<=to && ISOT(x.program)).reduce((t,x)=>t+x.amount,0);
+  const curRL = transactions.filter(x => x.date>=from && x.date<=to && ISOR(x.program)).reduce((t,x)=>t+x.amount,0);
+  const periodLabel = PERIODS.find(p => p.key===period)?.label || period;
 
   return (
     <div style={{ padding:"0 24px 32px" }}>
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginBottom:24 }}>
         {[
-          { label:"Tarot Funnel", color:"var(--tarot)", l1:cur.tL, ht:cur.sup, htLabel:"SUPER" },
-          { label:"Reiki Funnel", color:"var(--reiki)", l1:cur.rL, ht:cur.rgm, htLabel:"RGM"   },
-        ].map(({ label,color,l1,ht,htLabel }) => (
+          { label:"Tarot Funnel", color:"var(--tarot)", l1:curTL, htRec:superRec, htDue:superDue, htLabel:"SUPER" },
+          { label:"Reiki Funnel", color:"var(--reiki)", l1:curRL, htRec:rgmRec,   htDue:rgmDue,   htLabel:"RGM"   },
+        ].map(({ label,color,l1,htRec,htDue,htLabel }) => (
           <div key={label} style={{ background:"var(--surface)", border:"1px solid var(--border)", borderTop:"3px solid "+color, borderRadius:12, padding:"16px 18px" }}>
-            <div style={{ fontSize:13, fontWeight:700, color, marginBottom:14 }}>{label} -- {cur.label}</div>
+            <div style={{ fontSize:13, fontWeight:700, color, marginBottom:14 }}>{label}</div>
             {[
-              ["L1 cash collected",       inr(Math.round(l1)), color],
-              [htLabel+" cash (period)",  inr(Math.round(ht)), color],
-              [htLabel+" cash (all time)",inr(Math.round(label==="Tarot Funnel"?allSuper:allRGM)), "var(--text3)"],
+              ["L1 cash ("+periodLabel+")",    inr(Math.round(l1)),    color           ],
+              [htLabel+" received (all-time)", inr(Math.round(htRec)), "var(--success)"],
+              [htLabel+" outstanding",         inr(Math.round(htDue)), htDue>0?"var(--warning)":"var(--text3)"],
             ].map(([l,v,c]) => (
               <div key={l} style={{ display:"flex", justifyContent:"space-between", padding:"5px 0", borderBottom:"1px solid var(--border2)" }}>
                 <span style={{ fontSize:12, color:"var(--text2)" }}>{l}</span>
@@ -564,53 +697,38 @@ function RevTab({ transactions, emiV2, period }) {
               </div>
             ))}
             <div style={{ marginTop:10, paddingTop:10, borderTop:"1px solid var(--border)", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-              <span style={{ fontSize:12, color:"var(--text2)" }}>Total</span>
-              <span style={{ fontSize:20, fontWeight:700, color }}>{inr(Math.round(l1+ht))}</span>
+              <span style={{ fontSize:12, color:"var(--text2)" }}>L1 ({periodLabel}) + {htLabel}</span>
+              <span style={{ fontSize:20, fontWeight:700, color }}>{inr(Math.round(l1+htRec))}</span>
             </div>
           </div>
         ))}
       </div>
       <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"20px 24px", marginBottom:24, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
         <div>
-          <div style={{ fontSize:11, color:"var(--text3)", textTransform:"uppercase", letterSpacing:.5, marginBottom:4 }}>Company Total -- {cur.label}</div>
-          <div style={{ fontSize:11, color:"var(--text3)" }}>All programs combined</div>
+          <div style={{ fontSize:11, color:"var(--text3)", textTransform:"uppercase", letterSpacing:.5, marginBottom:4 }}>Company Cash Total</div>
+          <div style={{ fontSize:11, color:"var(--text3)" }}>L1 ({periodLabel}) + SUPER all batches + RGM all batches</div>
         </div>
-        <div style={{ textAlign:"right" }}>
-          <div style={{ fontSize:32, fontWeight:800, color:"var(--success)" }}>{inr(Math.round(cur.total))}</div>
-          <div style={{ fontSize:11, color:"var(--text3)", marginTop:4 }}>cash in</div>
-        </div>
+        <div style={{ fontSize:32, fontWeight:800, color:"var(--success)" }}>{inr(Math.round(curTL+curRL+superRec+rgmRec))}</div>
       </div>
-      <div style={{ fontSize:11, color:"var(--text3)", textTransform:"uppercase", letterSpacing:.5, marginBottom:10 }}>All Periods</div>
+      <div style={{ fontSize:11, color:"var(--text3)", textTransform:"uppercase", letterSpacing:.5, marginBottom:10 }}>L1 Cash by Period</div>
       <div style={sbox}>
         <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13 }}>
-          <thead>
-            <tr>
-              <th style={thL}>Period</th>
-              <th style={{ ...th, color:"var(--tarot)" }}>Tarot L1</th>
-              <th style={{ ...th, color:"var(--tarot)" }}>SUPER</th>
-              <th style={{ ...th, color:"var(--reiki)" }}>Reiki L1</th>
-              <th style={{ ...th, color:"var(--reiki)" }}>RGM</th>
-              <th style={{ ...th, color:"var(--success)" }}>Total</th>
-            </tr>
-          </thead>
+          <thead><tr><th style={thL}>Period</th><th style={{ ...th, color:"var(--tarot)" }}>Tarot L1</th><th style={{ ...th, color:"var(--reiki)" }}>Reiki L1</th><th style={{ ...th, color:"var(--success)" }}>L1 Total</th></tr></thead>
           <tbody>
             {allPeriods.map(r => (
               <tr key={r.key} style={{ background:r.key===period?"rgba(139,92,246,0.05)":"transparent" }}>
                 <td style={{ ...tdS("left"), color:"var(--text)", fontWeight:r.key===period?700:400 }}>{r.label}</td>
                 <td style={{ ...tdS(), color:"var(--tarot)" }}>{r.tL>0?inr(Math.round(r.tL)):"--"}</td>
-                <td style={{ ...tdS(), color:"var(--tarot)" }}>{r.sup>0?inr(Math.round(r.sup)):"--"}</td>
                 <td style={{ ...tdS(), color:"var(--reiki)" }}>{r.rL>0?inr(Math.round(r.rL)):"--"}</td>
-                <td style={{ ...tdS(), color:"var(--reiki)" }}>{r.rgm>0?inr(Math.round(r.rgm)):"--"}</td>
-                <td style={{ ...tdS(), color:"var(--success)", fontWeight:700 }}>{r.total>0?inr(Math.round(r.total)):"--"}</td>
+                <td style={{ ...tdS(), color:"var(--success)", fontWeight:700 }}>{(r.tL+r.rL)>0?inr(Math.round(r.tL+r.rL)):"--"}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      <div style={{ fontSize:11, color:"var(--text3)", lineHeight:1.7 }}>
-        L1 = actual cash from All New Booking + Due Payment tabs (real transaction dates).
-        SUPER/RGM = cash received filtered by batch launch date (e.g. "Dec 2025" batch = Dec 2025).
-        All-time totals shown in parentheses on each card for reference.
+      <div style={{ fontSize:11, color:"var(--text3)", lineHeight:1.8 }}>
+        L1 = period-filterable (real transaction dates from All New Booking + Due Payment tabs).
+        SUPER/RGM = all-time cumulative received (same numbers as SUPER & RGM tab). For batch-level detail see High Ticket tab.
       </div>
     </div>
   );
@@ -618,16 +736,18 @@ function RevTab({ transactions, emiV2, period }) {
 
 // -- Main Sales component ------------------------------------------------------
 const SUBS = [
-  { key:"overview", label:"Overview"           },
-  { key:"cashflow", label:"Cashflow"           },
-  { key:"closers",  label:"Closer Performance" },
-  { key:"revenue",  label:"Company Revenue"    },
+  { key:"overview",   label:"Overview"           },
+  { key:"cashflow",   label:"Cashflow"           },
+  { key:"closers",    label:"Closer Performance" },
+  { key:"highticket", label:"High Ticket"        },
+  { key:"revenue",    label:"Company Revenue"    },
 ];
 
 export default function Sales() {
   const [enr,     setEnr]     = useState([]);
   const [tx,      setTx]      = useState([]);
   const [emi,     setEmi]     = useState([]);
+  const [emiV1,   setEmiV1]   = useState([]);
   const [loading, setLoading] = useState(true);
   const [demo,    setDemo]    = useState(false);
   const [updated, setUpdated] = useState(null);
@@ -636,16 +756,21 @@ export default function Sales() {
 
   const load = useCallback(async () => {
     setLoading(true);
+    const withTimeout = (promise, fallback, ms=10000) =>
+      Promise.race([promise, new Promise(resolve => setTimeout(() => resolve(fallback), ms))]);
     try {
       const [e,t,m] = await Promise.all([
-        loadSalesData(),
-        loadTransactionData(),
-        loadEMIData().catch(() => getEMISample()),
+        withTimeout(loadSalesData(), []),
+        withTimeout(loadTransactionData(), []),
+        withTimeout(loadEMIData(), getEMISample()),
       ]);
-      setEnr(e); setTx(t); setEmi(m.v2||[]);
+      setEnr(Array.isArray(e) ? e : []);
+      setTx(Array.isArray(t) ? t : []);
+      setEmi((m && m.v2) ? m.v2 : []);
+      setEmiV1((m && m.students) ? m.students : []);
       setDemo(false);
     } catch (_) {
-      setEnr([]); setTx([]); setEmi([]);
+      setEnr([]); setTx([]); setEmi([]); setEmiV1([]);
       setDemo(true);
     } finally {
       setLoading(false); setUpdated(new Date());
@@ -685,10 +810,11 @@ export default function Sales() {
           );
         })}
       </div>
-      {sub==="overview" && <OverviewTab enr={fEnr} all={enr} />}
-      {sub==="cashflow" && <CashflowTab transactions={tx} period={period} />}
-      {sub==="closers"  && <CloserTab   enrollments={fEnr} />}
-      {sub==="revenue"  && <RevTab      transactions={tx} emiV2={emi} period={period} />}
+      {sub==="overview"   && <OverviewTab   enr={fEnr} all={enr} />}
+      {sub==="cashflow"   && <CashflowTab   transactions={tx} period={period} />}
+      {sub==="closers"    && <CloserTab      enrollments={fEnr} />}
+      {sub==="highticket" && <HighTicketTab  emiV2={emi} emiV1={emiV1} period={period} />}
+      {sub==="revenue"    && <RevTab         transactions={tx} emiV2={emi} period={period} />}
     </div>
   );
 }
