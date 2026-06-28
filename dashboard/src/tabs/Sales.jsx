@@ -510,7 +510,7 @@ function CloserTab({ enrollments }) {
 // -- High Ticket tab -----------------------------------------------------------
 // Reads directly from Resp EMI tab of ALL batch sheets (via loadAllBatchData)
 // This guarantees ALL 7 batches (5 SUPER + 2 RGM) are combined correctly
-function HighTicketTab({ batchData, emiV1, period }) {
+function HighTicketTab({ batchData, emiV1, period, batchLoading, batchError }) {
   const { from, to } = getDR(period);
   const periodLabel  = PERIODS.find(p => p.key===period)?.label || period;
 
@@ -542,9 +542,18 @@ function HighTicketTab({ batchData, emiV1, period }) {
       <div style={{ fontSize:11, color:"var(--text3)", textTransform:"uppercase", letterSpacing:.5, margin:"16px 0 10px" }}>
         All-Time Summary -- Direct from All {batchData.length} Batch Sheets (Resp EMI Tab)
       </div>
-      {batchData.length===0 && (
-        <div style={{ background:"var(--surface)", border:"1px solid var(--warning)", borderRadius:12, padding:"16px 20px", marginBottom:20, color:"var(--warning)", fontSize:13 }}>
-          Reading all batch sheets... this may take a moment.
+      {batchLoading && (
+        <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"20px 24px", marginBottom:20, display:"flex", alignItems:"center", gap:12 }}>
+          <div style={{ width:16, height:16, border:"2px solid var(--tarot)", borderTopColor:"transparent", borderRadius:"50%", animation:"spin 0.8s linear infinite" }} />
+          <span style={{ fontSize:13, color:"var(--text2)" }}>Reading all 7 batch sheets from Resp EMI tab...</span>
+        </div>
+      )}
+      {!batchLoading && batchError && (
+        <div style={{ background:"var(--surface)", border:"1px solid var(--danger)", borderRadius:12, padding:"16px 20px", marginBottom:20 }}>
+          <div style={{ fontSize:13, color:"var(--danger)", fontWeight:600, marginBottom:6 }}>Could not read batch sheets</div>
+          <div style={{ fontSize:12, color:"var(--text3)" }}>
+            Possible causes: Resp EMI tab name may differ, or sheets may not be publicly accessible. Check that all 7 batch sheets share the same tab name "Resp EMI" and are accessible to this Google account.
+          </div>
         </div>
       )}
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginBottom:24 }}>
@@ -698,40 +707,52 @@ const SUBS = [
 ];
 
 export default function Sales() {
-  const [enr,       setEnr]       = useState([]);
-  const [tx,        setTx]        = useState([]);
-  const [emi,       setEmi]       = useState([]);
-  const [emiV1,     setEmiV1]     = useState([]);
-  const [batchData, setBatchData] = useState([]);
-  const [loading,   setLoading]   = useState(true);
-  const [demo,      setDemo]      = useState(false);
-  const [updated,   setUpdated]   = useState(null);
-  const [period,    setPeriod]    = useState("thisMonth");
-  const [sub,       setSub]       = useState("overview");
+  const [enr,          setEnr]          = useState([]);
+  const [tx,           setTx]           = useState([]);
+  const [emi,          setEmi]          = useState([]);
+  const [emiV1,        setEmiV1]        = useState([]);
+  const [batchData,    setBatchData]    = useState([]);
+  const [batchLoading, setBatchLoading] = useState(false);
+  const [batchError,   setBatchError]   = useState(false);
+  const [loading,      setLoading]      = useState(true);
+  const [demo,         setDemo]         = useState(false);
+  const [updated,      setUpdated]      = useState(null);
+  const [period,       setPeriod]       = useState("thisMonth");
+  const [sub,          setSub]          = useState("overview");
 
   const load = useCallback(async () => {
     setLoading(true);
-    const withTimeout = (promise, fallback, ms=12000) =>
+    const withTimeout = (promise, fallback, ms=10000) =>
       Promise.race([promise, new Promise(resolve => setTimeout(() => resolve(fallback), ms))]);
     try {
-      const [e, t, m, bd] = await Promise.all([
-        withTimeout(loadSalesData(),        []),
-        withTimeout(loadTransactionData(),  []),
-        withTimeout(loadEMIData(),          getEMISample()),
-        withTimeout(loadAllBatchData(),     []),
+      // Step 1: Load main sales data (fast -- blocks render)
+      const [e, t, m] = await Promise.all([
+        withTimeout(loadSalesData(),       []),
+        withTimeout(loadTransactionData(), []),
+        withTimeout(loadEMIData(),         getEMISample()),
       ]);
       setEnr(Array.isArray(e) ? e : []);
       setTx(Array.isArray(t) ? t : []);
       setEmi((m && m.v2) ? m.v2 : []);
       setEmiV1((m && m.students) ? m.students : []);
-      setBatchData(Array.isArray(bd) ? bd : []);
       setDemo(false);
     } catch (_) {
-      setEnr([]); setTx([]); setEmi([]); setEmiV1([]); setBatchData([]);
+      setEnr([]); setTx([]); setEmi([]); setEmiV1([]);
       setDemo(true);
     } finally {
       setLoading(false); setUpdated(new Date());
     }
+
+    // Step 2: Load batch data in BACKGROUND -- does NOT block the Sales tab render
+    setBatchLoading(true);
+    setBatchError(false);
+    loadAllBatchData()
+      .then(bd => {
+        setBatchData(Array.isArray(bd) && bd.length > 0 ? bd : []);
+        if (!bd || bd.length === 0) setBatchError(true);
+      })
+      .catch(() => { setBatchData([]); setBatchError(true); })
+      .finally(() => setBatchLoading(false));
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -770,7 +791,7 @@ export default function Sales() {
       {sub==="overview"   && <OverviewTab   enr={fEnr} all={enr} />}
       {sub==="cashflow"   && <CashflowTab   transactions={tx} period={period} />}
       {sub==="closers"    && <CloserTab      enrollments={fEnr} />}
-      {sub==="highticket" && <HighTicketTab  batchData={batchData} emiV1={emiV1} period={period} />}
+      {sub==="highticket" && <HighTicketTab  batchData={batchData} emiV1={emiV1} period={period} batchLoading={batchLoading} batchError={batchError} />}
       {sub==="revenue"    && <RevTab         transactions={tx} batchData={batchData} period={period} />}
     </div>
   );
