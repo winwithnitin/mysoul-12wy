@@ -510,20 +510,35 @@ function CloserTab({ enrollments }) {
 // -- High Ticket tab -----------------------------------------------------------
 // Reads directly from Resp EMI tab of ALL batch sheets (via loadAllBatchData)
 // This guarantees ALL 7 batches (5 SUPER + 2 RGM) are combined correctly
-function HighTicketTab({ batchData, emiV1, period, batchLoading, batchError }) {
+function HighTicketTab({ batchData, emiV2, emiV1, period, batchLoading, batchError }) {
   const { from, to } = getDR(period);
   const periodLabel  = PERIODS.find(p => p.key===period)?.label || period;
 
-  const superBatches  = batchData.filter(b => b.program === "SUPER");
-  const rgmBatches    = batchData.filter(b => b.program === "RGM");
+  // Use batchData from new script if available, else fall back to grouping emiV2 by batch
+  const effectiveBatches = batchData.length > 0 ? batchData : (() => {
+    const bm = {};
+    for (const s of emiV2) {
+      const key = (s.batch||"Unknown")+"|"+(s.program||"SUPER");
+      if (!bm[key]) bm[key] = { batch:s.batch||"Unknown", program:s.program||"SUPER", students:0, received:0 };
+      bm[key].students++;
+      bm[key].received += s.totalActual || 0;
+    }
+    return Object.values(bm);
+  })();
+  const usingFallback = batchData.length === 0;
+
+  const superBatches  = effectiveBatches.filter(b => b.program === "SUPER");
+  const rgmBatches    = effectiveBatches.filter(b => b.program === "RGM");
   const superReceived = superBatches.reduce((t,b) => t+b.received, 0);
   const rgmReceived   = rgmBatches.reduce((t,b) => t+b.received, 0);
   const superStudents = superBatches.reduce((t,b) => t+b.students, 0);
   const rgmStudents   = rgmBatches.reduce((t,b) => t+b.students, 0);
 
   const mo = {jan:"01",feb:"02",mar:"03",apr:"04",may:"05",jun:"06",jul:"07",aug:"08",sep:"09",oct:"10",nov:"11",dec:"12"};
-  const parseBD = name => { const m=name.toLowerCase().match(/([a-z]+)\s+(\d{4})/); return (m&&mo[m[1].slice(0,3)])?m[2]+"-"+mo[m[1].slice(0,3)]+"-01":null; };
-  const batches = [...batchData].map(b => ({ ...b, batchDate:parseBD(b.batch), inPeriod:(()=>{const bd=parseBD(b.batch);return bd?(bd>=from&&bd<=to):false;})() })).sort((a,b)=>(a.batchDate||"")<(b.batchDate||"")?-1:1);
+  const parseBD = name => { const m=(name||"").toLowerCase().match(/([a-z]+)\s+(\d{4})/); return (m&&mo[m[1].slice(0,3)])?m[2]+"-"+mo[m[1].slice(0,3)]+"-01":null; };
+  const batches = [...effectiveBatches]
+    .map(b => ({ ...b, batchDate:parseBD(b.batch), inPeriod:(()=>{const bd=parseBD(b.batch);return bd?(bd>=from&&bd<=to):false;})() }))
+    .sort((a,b)=>(a.batchDate||"")<(b.batchDate||"")?-1:1);
 
   const today = new Date().toISOString().slice(0,10);
   const overdue = [];
@@ -539,28 +554,24 @@ function HighTicketTab({ batchData, emiV1, period, batchLoading, batchError }) {
 
   return (
     <div style={{ padding:"0 24px 32px" }}>
-      <div style={{ fontSize:11, color:"var(--text3)", textTransform:"uppercase", letterSpacing:.5, margin:"16px 0 10px" }}>
-        All-Time Summary -- Direct from All {batchData.length} Batch Sheets (Resp EMI Tab)
-      </div>
       {batchLoading && (
-        <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"20px 24px", marginBottom:20, display:"flex", alignItems:"center", gap:12 }}>
-          <div style={{ width:16, height:16, border:"2px solid var(--tarot)", borderTopColor:"transparent", borderRadius:"50%", animation:"spin 0.8s linear infinite" }} />
-          <span style={{ fontSize:13, color:"var(--text2)" }}>Reading all 7 batch sheets from Resp EMI tab...</span>
+        <div style={{ background:"var(--surface)", border:"1px solid var(--border)", borderRadius:12, padding:"14px 20px", marginTop:16, marginBottom:16, fontSize:13, color:"var(--text3)" }}>
+          Fetching live data from all batch sheets...
         </div>
       )}
       {!batchLoading && batchError && (
-        <div style={{ background:"var(--surface)", border:"1px solid var(--danger)", borderRadius:12, padding:"16px 20px", marginBottom:20 }}>
-          <div style={{ fontSize:13, color:"var(--danger)", fontWeight:600, marginBottom:6 }}>Could not read batch sheets</div>
-          <div style={{ fontSize:12, color:"var(--text3)" }}>
-            Possible causes: Resp EMI tab name may differ, or sheets may not be publicly accessible. Check that all 7 batch sheets share the same tab name "Resp EMI" and are accessible to this Google account.
-          </div>
+        <div style={{ background:"rgba(245,158,11,0.08)", border:"1px solid var(--warning)", borderRadius:12, padding:"12px 18px", marginTop:16, marginBottom:16, fontSize:12, color:"var(--warning)" }}>
+          Live batch read failed -- showing EMI tracker data instead. Fix: Nitin must re-deploy the Batch EMI script from his own Google account (script.google.com).
         </div>
       )}
+      <div style={{ fontSize:11, color:"var(--text3)", textTransform:"uppercase", letterSpacing:.5, margin:"16px 0 10px" }}>
+        All-Time Summary ({usingFallback ? "from EMI tracker" : "direct from all "+effectiveBatches.length+" batch sheets"})
+      </div>
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginBottom:24 }}>
         {[{label:"SUPER",color:"var(--tarot)",received:superReceived,students:superStudents,count:superBatches.length},{label:"RGM",color:"var(--reiki)",received:rgmReceived,students:rgmStudents,count:rgmBatches.length}].map(({label,color,received,students,count}) => (
           <div key={label} style={{ background:"var(--surface)", border:"1px solid var(--border)", borderTop:"3px solid "+color, borderRadius:12, padding:"16px 18px" }}>
             <div style={{ fontSize:14, fontWeight:700, color, marginBottom:14 }}>{label} Program</div>
-            {[["Batches read",num(count)+" batches",null],["Total students",num(students),null],["Cash received",inr(Math.round(received)),"var(--success)"]].map(([l,v,c]) => (
+            {[["Batches",num(count),null],["Students",num(students),null],["Cash Received",inr(Math.round(received)),"var(--success)"]].map(([l,v,c]) => (
               <div key={l} style={{ display:"flex", justifyContent:"space-between", padding:"5px 0", borderBottom:"1px solid var(--border2)" }}>
                 <span style={{ fontSize:12, color:"var(--text2)" }}>{l}</span>
                 <span style={{ fontSize:13, fontWeight:500, color:c||"var(--text)" }}>{v}</span>
@@ -569,21 +580,20 @@ function HighTicketTab({ batchData, emiV1, period, batchLoading, batchError }) {
           </div>
         ))}
       </div>
-
       <div style={{ fontSize:11, color:"var(--text3)", textTransform:"uppercase", letterSpacing:.5, marginBottom:10 }}>
-        Per-Batch Breakdown (highlighted = batch launched in {periodLabel})
+        Batch Breakdown (highlighted = launched in {periodLabel})
       </div>
       <div style={sbox}>
         <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13 }}>
           <thead><tr>{["Batch","Program","Students","Cash Received"].map((h,i)=><th key={h} style={i<2?thL:th}>{h}</th>)}</tr></thead>
           <tbody>
-            {batches.length===0
-              ? <tr><td colSpan={4} style={{...tdS(),textAlign:"center",padding:"2rem",color:"var(--text3)"}}>Reading batch sheets...</td></tr>
+            {batches.length === 0
+              ? <tr><td colSpan={4} style={{...tdS(),textAlign:"center",padding:"2rem",color:"var(--text3)"}}>No data.</td></tr>
               : batches.map(b => {
                   const color = b.program==="SUPER"?"var(--tarot)":"var(--reiki)";
                   return (
                     <tr key={b.batch+b.program} style={{ background:b.inPeriod?"rgba(139,92,246,0.07)":"transparent" }}>
-                      <td style={{ ...tdS("left"), color:"var(--text)", fontWeight:b.inPeriod?700:400 }}>
+                      <td style={{ ...tdS("left"), fontWeight:b.inPeriod?700:400 }}>
                         {b.batch}{b.inPeriod&&<span style={{marginLeft:6,fontSize:10,background:"var(--tarot)",color:"#fff",padding:"1px 6px",borderRadius:3}}>In period</span>}
                       </td>
                       <td style={{ ...tdS("left"), color, fontWeight:600 }}>{b.program}</td>
@@ -601,7 +611,6 @@ function HighTicketTab({ batchData, emiV1, period, batchLoading, batchError }) {
           </tbody>
         </table>
       </div>
-
       <div style={{ fontSize:11, color:"var(--text3)", textTransform:"uppercase", letterSpacing:.5, marginBottom:10 }}>
         Overdue EMIs -- {overdue.length>0?overdue.length+" unpaid":"All clear"}
       </div>
@@ -610,20 +619,18 @@ function HighTicketTab({ batchData, emiV1, period, batchLoading, batchError }) {
           ? <div style={{ padding:"1.5rem", color:"var(--success)", fontSize:13 }}>No overdue EMIs</div>
           : <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13 }}>
               <thead><tr>{["Student","Phone","Batch","Program","EMI #","Due Date","Amount","Days"].map((h,i)=><th key={h} style={i<2?thL:th}>{h}</th>)}</tr></thead>
-              <tbody>
-                {overdue.slice(0,30).map((o,i)=>(
-                  <tr key={i}>
-                    <td style={{ ...tdS("left"), color:"var(--text)", fontWeight:500 }}>{o.name||"--"}</td>
-                    <td style={tdS("left")}>{o.phone||"--"}</td>
-                    <td style={tdS()}>{o.batch}</td>
-                    <td style={{ ...tdS(), color:o.program==="SUPER"?"var(--tarot)":"var(--reiki)" }}>{o.program}</td>
-                    <td style={tdS()}>EMI {o.emiNum}</td>
-                    <td style={tdS()}>{o.date}</td>
-                    <td style={{ ...tdS(), color:"var(--danger)", fontWeight:700 }}>{inr(o.amt)}</td>
-                    <td style={{ ...tdS(), color:o.days>30?"var(--danger)":"var(--warning)", fontWeight:700 }}>{o.days}d</td>
-                  </tr>
-                ))}
-              </tbody>
+              <tbody>{overdue.slice(0,30).map((o,i)=>(
+                <tr key={i}>
+                  <td style={{ ...tdS("left"), color:"var(--text)", fontWeight:500 }}>{o.name||"--"}</td>
+                  <td style={tdS("left")}>{o.phone||"--"}</td>
+                  <td style={tdS()}>{o.batch}</td>
+                  <td style={{ ...tdS(), color:o.program==="SUPER"?"var(--tarot)":"var(--reiki)" }}>{o.program}</td>
+                  <td style={tdS()}>EMI {o.emiNum}</td>
+                  <td style={tdS()}>{o.date}</td>
+                  <td style={{ ...tdS(), color:"var(--danger)", fontWeight:700 }}>{inr(o.amt)}</td>
+                  <td style={{ ...tdS(), color:o.days>30?"var(--danger)":"var(--warning)", fontWeight:700 }}>{o.days}d</td>
+                </tr>
+              ))}</tbody>
             </table>
         }
       </div>
@@ -632,9 +639,15 @@ function HighTicketTab({ batchData, emiV1, period, batchLoading, batchError }) {
 }
 
 // -- Company Revenue tab -------------------------------------------------------
-function RevTab({ transactions, batchData, period }) {
-  const superReceived = batchData.filter(b=>b.program==="SUPER").reduce((t,b)=>t+b.received,0);
-  const rgmReceived   = batchData.filter(b=>b.program==="RGM").reduce((t,b)=>t+b.received,0);
+function RevTab({ transactions, batchData, emiV2, period }) {
+  // Use batchData if available (new script), else fall back to emiV2 (existing EMI tracker)
+  const superReceived = batchData.length > 0
+    ? batchData.filter(b=>b.program==="SUPER").reduce((t,b)=>t+b.received,0)
+    : emiV2.filter(s=>s.program==="SUPER").reduce((t,s)=>t+(s.totalActual||0),0);
+  const rgmReceived = batchData.length > 0
+    ? batchData.filter(b=>b.program==="RGM").reduce((t,b)=>t+b.received,0)
+    : emiV2.filter(s=>s.program==="RGM").reduce((t,s)=>t+(s.totalActual||0),0);
+
 
   const allPeriods = PERIODS.map(pk => {
     const { from:f, to:t } = getDR(pk.key);
@@ -791,8 +804,8 @@ export default function Sales() {
       {sub==="overview"   && <OverviewTab   enr={fEnr} all={enr} />}
       {sub==="cashflow"   && <CashflowTab   transactions={tx} period={period} />}
       {sub==="closers"    && <CloserTab      enrollments={fEnr} />}
-      {sub==="highticket" && <HighTicketTab  batchData={batchData} emiV1={emiV1} period={period} batchLoading={batchLoading} batchError={batchError} />}
-      {sub==="revenue"    && <RevTab         transactions={tx} batchData={batchData} period={period} />}
+      {sub==="highticket" && <HighTicketTab  batchData={batchData} emiV2={emi} emiV1={emiV1} period={period} batchLoading={batchLoading} batchError={batchError} />}
+      {sub==="revenue"    && <RevTab         transactions={tx} batchData={batchData} emiV2={emi} period={period} />}
     </div>
   );
 }
