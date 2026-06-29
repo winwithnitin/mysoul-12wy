@@ -1,5 +1,5 @@
 import { toISO, todayISO, monthStartISO } from './dates.js';
-import { SHEETS, SALES_SHEET, FINANCE_URL, EMI_URL } from '../config.js';
+import { SHEETS, SALES_SHEET, FINANCE_URL, EMI_URL, BATCH_EMI_URL } from '../config.js';
 
 // --- Shared helpers -----------------------------------------------------------
 export function parseCSV(text) {
@@ -255,7 +255,6 @@ export function detectDuplicates(enrollments) {
 // Response shape: { batches: [{batch, program, students, received}], superTotal, rgmTotal }
 
 export async function loadAllBatchData() {
-  const { BATCH_EMI_URL } = await import('../config.js');
   const res = await fetch(BATCH_EMI_URL);
   if (!res.ok) throw new Error('Batch EMI API ' + res.status);
   const data = await res.json();
