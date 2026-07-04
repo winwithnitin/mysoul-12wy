@@ -1,0 +1,1423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MySoul Personalised Kundli 2.0 — Expert Vedic Astrology Report</title>
+<meta name="description" content="A personalized reading of your career timing, relationship patterns and money flow. Starting ₹399.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<!-- ══ GLOBAL CSS — ADD ONCE IN FLEXIFUNNELS ══ -->
+<style>
+/* ════════════════════════════════════
+   TOKENS
+════════════════════════════════════ */
+:root{
+  --bg:        #FAF6EE;
+  --cream:     #f2ead8;
+  --cream2:    #EDE0C8;
+  --white:     #FFFDF8;
+
+  /* PRIMARY — Mustard Brown */
+  --p:         #AA5605;
+  --pd:        #7A3A02;
+  --pl:        #CC7722;
+  --pll:       #D4942A;
+
+  /* Gold accents */
+  --gold:      #C9870A;
+  --gold2:     #D9A441;
+  --gold3:     #E8B84B;
+
+  /* Light maroon accent only for contrast elements */
+  --lm:        #9B3020;
+
+  /* Text */
+  --text:      #1A1208;
+  --mid:       #4A3218;
+  --muted:     #8A7060;
+
+  /* Borders / shadows */
+  --bdr:       rgba(170,86,5,0.18);
+  --bdr2:      rgba(170,86,5,0.12);
+  --shsm:      0 1px 6px rgba(170,86,5,0.07);
+  --shmd:      0 4px 24px rgba(170,86,5,0.1);
+  --shlg:      0 12px 48px rgba(170,86,5,0.13);
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:16px;line-height:1.7;overflow-x:hidden;}
+
+/* DM Serif Display for headings — elegant, fancy, very readable */
+h1,h2,h3,h4{font-family:'DM Serif Display',serif;line-height:1.22;}
+a{text-decoration:none;}
+
+/* ════════════════════════════════════
+   ANIMATIONS
+════════════════════════════════════ */
+@keyframes marqueeL{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+@keyframes marqueeR{from{transform:translateX(-50%);}to{transform:translateX(0);}}
+@keyframes spinCW{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+@keyframes spinCCW{from{transform:rotate(0);}to{transform:rotate(-360deg);}}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.4;transform:scale(.65);}}
+@keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+@keyframes statScroll{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+
+/* ════════════════════════════════════
+   TOP BAR
+════════════════════════════════════ */
+.bar{
+  background:linear-gradient(90deg,#5A2800,var(--pd),var(--p),var(--pd),#5A2800);
+  height:34px;overflow:hidden;position:relative;
+  mask:linear-gradient(90deg,transparent 0%,#000 8%,#000 92%,transparent 100%);
+  -webkit-mask:linear-gradient(90deg,transparent 0%,#000 8%,#000 92%,transparent 100%);
+}
+.bar-track{display:flex;width:max-content;animation:marqueeL 24s linear infinite;align-items:center;height:100%;}
+.bar-item{display:inline-flex;align-items:center;gap:8px;padding:0 24px;white-space:nowrap;font-family:'Inter',sans-serif;font-size:12px;font-weight:500;color:rgba(255,247,232,.7);border-right:1px solid rgba(232,184,75,.18);}
+.bar-item strong{color:var(--gold3);font-weight:700;}
+
+/* ════════════════════════════════════
+   NAV
+════════════════════════════════════ */
+.nav{background:rgba(250,246,238,.98);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--bdr);padding:12px 5vw;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:99;box-shadow:0 2px 14px rgba(170,86,5,.06);}
+.nav-logo{font-family:'DM Serif Display',serif;font-size:23px;color:var(--p);line-height:1;}
+.nav-logo span{color:var(--gold2);}
+.nav-sub{font-family:'Inter',sans-serif;font-size:8px;letter-spacing:2.5px;color:var(--muted);text-transform:uppercase;margin-top:2px;}
+.nav-trust{font-family:'Inter',sans-serif;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px;}
+.nav-trust strong{color:var(--p);}
+.btn-nav{background:linear-gradient(135deg,var(--p),var(--pll));color:#fff;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;padding:10px 20px;border-radius:7px;box-shadow:0 3px 12px rgba(170,86,5,.28);transition:opacity .18s,transform .18s;white-space:nowrap;}
+.btn-nav:hover{opacity:.92;transform:translateY(-1px);}
+
+/* ════════════════════════════════════
+   BUTTONS
+════════════════════════════════════ */
+.btn-gold{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--pd),var(--p),var(--pll));color:#fff;font-family:'Inter',sans-serif;font-size:16px;font-weight:700;padding:15px 30px;border-radius:10px;border:none;cursor:pointer;box-shadow:0 4px 20px rgba(170,86,5,.35),0 0 0 1px rgba(170,86,5,.2),inset 0 1px 0 rgba(255,255,255,.2);transition:transform .18s,box-shadow .18s;}
+.btn-gold:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(170,86,5,.44);}
+.btn-outline{display:inline-flex;align-items:center;gap:6px;background:transparent;color:var(--p);font-family:'Inter',sans-serif;font-size:14px;font-weight:600;padding:14px 22px;border-radius:10px;border:1.5px solid rgba(170,86,5,.3);transition:all .18s;}
+.btn-outline:hover{border-color:var(--p);background:rgba(170,86,5,.04);}
+.btn-outline-light{display:inline-flex;align-items:center;gap:6px;background:transparent;color:rgba(255,247,232,.82);font-family:'Inter',sans-serif;font-size:14px;font-weight:600;padding:14px 22px;border-radius:10px;border:1.5px solid rgba(255,247,232,.3);transition:all .18s;}
+.btn-outline-light:hover{border-color:rgba(255,247,232,.6);}
+
+/* ════════════════════════════════════
+   HERO
+════════════════════════════════════ */
+.hero{
+  background:radial-gradient(ellipse at 72% 20%,rgba(170,86,5,.06) 0%,transparent 50%),radial-gradient(ellipse at 8% 80%,rgba(170,86,5,.04) 0%,transparent 50%),linear-gradient(160deg,#FFFDF8 0%,var(--bg) 55%,var(--cream) 100%);
+  padding:40px 5vw 36px;position:relative;overflow:hidden;
+}
+.hero-ring{position:absolute;border:1px dashed rgba(170,86,5,.1);border-radius:50%;pointer-events:none;}
+.hero-ring.r1{width:460px;height:460px;top:-160px;right:-140px;animation:spinCW 55s linear infinite;}
+.hero-ring.r2{width:280px;height:280px;top:-80px;right:-60px;animation:spinCCW 35s linear infinite;}
+.hero-inner{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr 340px;gap:40px;align-items:center;position:relative;z-index:2;}
+
+/* Live badge */
+.hero-live{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(170,86,5,.16);background:rgba(170,86,5,.05);border-radius:30px;padding:6px 14px;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;color:var(--p);margin-bottom:14px;width:fit-content;animation:fadeUp .45s ease both;}
+.live-dot{width:7px;height:7px;background:#4CAF50;border-radius:50%;flex-shrink:0;animation:pulse 1.5s ease infinite;box-shadow:0 0 6px rgba(76,175,80,.45);}
+
+.hero-eyebrow{font-family:'Inter',sans-serif;font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--p);margin-bottom:12px;animation:fadeUp .45s ease .05s both;}
+
+/* H1 — near black + mustard italic */
+.hero-h1{font-family:'DM Serif Display',serif;font-size:52px;color:var(--text);line-height:1.12;margin-bottom:6px;animation:fadeUp .5s ease .1s both;}
+.hero-h1 em{font-style:italic;color:var(--p);}
+.hero-h1-sub{font-family:'DM Serif Display',serif;font-size:24px;color:var(--mid);font-style:italic;margin-bottom:18px;animation:fadeUp .5s ease .13s both;}
+
+.hero-sub{font-family:'Inter',sans-serif;font-size:15px;color:var(--mid);line-height:1.72;margin-bottom:20px;max-width:460px;animation:fadeUp .5s ease .16s both;}
+.hero-price-row{display:flex;align-items:baseline;gap:8px;margin-bottom:14px;animation:fadeUp .5s ease .19s both;}
+.hero-from{font-family:'Inter',sans-serif;font-size:12px;color:var(--muted);}
+.hero-price{font-family:'DM Serif Display',serif;font-size:36px;color:var(--p);}
+.hero-del{font-family:'Inter',sans-serif;font-size:12px;color:var(--muted);}
+.hero-checks{display:flex;flex-direction:column;gap:7px;margin-bottom:22px;animation:fadeUp .5s ease .22s both;}
+.hero-chk{display:flex;align-items:center;gap:9px;font-family:'Inter',sans-serif;font-size:14px;font-weight:500;color:var(--mid);}
+.hck{width:19px;height:19px;flex-shrink:0;background:linear-gradient(135deg,var(--p),var(--pll));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#fff;}
+.hero-ctas{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;animation:fadeUp .5s ease .25s both;}
+.hero-meta{display:flex;gap:14px;flex-wrap:wrap;font-family:'Inter',sans-serif;font-size:12px;color:var(--muted);animation:fadeUp .5s ease .28s both;}
+
+/* ════════
+   HERO RIGHT — simplified mockup placeholder
+   (user will add actual mockup image later)
+════════ */
+.hero-right{display:flex;justify-content:center;align-items:center;animation:fadeUp .6s ease .2s both;}
+
+.k2-mockup{
+  width:280px;
+  background:linear-gradient(165deg,#5A2800,var(--pd),#AA5605);
+  border-radius:20px;
+  border:1.5px solid rgba(232,184,75,.35);
+  box-shadow:0 20px 56px rgba(0,0,0,.35),0 0 0 1px rgba(232,184,75,.18),inset 0 1px 0 rgba(232,184,75,.12);
+  padding:28px 24px;
+  position:relative;
+  overflow:hidden;
+}
+.k2-mockup::before{content:'';position:absolute;top:0;left:12%;right:12%;height:2px;background:linear-gradient(90deg,transparent,var(--gold3),var(--gold2),var(--gold3),transparent);}
+.k2-mockup::after{content:'';position:absolute;bottom:-60px;right:-60px;width:200px;height:200px;background:radial-gradient(circle,rgba(232,184,75,.08) 0%,transparent 70%);pointer-events:none;}
+
+.k2-brand{font-family:'Inter',sans-serif;font-size:11px;font-weight:600;letter-spacing:2px;color:rgba(255,247,232,.5);text-align:center;display:block;margin-bottom:6px;text-transform:uppercase;}
+.k2-title{font-family:'DM Serif Display',serif;font-size:17px;color:var(--white);text-align:center;line-height:1.3;margin-bottom:6px;}
+.k2-title em{font-style:italic;color:var(--gold3);}
+.k2-badge{display:inline-block;background:rgba(232,184,75,.15);border:1px solid rgba(232,184,75,.3);border-radius:10px;padding:2px 10px;font-family:'Inter',sans-serif;font-size:9px;font-weight:700;color:var(--gold3);text-transform:uppercase;letter-spacing:1px;display:block;text-align:center;margin:0 auto 18px;}
+
+/* Kundli chart SVG inside card */
+.k2-chart{display:flex;justify-content:center;margin-bottom:16px;}
+
+/* Score rows */
+.k2-rows{display:flex;flex-direction:column;gap:0;}
+.k2-row{display:flex;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.08);gap:8px;}
+.k2-row:last-child{border-bottom:none;}
+.k2-rl{flex:1;}
+.k2-rl-label{font-family:'Inter',sans-serif;font-size:11px;font-weight:600;color:rgba(255,247,232,.85);display:block;}
+.k2-rl-sub{font-family:'Inter',sans-serif;font-size:9px;color:rgba(255,247,232,.4);}
+.k2-score{font-family:'DM Serif Display',serif;font-size:16px;color:var(--gold3);flex-shrink:0;}
+.k2-bar{width:40px;height:3px;background:rgba(255,255,255,.1);border-radius:2px;flex-shrink:0;}
+.k2-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--gold),var(--gold3));}
+
+.k2-locked{display:flex;align-items:center;gap:6px;padding:8px 0;}
+.k2-lp{background:rgba(232,184,75,.12);border:1px solid rgba(232,184,75,.2);border-radius:10px;padding:2px 8px;font-family:'Inter',sans-serif;font-size:8px;color:var(--gold3);font-weight:700;text-transform:uppercase;white-space:nowrap;}
+.k2-ls{font-family:'Inter',sans-serif;font-size:9px;color:rgba(255,255,255,.3);}
+
+.k2-foot{border-top:1px solid rgba(255,255,255,.08);margin-top:4px;padding-top:10px;display:flex;justify-content:space-between;align-items:center;}
+.k2-foot-live{display:flex;align-items:center;gap:5px;font-family:'Inter',sans-serif;font-size:9px;font-weight:600;color:#6ECB6E;}
+.k2-foot-dot{width:5px;height:5px;background:#6ECB6E;border-radius:50%;animation:pulse 1.5s ease infinite;}
+.k2-foot-brand{font-family:'DM Serif Display',serif;font-size:10px;color:rgba(255,255,255,.3);font-style:italic;}
+
+/* Floating badges — desktop only */
+.fbadge{position:absolute;background:var(--white);border-radius:12px;padding:9px 13px;box-shadow:0 6px 20px rgba(0,0,0,.12);display:flex;align-items:center;gap:8px;z-index:10;white-space:nowrap;}
+.fb1{top:-10px;left:-44px;animation:float 3s ease-in-out infinite;}
+.fb2{bottom:50px;right:-42px;animation:float 3.5s ease-in-out .8s infinite;}
+.fb3{top:90px;right:-46px;animation:float 2.8s ease-in-out .4s infinite;}
+.fbadge-icon{font-size:18px;}
+.fbadge-t1{font-family:'Inter',sans-serif;font-size:11px;font-weight:700;color:var(--text);display:block;}
+.fbadge-t2{font-family:'Inter',sans-serif;font-size:9px;color:var(--muted);}
+
+/* ════════════════════════════════════
+   STATS BAR
+════════════════════════════════════ */
+.stats-bar{background:var(--white);border-top:1px solid var(--bdr);border-bottom:1px solid var(--bdr);padding:20px 5vw;}
+.stats-desktop{max-width:1200px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;}
+.stat{text-align:center;flex:1;padding:0 10px;}
+.stat-num{font-family:'DM Serif Display',serif;font-size:26px;color:var(--p);display:block;line-height:1;margin-bottom:4px;}
+.stat-lbl{font-family:'Inter',sans-serif;font-size:11px;color:var(--muted);letter-spacing:.3px;}
+.stat-sep{width:1px;height:34px;background:linear-gradient(180deg,transparent,var(--bdr),transparent);flex-shrink:0;}
+.stats-mobile{display:none;overflow:hidden;mask:linear-gradient(90deg,transparent 0%,#000 8%,#000 92%,transparent 100%);-webkit-mask:linear-gradient(90deg,transparent 0%,#000 8%,#000 92%,transparent 100%);padding:14px 0;}
+.stats-m-track{display:flex;width:max-content;animation:statScroll 18s linear infinite;align-items:center;}
+.stat-m{display:flex;flex-direction:column;align-items:center;gap:3px;padding:0 18px;border-right:1px solid var(--bdr);flex-shrink:0;}
+.stat-m .mn{font-family:'DM Serif Display',serif;font-size:20px;color:var(--p);line-height:1;}
+.stat-m .ml{font-family:'Inter',sans-serif;font-size:10px;color:var(--muted);white-space:nowrap;}
+
+/* ════════════════════════════════════
+   WHAT IS KUNDLI 2.0
+════════════════════════════════════ */
+.what-bg{background:var(--cream);border-top:1px solid var(--bdr);}
+.what-inner{max-width:1200px;margin:0 auto;padding:68px 5vw;display:grid;grid-template-columns:340px 1fr;gap:60px;align-items:center;}
+.what-book{background:linear-gradient(155deg,#5A2800,var(--pd),var(--p));border-radius:18px;padding:28px 24px;box-shadow:var(--shlg),0 0 0 1px rgba(232,184,75,.2);border:1px solid rgba(232,184,75,.25);position:relative;overflow:hidden;}
+.what-book::before{content:'';position:absolute;top:0;left:15%;right:15%;height:2px;background:linear-gradient(90deg,transparent,var(--gold3),transparent);}
+.what-book-icon{font-size:48px;text-align:center;display:block;margin-bottom:14px;}
+.what-book-title{font-family:'DM Serif Display',serif;font-size:19px;color:var(--white);text-align:center;line-height:1.3;margin-bottom:6px;}
+.what-book-title em{color:var(--gold3);font-style:italic;}
+.what-book-sub{font-family:'Inter',sans-serif;font-size:12px;color:rgba(255,247,232,.5);text-align:center;line-height:1.5;}
+.what-book-div{height:1px;background:rgba(232,184,75,.15);margin:16px 0;}
+.what-book-points{display:flex;flex-direction:column;gap:8px;}
+.what-book-point{display:flex;align-items:center;gap:9px;font-family:'Inter',sans-serif;font-size:12px;color:rgba(255,247,232,.7);}
+.wbdot{width:6px;height:6px;background:var(--gold2);border-radius:50%;flex-shrink:0;}
+.what-stat-float{position:absolute;bottom:-14px;right:-14px;background:var(--white);border-radius:12px;padding:11px 14px;box-shadow:var(--shmd);text-align:center;z-index:5;}
+.what-stat-float .wsn{font-family:'DM Serif Display',serif;font-size:20px;color:var(--p);display:block;line-height:1;}
+.what-stat-float .wsl{font-family:'Inter',sans-serif;font-size:9px;color:var(--muted);}
+
+.what-h2{font-family:'DM Serif Display',serif;font-size:38px;color:var(--text);line-height:1.2;margin-bottom:8px;}
+.what-h2 em{color:var(--p);font-style:italic;}
+.what-rule{width:48px;height:2px;background:linear-gradient(90deg,var(--p),var(--pll));border-radius:2px;margin:14px 0 22px;}
+.what-body{font-family:'Inter',sans-serif;font-size:16px;color:var(--mid);line-height:1.75;margin-bottom:26px;}
+.what-points{display:flex;flex-direction:column;gap:13px;margin-bottom:28px;}
+.what-point{display:flex;align-items:flex-start;gap:11px;}
+.what-pt-dot{width:24px;height:24px;flex-shrink:0;background:linear-gradient(135deg,var(--p),var(--pll));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;font-weight:800;margin-top:1px;}
+.what-pt-text{font-family:'Inter',sans-serif;font-size:15px;color:var(--mid);line-height:1.6;font-weight:500;}
+
+/* ════════════════════════════════════
+   SECTION BASE
+════════════════════════════════════ */
+.sec{max-width:1200px;margin:0 auto;padding:68px 5vw;}
+.sec-eyebrow{font-family:'Inter',sans-serif;font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--p);margin-bottom:12px;}
+.sec-h2{font-family:'DM Serif Display',serif;font-size:40px;color:var(--text);margin-bottom:8px;line-height:1.22;}
+.sec-h2 em{font-style:italic;color:var(--p);}
+.sec-h2 .lm{color:var(--lm);}
+.sec-rule{width:48px;height:2px;background:linear-gradient(90deg,var(--p),var(--pll));border-radius:2px;margin:14px 0 32px;}
+.sec-rule.center{margin-left:auto;margin-right:auto;}
+.hl-box{background:rgba(170,86,5,.06);border:1px solid rgba(170,86,5,.2);border-left:3px solid var(--p);border-radius:0 10px 10px 0;padding:16px 22px;margin:24px 0;font-family:'Inter',sans-serif;font-size:15px;color:var(--mid);font-style:italic;line-height:1.7;}
+.hl-dark{background:linear-gradient(135deg,var(--pd),var(--p));color:#fff;border-radius:14px;padding:22px 28px;margin:28px 0;font-family:'DM Serif Display',serif;font-size:20px;font-style:italic;line-height:1.52;text-align:center;}
+.hl-dark em{color:var(--gold3);}
+
+/* ════════════════════════════════════
+   PAIN SECTION — Numbered Timeline
+   (Reference: Image 1)
+════════════════════════════════════ */
+.pain-bg{background:linear-gradient(180deg,var(--bg),var(--cream));border-top:1px solid var(--bdr);}
+.pain-intro{font-family:'Inter',sans-serif;font-size:16px;color:var(--mid);line-height:1.75;max-width:640px;margin-bottom:40px;}
+
+/* Vertical timeline layout */
+.pain-timeline{display:flex;flex-direction:column;gap:0;max-width:760px;}
+.pain-tl-item{display:flex;align-items:flex-start;gap:20px;position:relative;}
+/* Dashed connector between items */
+.pain-tl-item:not(:last-child)::after{
+  content:'';
+  position:absolute;
+  left:19px;
+  top:44px;
+  bottom:-24px;
+  width:2px;
+  border-left:2px dashed rgba(170,86,5,.22);
+}
+.pain-tl-left{display:flex;flex-direction:column;align-items:center;flex-shrink:0;padding-bottom:24px;}
+.pain-tl-num{
+  width:40px;height:40px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'DM Serif Display',serif;font-size:17px;
+  flex-shrink:0;position:relative;z-index:1;
+}
+.pain-tl-num.active{background:linear-gradient(135deg,var(--pd),var(--p));color:#fff;box-shadow:0 3px 14px rgba(170,86,5,.3);}
+.pain-tl-num.inactive{background:var(--white);border:1.5px solid rgba(170,86,5,.25);color:var(--p);}
+.pain-tl-content{background:var(--white);border:1px solid var(--bdr2);border-radius:14px;padding:18px 22px;margin-bottom:24px;flex:1;box-shadow:var(--shsm);transition:box-shadow .18s;}
+.pain-tl-content:hover{box-shadow:var(--shmd);}
+.pain-tl-title{font-family:'DM Serif Display',serif;font-size:19px;color:var(--p);margin-bottom:6px;}
+.pain-tl-body{font-family:'Inter',sans-serif;font-size:14px;color:var(--mid);line-height:1.65;}
+
+/* ════════════════════════════════════
+   PERSONA
+════════════════════════════════════ */
+.persona-bg{background:var(--white);border-top:1px solid var(--bdr2);}
+.persona-lead{font-family:'Inter',sans-serif;font-size:16px;color:var(--mid);line-height:1.75;max-width:640px;margin-bottom:36px;}
+.persona-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
+.persona-card{background:var(--bg);border:1px solid var(--bdr);border-radius:12px;padding:16px 18px;display:flex;align-items:flex-start;gap:12px;transition:box-shadow .18s;}
+.persona-card:hover{box-shadow:var(--shsm);}
+.persona-ck{width:22px;height:22px;flex-shrink:0;border:1.5px solid var(--gold2);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-top:2px;color:var(--p);font-size:11px;font-weight:700;}
+.persona-num{font-family:'DM Serif Display',serif;font-size:12px;color:var(--p);margin-bottom:4px;display:block;letter-spacing:.5px;}
+.persona-title{font-family:'DM Serif Display',serif;font-size:17px;color:var(--p);margin-bottom:5px;}
+.persona-body{font-family:'Inter',sans-serif;font-size:13px;color:var(--mid);line-height:1.6;}
+
+/* ════════════════════════════════════
+   OUTCOMES
+════════════════════════════════════ */
+.outcomes-bg{background:linear-gradient(135deg,var(--pd),#5A2800);padding:68px 5vw;}
+.outcomes-inner{max-width:1200px;margin:0 auto;}
+.outcomes-bg .sec-eyebrow{color:var(--gold3);}
+.outcomes-bg .sec-h2{color:#fff;}
+.outcomes-bg .sec-h2 em{color:var(--gold3);}
+.outcomes-bg .sec-rule{background:linear-gradient(90deg,var(--gold3),var(--gold2));}
+.outcomes-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+.outcome-card{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:26px 22px;backdrop-filter:blur(8px);transition:background .2s;}
+.outcome-card:hover{background:rgba(255,255,255,.12);}
+.outcome-title{font-family:'DM Serif Display',serif;font-size:21px;color:#fff;margin-bottom:10px;}
+.outcome-body{font-family:'Inter',sans-serif;font-size:14px;color:rgba(255,247,232,.65);line-height:1.68;}
+
+/* ════════════════════════════════════
+   TRIED
+════════════════════════════════════ */
+.tried-bg{background:var(--bg);border-top:1px solid var(--bdr);}
+.tried-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:8px;}
+.tried-card{background:var(--white);border:1px solid var(--bdr2);border-radius:14px;padding:24px 20px;box-shadow:var(--shsm);}
+.tried-q{font-family:'DM Serif Display',serif;font-size:18px;color:var(--p);margin-bottom:10px;font-style:italic;line-height:1.3;}
+.tried-a{font-family:'Inter',sans-serif;font-size:13.5px;color:var(--mid);line-height:1.65;}
+
+/* ════════════════════════════════════
+   PRICING
+════════════════════════════════════ */
+.pkg-bg{background:linear-gradient(180deg,var(--cream),var(--cream2));border-top:1px solid var(--bdr);}
+.pkg-inner{max-width:880px;margin:0 auto;padding:68px 5vw;}
+.pkg-inner .sec-eyebrow,.pkg-inner .sec-h2{text-align:center;}
+.pkg-inner .sec-rule{margin:14px auto 18px;}
+.pkg-timer-row{display:flex;justify-content:center;margin-bottom:28px;}
+.pkg-timer{display:inline-flex;align-items:center;gap:8px;background:var(--white);border:1px solid var(--bdr2);border-radius:30px;padding:8px 20px;font-family:'Inter',sans-serif;font-size:12px;color:var(--muted);box-shadow:var(--shsm);}
+.pkg-timer-val{font-family:'DM Serif Display',serif;font-size:15px;color:var(--p);letter-spacing:1px;}
+.pkg-tabs{display:none;justify-content:center;margin-bottom:18px;}
+.pkg-tab-track{display:inline-flex;background:var(--white);border:1.5px solid var(--bdr2);border-radius:40px;padding:3px;gap:3px;box-shadow:var(--shsm);}
+.pkg-tab{padding:8px 24px;border-radius:30px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif;border:none;background:transparent;white-space:nowrap;}
+.pkg-tab.on{background:linear-gradient(135deg,var(--p),var(--pll));color:#fff;box-shadow:0 2px 12px rgba(170,86,5,.28);}
+.pkg-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;}
+.pkg-card{background:var(--white);border:1.5px solid var(--bdr2);border-radius:22px;padding:34px 28px;position:relative;display:flex;flex-direction:column;box-shadow:var(--shsm);transition:box-shadow .2s;}
+.pkg-card:hover{box-shadow:var(--shmd);}
+.pkg-card.premium{background:linear-gradient(155deg,#5A2800,var(--pd),#AA5605);border-color:rgba(232,184,75,.4);box-shadow:0 20px 56px rgba(0,0,0,.38),0 0 0 1px rgba(232,184,75,.18),inset 0 1px 0 rgba(232,184,75,.12);overflow:visible;}
+.pkg-card.premium::before{content:'';position:absolute;top:0;left:10%;right:10%;height:2px;background:linear-gradient(90deg,transparent,var(--gold3),var(--gold2),var(--gold3),transparent);}
+.badge-start{position:absolute;top:-12px;left:22px;background:#EDEBE4;border:1px solid rgba(0,0,0,.1);color:var(--muted);font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:3px 12px;border-radius:20px;font-family:'Inter',sans-serif;}
+.badge-pop{position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--pd),var(--pll));color:#fff;font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:5px 20px;border-radius:20px;white-space:nowrap;font-family:'Inter',sans-serif;box-shadow:0 3px 14px rgba(170,86,5,.45);z-index:10;}
+.pc-name{font-family:'DM Serif Display',serif;font-size:23px;margin-bottom:4px;}
+.pkg-card:not(.premium) .pc-name{color:var(--text);}
+.pkg-card.premium .pc-name{color:var(--white);}
+.pc-desc{font-family:'Inter',sans-serif;font-size:13.5px;margin-bottom:16px;line-height:1.5;}
+.pkg-card:not(.premium) .pc-desc{color:var(--muted);}
+.pkg-card.premium .pc-desc{color:rgba(255,253,248,.52);}
+.price-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+.pr-old{font-family:'Inter',sans-serif;font-size:14px;font-weight:500;text-decoration:line-through;}
+.pkg-card:not(.premium) .pr-old{color:var(--muted);}
+.pkg-card.premium .pr-old{color:rgba(255,255,255,.28);}
+.pr-arr{font-size:13px;}
+.pkg-card:not(.premium) .pr-arr{color:var(--muted);}
+.pkg-card.premium .pr-arr{color:rgba(255,255,255,.25);}
+.pr-price{font-family:'DM Serif Display',serif;font-size:48px;line-height:1;}
+.pkg-card:not(.premium) .pr-price{color:var(--p);}
+.pkg-card.premium .pr-price{color:var(--gold3);}
+.pr-save{display:inline-block;font-size:11px;font-weight:700;padding:3px 10px;border-radius:14px;font-family:'Inter',sans-serif;align-self:center;}
+.pkg-card:not(.premium) .pr-save{background:rgba(170,86,5,.08);color:var(--p);}
+.pkg-card.premium .pr-save{background:rgba(232,184,75,.13);color:var(--gold3);border:1px solid rgba(232,184,75,.28);}
+.pkg-bonus{background:rgba(232,184,75,.09);border:1px solid rgba(232,184,75,.22);border-radius:8px;padding:9px 14px;font-size:11.5px;font-weight:600;color:var(--gold3);margin-bottom:12px;text-align:center;font-family:'Inter',sans-serif;line-height:1.45;}
+.cdiv{height:1px;margin-bottom:13px;}
+.pkg-card:not(.premium) .cdiv{background:rgba(170,86,5,.08);}
+.pkg-card.premium .cdiv{background:rgba(232,184,75,.13);}
+.feat-list{list-style:none;margin-bottom:20px;flex:1;}
+.feat-list li{font-family:'Inter',sans-serif;font-size:13.5px;padding:6px 0;border-bottom:1px solid;display:flex;align-items:flex-start;gap:8px;line-height:1.45;}
+.feat-list li:last-child{border-bottom:none;}
+.pkg-card:not(.premium) .feat-list li{color:var(--mid);border-color:rgba(170,86,5,.06);}
+.pkg-card.premium .feat-list li{color:rgba(255,253,248,.82);border-color:rgba(255,255,255,.07);}
+.feat-list li.dimmed{color:#C0AFA0 !important;}
+.pkg-card.premium .feat-list li.dimmed{color:rgba(255,255,255,.28) !important;}
+.ck-m{color:var(--p);flex-shrink:0;font-weight:700;font-size:12px;}
+.ck-g{color:var(--gold3);flex-shrink:0;font-weight:700;font-size:12px;}
+.ex-x{color:#C8B8A8;flex-shrink:0;font-size:12px;}
+.btn-basic-pkg{display:block;text-align:center;background:var(--white);color:var(--p);font-weight:700;font-size:15px;padding:14px;border-radius:10px;border:2px solid var(--p);font-family:'Inter',sans-serif;transition:all .18s;box-shadow:0 2px 8px rgba(170,86,5,.08);}
+.btn-basic-pkg:hover{background:rgba(170,86,5,.04);}
+.btn-premium-pkg{display:block;text-align:center;background:linear-gradient(135deg,var(--pd),var(--pll));color:#fff;font-weight:800;font-size:16px;padding:15px;border-radius:10px;font-family:'Inter',sans-serif;box-shadow:0 4px 22px rgba(170,86,5,.42),0 0 0 1px rgba(170,86,5,.25);transition:transform .18s,box-shadow .18s;position:relative;z-index:1;}
+.btn-premium-pkg:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(170,86,5,.52);}
+.cn-note{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:9px;font-family:'Inter',sans-serif;font-size:11px;}
+.pkg-card:not(.premium) .cn-note{color:var(--muted);}
+.pkg-card.premium .cn-note{color:rgba(255,255,255,.32);}
+.cn-sep{opacity:.25;}
+.pkg-fine{font-family:'Inter',sans-serif;font-size:10px;color:rgba(255,255,255,.25);text-align:center;margin-top:10px;line-height:1.55;font-style:italic;}
+.pkg-bottom{margin-top:26px;text-align:center;}
+.pkg-note{font-family:'Inter',sans-serif;font-size:13.5px;color:var(--muted);font-style:italic;margin-bottom:14px;line-height:1.55;}
+.pkg-guar{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;font-family:'Inter',sans-serif;font-size:12px;color:var(--muted);}
+.pkg-guar .gi{display:flex;align-items:center;gap:5px;color:var(--mid);}
+.pkg-guar .gi strong{color:var(--p);}
+.pkg-guar .gs{opacity:.3;}
+
+/* ════════════════════════════════════
+   TRUST ROW
+════════════════════════════════════ */
+/* Trust Strip — auto-scroll marquee on desktop + mobile */
+.trust-strip{background:var(--white);border-top:1px solid var(--bdr);border-bottom:1px solid var(--bdr);padding:14px 0;overflow:hidden;mask:linear-gradient(90deg,transparent 0%,#000 6%,#000 94%,transparent 100%);-webkit-mask:linear-gradient(90deg,transparent 0%,#000 6%,#000 94%,transparent 100%);}
+.trust-track{display:flex;width:max-content;animation:trustScroll 20s linear infinite;align-items:center;}
+@keyframes trustScroll{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+.trust-m-item{display:inline-flex;align-items:center;white-space:nowrap;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;color:var(--mid);padding:0 20px;}
+.trust-sep{padding:0 8px;color:var(--p);opacity:.5;font-size:10px;flex-shrink:0;}
+
+/* ════════════════════════════════════
+   TESTIMONIALS
+════════════════════════════════════ */
+.testi-bg{background:var(--cream);border-top:1px solid var(--bdr);padding:68px 0;}
+.testi-head{text-align:center;padding:0 5vw;margin-bottom:44px;}
+.marquee-row{overflow:hidden;position:relative;margin-bottom:18px;}
+.marquee-track{display:flex;gap:18px;width:max-content;}
+.marquee-track.go-l{animation:marqueeL 36s linear infinite;}
+.marquee-track.go-r{animation:marqueeR 28s linear infinite;}
+.t-card{width:295px;flex-shrink:0;background:var(--white);border:1px solid rgba(170,86,5,.18);border-radius:16px;padding:20px 18px;box-shadow:var(--shsm);}
+.t-tag{display:inline-block;background:rgba(170,86,5,.08);color:var(--p);font-family:'Inter',sans-serif;font-size:10px;font-weight:700;padding:2px 9px;border-radius:10px;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;}
+.t-stars{color:var(--gold);font-size:13px;margin-bottom:8px;letter-spacing:1px;}
+.t-text{font-family:'Inter',sans-serif;font-size:13px;color:var(--mid);line-height:1.68;margin-bottom:14px;}
+.t-author{display:flex;align-items:center;gap:10px;}
+.t-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--gold2));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;flex-shrink:0;}
+.t-name{font-family:'Inter',sans-serif;font-size:13px;font-weight:700;color:var(--text);}
+.t-city{font-family:'Inter',sans-serif;font-size:11px;color:var(--muted);}
+
+/* ════════════════════════════════════
+   COMPARISON — Two column card style
+   (Reference: Image 2 — clear visual contrast)
+════════════════════════════════════ */
+.compare-bg{background:var(--white);border-top:1px solid var(--bdr2);}
+.compare-new{border-radius:18px;overflow:hidden;box-shadow:var(--shmd);margin-top:8px;}
+
+/* Column headers */
+.compare-cols{display:grid;grid-template-columns:1fr 1fr;gap:0;}
+.compare-col-head{padding:18px 24px;text-align:center;}
+.compare-col-head.bad{background:#FFF1F0;border-bottom:2px solid #FFCCC7;}
+.compare-col-head.good{background:linear-gradient(135deg,#1B5E35,#1B7A3E);border-bottom:2px solid #2E9D55;}
+.compare-col-head-label{font-family:'DM Serif Display',serif;font-size:17px;display:block;margin-bottom:4px;}
+.compare-col-head.bad .compare-col-head-label{color:#C53030;}
+.compare-col-head.good .compare-col-head-label{color:#fff;}
+.compare-col-head-sub{font-family:'Inter',sans-serif;font-size:12px;}
+.compare-col-head.bad .compare-col-head-sub{color:#E57373;}
+.compare-col-head.good .compare-col-head-sub{color:rgba(255,247,232,.65);}
+
+/* Rows */
+.compare-row{display:grid;grid-template-columns:1fr 1fr;gap:0;border-bottom:1px solid rgba(0,0,0,.05);}
+.compare-row:last-child{border-bottom:none;}
+.compare-cell{padding:14px 22px;display:flex;align-items:flex-start;gap:10px;font-family:'Inter',sans-serif;font-size:14px;line-height:1.5;}
+.compare-cell.bad-cell{background:#FFFAF9;color:#7A3A3A;}
+.compare-cell.good-cell{background:#F0FFF4;color:#1B4332;font-weight:500;}
+.compare-cell.bad-cell .cx{color:#E53E3E;font-size:16px;flex-shrink:0;margin-top:1px;}
+.compare-cell.good-cell .ck2{color:#1B7A3E;font-size:16px;flex-shrink:0;margin-top:1px;font-weight:700;}
+
+/* ════════════════════════════════════
+   INSIDE YOUR REPORT
+════════════════════════════════════ */
+.inside-bg{background:var(--cream);border-top:1px solid var(--bdr);}
+.inside-sub{font-family:'Inter',sans-serif;font-size:16px;color:var(--mid);line-height:1.72;max-width:600px;margin-bottom:36px;}
+.inside-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+.inside-card{background:var(--white);border:1px solid var(--bdr2);border-radius:16px;padding:22px 20px;box-shadow:var(--shsm);transition:transform .2s,box-shadow .2s;}
+.inside-card:hover{transform:translateY(-3px);box-shadow:var(--shmd);}
+.inside-icon{font-size:28px;display:block;margin-bottom:12px;}
+/* Single header row: icon + tag always together */
+.ic-top-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.ic-top-row .inside-icon{font-size:26px;margin-bottom:0;}
+.inside-tag{display:inline-block;background:rgba(170,86,5,.08);color:var(--p);font-family:'Inter',sans-serif;font-size:10px;font-weight:700;padding:2px 9px;border-radius:10px;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;}
+.inside-title{font-family:'DM Serif Display',serif;font-size:18px;color:var(--text);margin-bottom:7px;}
+.inside-body{font-family:'Inter',sans-serif;font-size:13px;color:var(--mid);line-height:1.65;}
+.inside-footer{font-family:'Inter',sans-serif;font-size:13px;color:var(--muted);text-align:center;margin-top:28px;}
+
+/* Inside cards: single ic-top-row handles both desktop and mobile */
+
+/* ════════════════════════════════════
+   DOSH
+════════════════════════════════════ */
+.dosh-bg{background:linear-gradient(135deg,var(--pd),#5A2800);padding:68px 5vw;}
+.dosh-inner{max-width:1200px;margin:0 auto;}
+.dosh-bg .sec-eyebrow{color:var(--gold3);}
+.dosh-bg .sec-h2{color:#fff;}
+.dosh-bg .sec-h2 em{color:var(--gold3);}
+.dosh-bg .sec-rule{background:linear-gradient(90deg,var(--gold3),var(--gold2));}
+.dosh-intro{font-family:'Inter',sans-serif;font-size:16px;color:rgba(255,247,232,.65);line-height:1.72;max-width:640px;margin-bottom:36px;}
+.dosh-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+.dosh-card{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:20px 18px;backdrop-filter:blur(8px);transition:background .2s;display:flex;flex-direction:row;align-items:flex-start;gap:14px;}
+.dosh-card:hover{background:rgba(255,255,255,.12);}
+.dosh-icon{font-size:26px;flex-shrink:0;margin-top:3px;display:block;}
+.dosh-sub{font-family:'Inter',sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold3);margin-bottom:4px;}
+.dosh-title{font-family:'DM Serif Display',serif;font-size:22px;color:#fff;margin-bottom:12px;}
+.dosh-body{font-family:'Inter',sans-serif;font-size:13px;color:rgba(255,247,232,.62);line-height:1.68;}
+.dosh-closing{margin-top:36px;background:rgba(232,184,75,.1);border:1px solid rgba(232,184,75,.25);border-radius:12px;padding:18px 24px;font-family:'DM Serif Display',serif;font-size:19px;font-style:italic;color:var(--gold3);line-height:1.52;text-align:center;}
+
+/* Mobile dosh: icon inline */
+.dosh-card-mob{display:none;align-items:flex-start;gap:12px;}
+
+/* ════════════════════════════════════
+   ABOUT
+════════════════════════════════════ */
+.about-bg{background:var(--bg);border-top:1px solid var(--bdr);}
+.about-inner{max-width:1200px;margin:0 auto;padding:68px 5vw;display:grid;grid-template-columns:260px 1fr;gap:60px;align-items:center;}
+.about-photo-wrap{position:relative;}
+.about-photo{background:linear-gradient(155deg,var(--cream2),var(--cream));border-radius:20px;border:1.5px solid var(--bdr);box-shadow:var(--shlg);aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;overflow:hidden;position:relative;}
+.about-photo::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 55%,rgba(90,40,0,.75) 100%);z-index:1;}
+.about-photo-icon{font-size:64px;opacity:.15;}
+.about-photo-bottom{position:absolute;bottom:0;left:0;right:0;z-index:2;padding:20px 16px 14px;text-align:center;color:#fff;}
+.about-photo-bottom strong{font-family:'DM Serif Display',serif;font-size:16px;display:block;margin-bottom:2px;}
+.about-photo-bottom span{font-size:10px;opacity:.75;letter-spacing:1px;}
+.about-stat-float{position:absolute;bottom:-14px;right:-14px;background:var(--white);border-radius:12px;padding:11px 14px;box-shadow:var(--shmd);text-align:center;z-index:5;}
+.about-stat-float .asn{font-family:'DM Serif Display',serif;font-size:20px;color:var(--p);display:block;line-height:1;}
+.about-stat-float .asl{font-family:'Inter',sans-serif;font-size:9px;color:var(--muted);margin-top:2px;}
+.about-eyebrow{font-family:'Inter',sans-serif;font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--p);margin-bottom:10px;}
+.about-name{font-family:'DM Serif Display',serif;font-size:34px;color:var(--text);margin-bottom:4px;}
+.about-role{font-family:'Inter',sans-serif;font-size:12px;color:var(--p);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:20px;}
+.about-body{font-family:'Inter',sans-serif;font-size:15px;color:var(--mid);line-height:1.85;margin-bottom:24px;}
+.about-body em{color:var(--p);font-style:italic;}
+.about-creds{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.about-cred{display:flex;align-items:center;gap:8px;font-family:'Inter',sans-serif;font-size:13px;color:var(--text);font-weight:500;}
+.about-cred-dot{width:7px;height:7px;background:var(--gold2);border-radius:50%;flex-shrink:0;}
+
+/* ════════════════════════════════════
+   PROCESS
+════════════════════════════════════ */
+.process-bg{background:var(--cream);border-top:1px solid var(--bdr);}
+.process-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:0;position:relative;margin-top:40px;}
+.process-grid::before{content:'';position:absolute;top:34px;left:calc(10%+16px);right:calc(10%+16px);height:1px;background:linear-gradient(90deg,var(--gold2),var(--gold3),var(--gold2));opacity:.4;}
+.step{text-align:center;padding:0 12px;}
+.step-num{width:68px;height:68px;border-radius:50%;background:linear-gradient(135deg,var(--pd),var(--p));display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-family:'DM Serif Display',serif;font-size:22px;color:#fff;box-shadow:0 4px 16px rgba(170,86,5,.25);position:relative;z-index:1;}
+.step h3{font-family:'DM Serif Display',serif;font-size:16px;color:var(--text);margin-bottom:6px;}
+.step p{font-family:'Inter',sans-serif;font-size:12px;color:var(--muted);line-height:1.6;}
+
+/* ════════════════════════════════════
+   FAQ
+════════════════════════════════════ */
+.faq-bg{background:var(--white);border-top:1px solid var(--bdr2);}
+.faq-inner{max-width:780px;margin:0 auto;}
+.faq-list{display:flex;flex-direction:column;gap:6px;}
+.faq-item{border:1px solid var(--bdr);border-radius:12px;overflow:hidden;}
+.faq-q{padding:17px 22px;font-family:'Inter',sans-serif;font-size:15px;font-weight:500;color:var(--text);cursor:pointer;display:flex;justify-content:space-between;align-items:center;background:var(--white);transition:background .18s;}
+.faq-q:hover{background:rgba(170,86,5,.02);}
+.faq-arrow{color:var(--p);transition:transform .22s;font-size:17px;}
+.faq-a{padding:0 22px 16px;font-family:'Inter',sans-serif;font-size:14px;color:var(--muted);line-height:1.72;background:var(--white);display:none;}
+.faq-item.open .faq-a{display:block;}
+.faq-item.open .faq-arrow{transform:rotate(180deg);}
+
+/* ════════════════════════════════════
+   FINAL CTA
+════════════════════════════════════ */
+.final-bg{background:linear-gradient(135deg,var(--pd),#5A2800);padding:68px 5vw;text-align:center;position:relative;overflow:hidden;}
+.final-bg::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(232,184,75,.1),transparent 60%);}
+.final-inner{max-width:680px;margin:0 auto;position:relative;z-index:1;}
+.final-h2{font-family:'DM Serif Display',serif;font-size:42px;color:#fff;margin-bottom:16px;line-height:1.2;}
+.final-h2 span{background:linear-gradient(135deg,var(--gold3),var(--gold2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.final-sub{font-family:'Inter',sans-serif;font-size:16px;color:rgba(255,247,232,.72);margin-bottom:34px;line-height:1.72;}
+.final-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:18px;}
+.final-note{font-family:'Inter',sans-serif;font-size:12px;color:rgba(255,247,232,.38);}
+
+/* ════════════════════════════════════
+   FOOTER
+════════════════════════════════════ */
+footer{background:var(--text);padding:28px 5vw;text-align:center;}
+.foot-logo{font-family:'DM Serif Display',serif;font-size:20px;letter-spacing:2px;color:var(--gold2);margin-bottom:4px;}
+.foot-logo span{color:var(--gold3);}
+.foot-sub{font-family:'Inter',sans-serif;font-size:8px;letter-spacing:3px;color:rgba(255,255,255,.2);text-transform:uppercase;margin-bottom:14px;}
+.foot-links a{font-family:'Inter',sans-serif;font-size:12px;color:rgba(255,255,255,.32);margin:0 8px;}
+.foot-links a:hover{color:rgba(255,255,255,.6);}
+.foot-copy{font-family:'Inter',sans-serif;font-size:11px;color:rgba(255,255,255,.15);margin-top:10px;}
+
+/* ════════════════════════════════════
+   FIXED BOTTOM BAR
+════════════════════════════════════ */
+.fixbar{display:none;position:fixed;bottom:0;left:0;right:0;z-index:999;background:linear-gradient(135deg,#5A2800,var(--pd));border-top:1px solid rgba(232,184,75,.28);padding:11px 16px 15px;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 -6px 28px rgba(0,0,0,.42);transition:opacity .26s,transform .26s;}
+.fixbar-left{flex:1;min-width:0;}
+.fixbar-from{font-family:'Inter',sans-serif;font-size:9px;color:rgba(255,255,255,.36);display:block;margin-bottom:1px;}
+.fixbar-price{font-family:'DM Serif Display',serif;font-size:26px;color:var(--gold3);display:block;line-height:1;margin-bottom:2px;}
+.fixbar-sub{font-family:'Inter',sans-serif;font-size:10px;color:rgba(255,255,255,.32);}
+.fixbar-btn{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,var(--pd),var(--pll));color:#fff;font-family:'Inter',sans-serif;font-weight:800;font-size:14px;padding:13px 20px;border-radius:9px;border:none;cursor:pointer;text-decoration:none;white-space:nowrap;flex-shrink:0;box-shadow:0 4px 16px rgba(170,86,5,.42);}
+
+/* ════════════════════════════════════
+   RESPONSIVE
+════════════════════════════════════ */
+@media(max-width:768px){
+  .nav{padding:11px 4vw;}
+  .nav-logo{font-size:20px;}
+  .nav-trust{display:none;}
+  .btn-nav{font-size:12px;padding:9px 14px;}
+
+  /* HERO — fixed: right column shows inline, no overflow */
+  .hero{padding:22px 5vw 28px;overflow:hidden;}
+  .hero-ring{display:none;}
+  .hero-inner{
+    grid-template-columns:1fr;
+    gap:24px;
+  }
+  /* Mockup sits naturally in flow after text */
+  .hero-right{
+    display:flex;
+    justify-content:center;
+    animation:none;
+  }
+  .k2-mockup{
+    width:100%;
+    max-width:320px;
+  }
+  /* Floating badges hidden on mobile */
+  .fbadge{display:none;}
+
+  .hero-h1{font-size:30px;}
+  .hero-h1-sub{font-size:18px;margin-bottom:12px;}
+  .hero-sub{font-size:14px;margin-bottom:16px;}
+  .hero-live{font-size:10px;padding:5px 12px;margin-bottom:10px;}
+  .hero-price{font-size:30px;}
+  .hero-price-row{margin-bottom:12px;}
+  .hero-checks{gap:7px;margin-bottom:18px;}
+  .hero-chk{font-size:13px;}
+  .hero-ctas{flex-direction:column;gap:10px;margin-bottom:14px;}
+  .btn-gold{font-size:15px;padding:14px 14px;justify-content:center;}
+  .btn-outline{font-size:13px;padding:12px 12px;justify-content:center;}
+
+  /* Stats */
+  .stats-bar{padding:0;}
+  .stats-desktop{display:none;}
+  .stats-mobile{display:block;}
+
+  /* What section */
+  .what-inner{grid-template-columns:1fr;gap:28px;padding:52px 5vw;}
+  .what-book{max-width:300px;margin:0 auto;}
+  .what-h2{font-size:28px;}
+
+  /* Section titles */
+  .sec{padding:52px 5vw;}
+  .sec-h2{font-size:30px;}
+
+  /* Pain timeline — stays as vertical list, good on mobile */
+  .pain-tl-content{padding:14px 16px;margin-bottom:20px;}
+  .pain-tl-title{font-size:17px;}
+  .pain-tl-item:not(:last-child)::after{top:42px;bottom:-20px;}
+
+  /* Persona */
+  .persona-grid{grid-template-columns:1fr;}
+
+  /* Outcomes */
+  .outcomes-bg{padding:52px 5vw;}
+  .outcomes-grid{grid-template-columns:1fr;}
+
+  /* Tried */
+  .tried-grid{grid-template-columns:1fr;}
+
+  /* Pricing tabs */
+  .pkg-tabs{display:flex;}
+  .pkg-grid{grid-template-columns:1fr;gap:0;}
+  .pkg-card{display:none;padding:28px 18px 22px;}
+  .pkg-card.tab-on{display:flex;}
+  .pr-price{font-size:40px;}
+  .pkg-inner{padding:52px 5vw;}
+
+  /* Comparison — stays 2 col, shrink text */
+  .compare-cell{padding:11px 14px;font-size:12.5px;}
+  .compare-col-head{padding:14px 14px;}
+  .compare-col-head-label{font-size:15px;}
+
+  /* Inside grid */
+  .inside-grid{grid-template-columns:1fr 1fr;}
+  .inside-card{padding:16px 14px;}
+  .inside-icon{display:none;}
+
+  .inside-title{font-size:15px;margin-bottom:5px;}
+  .inside-body{font-size:12px;}
+
+  /* Dosh */
+  .dosh-bg{padding:52px 5vw;}
+  .dosh-grid{grid-template-columns:1fr;}
+  .dosh-icon{font-size:22px;}
+
+  /* About */
+  .about-inner{grid-template-columns:1fr;gap:28px;padding:52px 5vw;}
+  .about-photo-wrap{max-width:250px;margin:0 auto;}
+  .about-creds{grid-template-columns:1fr;}
+  .about-name{font-size:28px;}
+
+  /* Process */
+  .process-grid{grid-template-columns:1fr 1fr;gap:20px;}
+  .process-grid::before{display:none;}
+
+  /* Trust scroll */
+  .trust-row-inner{flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start;gap:18px;scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch;}
+  .trust-row-inner::-webkit-scrollbar{display:none;}
+
+  /* Final CTA */
+  .final-h2{font-size:30px;}
+  .final-sub{font-size:14px;}
+  .final-btns{flex-direction:column;align-items:center;}
+
+  /* Fixed bar */
+  .fixbar{display:flex;}
+  body{padding-bottom:76px;}
+}
+
+@media(min-width:769px){
+  .pkg-card{display:flex !important;}
+  .pkg-tabs{display:none !important;}
+  .fixbar{display:none !important;}
+
+}
+
+/* Process section uses pain-timeline — compact variant */
+.proc-timeline{max-width:600px;margin:0 auto;}
+.pain-tl-sm{padding:12px 18px !important;margin-bottom:16px !important;}
+.pain-tl-sm .pain-tl-title{font-size:17px;margin-bottom:3px;}
+.pain-tl-sm .pain-tl-body{font-size:13.5px;}
+/* Last item has no dashed line */
+.pain-tl-last::after{display:none !important;}
+/* Process section padding tighter on mobile */
+.sec-process{padding:44px 5vw !important;}
+
+/* WhatsApp button */
+.btn-wa{display:inline-flex;align-items:center;gap:8px;background:#25D366;color:#fff;font-family:'Inter',sans-serif;font-size:15px;font-weight:700;padding:15px 26px;border-radius:10px;border:none;cursor:pointer;box-shadow:0 4px 18px rgba(37,211,102,.3);transition:transform .18s,box-shadow .18s;}
+.btn-wa:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(37,211,102,.4);}
+</style>
+</head>
+<body>
+
+<!-- ANNOUNCEMENT BAR -->
+<!-- ══ SECTION 1: ANNOUNCEMENT BAR ══ -->
+<div class="bar">
+  <div class="bar-track">
+    <div class="bar-item"><strong>Personalized Kundli Report</strong></div>
+    <div class="bar-item">✦ Expert-Prepared · Not AI Generated</div>
+    <div class="bar-item">📱 WhatsApp PDF Delivery</div>
+    <div class="bar-item">⚡ Delivered in 24–48 Hours</div>
+    <div class="bar-item"><strong>Starting ₹399</strong> · 60% OFF Today</div>
+    <div class="bar-item">🔒 Secure · 5,000+ Reports Delivered</div>
+    <div class="bar-item">⭐ 4.9/5 · MySoul Astrology Team</div>
+    <div class="bar-item"><strong>Personalized Kundli Report</strong></div>
+    <div class="bar-item">✦ Expert-Prepared · Not AI Generated</div>
+    <div class="bar-item">📱 WhatsApp PDF Delivery</div>
+    <div class="bar-item">⚡ Delivered in 24–48 Hours</div>
+    <div class="bar-item"><strong>Starting ₹399</strong> · 60% OFF Today</div>
+    <div class="bar-item">🔒 Secure · 5,000+ Reports Delivered</div>
+    <div class="bar-item">⭐ 4.9/5 · MySoul Astrology Team</div>
+  </div>
+</div>
+
+<!-- NAV -->
+<!-- ══ SECTION 2: NAVIGATION ══ -->
+<nav class="nav">
+  <div>
+    <div class="nav-logo">My<span>Soul</span></div>
+    <div class="nav-sub">Lifestyle · Spirituality · Transformation</div>
+  </div>
+  <div class="nav-trust">⭐ <strong>4.9/5</strong> &nbsp;·&nbsp; 5,000+ Reports</div>
+  <a href="#packages" class="btn-nav">Get My Report →</a>
+</nav>
+
+<!-- HERO -->
+<!-- ══ SECTION 3: HERO ══ -->
+<section class="hero" id="hero">
+  <div class="hero-ring r1"></div>
+  <div class="hero-ring r2"></div>
+  <div class="hero-inner">
+
+    <!-- LEFT -->
+    <div class="hero-left">
+      <div class="hero-live"><span class="live-dot"></span> MySoul Astrology Team is preparing reports now</div>
+      <div class="hero-eyebrow">✦ Vedic Astrology · Personalized Report</div>
+      <h1 class="hero-h1">Your <em>Birth Chart</em><br>Already Knows.</h1>
+      <div class="hero-h1-sub">It's Time You Read It.</div>
+      <p class="hero-sub">A personalized reading of your career timing, relationship patterns and money flow — translated from your birth chart into plain English by people who actually study it.</p>
+      <div class="hero-price-row">
+        <span class="hero-from">Reports Starting from</span>
+        <span class="hero-price">₹399</span>
+        <span class="hero-del">· Delivered in 24–48 hours</span>
+      </div>
+      <div class="hero-checks">
+        <div class="hero-chk"><span class="hck">✓</span> Expert-Prepared, Not Software</div>
+        <div class="hero-chk"><span class="hck">✓</span> 5,000+ Reports Delivered</div>
+      </div>
+      <div class="hero-ctas">
+        <a href="#packages" class="btn-gold">✦ Get My Kundli Report →</a>
+        <a href="#whatis" class="btn-outline">See What's Inside ↓</a>
+      </div>
+      <div class="hero-meta">
+        <span>⭐ 4.9/5 Rating</span>
+        <span>·</span>
+        <span>✓ Astrology Experts</span>
+        <span>·</span>
+        <span>🔒 Private & Confidential</span>
+      </div>
+    </div>
+
+    <!-- RIGHT — Simplified Mockup Card -->
+    <div class="hero-right">
+      <div style="position:relative;">
+        <!-- Floating badges (desktop only) -->
+        <div class="fbadge fb1">
+          <span class="fbadge-icon">⭐</span>
+          <div><span class="fbadge-t1">4.9 / 5</span><span class="fbadge-t2">5,000+ reports</span></div>
+        </div>
+        <div class="fbadge fb2">
+          <span class="fbadge-icon">⚡</span>
+          <div><span class="fbadge-t1">24–48 Hrs</span><span class="fbadge-t2">WhatsApp + Email</span></div>
+        </div>
+        <div class="fbadge fb3">
+          <span class="fbadge-icon">🔒</span>
+          <div><span class="fbadge-t1">100% Secure</span><span class="fbadge-t2">Private</span></div>
+        </div>
+
+        <div class="k2-mockup">
+          <span class="k2-brand">MySoul</span>
+          <div class="k2-title">Personalised <em>Kundli 2.0</em></div>
+          <div class="k2-badge">Premium Report</div>
+
+          <!-- Kundli chart -->
+          <div class="k2-chart">
+            <svg width="160" height="130" viewBox="0 0 160 130" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="8" y="6" width="144" height="118" stroke="rgba(201,135,10,0.5)" stroke-width="1.2" fill="none" rx="2"/>
+              <rect x="38" y="30" width="84" height="70" stroke="rgba(201,135,10,0.35)" stroke-width=".8" fill="none"/>
+              <line x1="8" y1="6" x2="80" y2="65" stroke="rgba(201,135,10,0.25)" stroke-width=".7"/>
+              <line x1="152" y1="6" x2="80" y2="65" stroke="rgba(201,135,10,0.25)" stroke-width=".7"/>
+              <line x1="8" y1="124" x2="80" y2="65" stroke="rgba(201,135,10,0.25)" stroke-width=".7"/>
+              <line x1="152" y1="124" x2="80" y2="65" stroke="rgba(201,135,10,0.25)" stroke-width=".7"/>
+              <line x1="80" y1="6" x2="80" y2="124" stroke="rgba(201,135,10,0.18)" stroke-width=".6"/>
+              <line x1="8" y1="65" x2="152" y2="65" stroke="rgba(201,135,10,0.18)" stroke-width=".6"/>
+              <text x="80" y="24" text-anchor="middle" font-size="10" fill="#D9A441" opacity=".9">♃</text>
+              <text x="144" y="68" text-anchor="middle" font-size="10" fill="#C9870A" opacity=".9">♀</text>
+              <text x="80" y="118" text-anchor="middle" font-size="10" fill="#D9A441" opacity=".9">☉</text>
+              <text x="16" y="68" text-anchor="middle" font-size="10" fill="#C9870A" opacity=".9">☿</text>
+              <text x="22" y="22" text-anchor="middle" font-size="9" fill="#D9A441" opacity=".7">♄</text>
+              <text x="138" y="22" text-anchor="middle" font-size="9" fill="#C9870A" opacity=".7">♂</text>
+              <text x="22" y="118" text-anchor="middle" font-size="9" fill="#D9A441" opacity=".7">☾</text>
+              <text x="138" y="118" text-anchor="middle" font-size="9" fill="#C9870A" opacity=".7">♅</text>
+              <circle cx="80" cy="65" r="4" fill="#C9870A" opacity=".7"/>
+            </svg>
+          </div>
+
+          <div class="k2-rows">
+            <div class="k2-row">
+              <div class="k2-rl"><span class="k2-rl-label">Career Phase</span><span class="k2-rl-sub">Q3 2026 growth</span></div>
+              <span class="k2-score">9.1</span>
+              <div class="k2-bar"><div class="k2-fill" style="width:91%"></div></div>
+            </div>
+            <div class="k2-row">
+              <div class="k2-rl"><span class="k2-rl-label">Marriage Timing</span><span class="k2-rl-sub">Active dasha</span></div>
+              <span class="k2-score">8.6</span>
+              <div class="k2-bar"><div class="k2-fill" style="width:86%"></div></div>
+            </div>
+            <div class="k2-locked">
+              <span class="k2-lp">🔒 Unlocked after purchase</span>
+              <span class="k2-ls">Remedies + Life Block</span>
+            </div>
+          </div>
+
+          <div class="k2-foot">
+            <div class="k2-foot-live"><div class="k2-foot-dot"></div> Preparing Now</div>
+            <div class="k2-foot-brand">MySoul Kundli 2.0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- STATS BAR -->
+<!-- ══ SECTION 4: STATS BAR ══ -->
+<div class="stats-bar">
+  <div class="stats-desktop">
+    <div class="stat"><span class="stat-num">5,000+</span><span class="stat-lbl">Reports Delivered</span></div>
+    <div class="stat-sep"></div>
+    <div class="stat"><span class="stat-num">4.9 ★</span><span class="stat-lbl">Average Rating</span></div>
+    <div class="stat-sep"></div>
+    <div class="stat"><span class="stat-num">48 hrs</span><span class="stat-lbl">Max Delivery</span></div>
+    <div class="stat-sep"></div>
+    <div class="stat"><span class="stat-num">100%</span><span class="stat-lbl">Personalized</span></div>
+    <div class="stat-sep"></div>
+    <div class="stat"><span class="stat-num">🔒</span><span class="stat-lbl">Secure Checkout</span></div>
+  </div>
+  <div class="stats-mobile">
+    <div class="stats-m-track">
+      <div class="stat-m"><span class="mn">5,000+</span><span class="ml">Reports Delivered</span></div>
+      <div class="stat-m"><span class="mn">4.9 ★</span><span class="ml">Average Rating</span></div>
+      <div class="stat-m"><span class="mn">48 hrs</span><span class="ml">Max Delivery</span></div>
+      <div class="stat-m"><span class="mn">100%</span><span class="ml">Personalized</span></div>
+      <div class="stat-m"><span class="mn">🔒</span><span class="ml">Secure Checkout</span></div>
+      <div class="stat-m"><span class="mn">5,000+</span><span class="ml">Reports Delivered</span></div>
+      <div class="stat-m"><span class="mn">4.9 ★</span><span class="ml">Average Rating</span></div>
+      <div class="stat-m"><span class="mn">48 hrs</span><span class="ml">Max Delivery</span></div>
+      <div class="stat-m"><span class="mn">100%</span><span class="ml">Personalized</span></div>
+      <div class="stat-m"><span class="mn">🔒</span><span class="ml">Secure Checkout</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- WHAT IS KUNDLI 2.0 -->
+<!-- ══ SECTION 5: WHAT IS KUNDLI 2.0 ══ -->
+<div class="what-bg" id="whatis">
+  <div class="what-inner">
+    <div style="position:relative;">
+      <div class="what-book">
+        <span class="what-book-icon">📖</span>
+        <div class="what-book-title">What is <em>MySoul<br>Personalised Kundli 2.0?</em></div>
+        <div class="what-book-sub">Your guide to understanding your birth chart</div>
+        <div class="what-book-div"></div>
+        <div class="what-book-points">
+          <div class="what-book-point"><span class="wbdot"></span> Career, finances & relationships</div>
+          <div class="what-book-point"><span class="wbdot"></span> Personality & life path insights</div>
+          <div class="what-book-point"><span class="wbdot"></span> Personalized Vedic remedies</div>
+          <div class="what-book-point"><span class="wbdot"></span> Upcoming opportunities & timing</div>
+        </div>
+      </div>
+      <div class="what-stat-float"><span class="wsn">5,000+</span><span class="wsl">Reports Delivered</span></div>
+    </div>
+    <div class="what-content">
+      <div class="sec-eyebrow">✦ About The Report</div>
+      <h2 class="what-h2">What is <em>MySoul<br>Personalised Kundli 2.0?</em></h2>
+      <div class="what-rule"></div>
+      <p class="what-body">It is your Guide to Understanding Your Birth Chart. Our MySoul Astrology Team reveals the deeper astrological insights within your Janam Kundli to help you understand your strengths, challenges, and upcoming opportunities.</p>
+      <div class="what-points">
+        <div class="what-point"><span class="what-pt-dot">◆</span><span class="what-pt-text">Reveals the planetary positions at the time of your birth.</span></div>
+        <div class="what-point"><span class="what-pt-dot">◆</span><span class="what-pt-text">Uncovers insights about your career, finances, relationships, health, and major life events.</span></div>
+        <div class="what-point"><span class="what-pt-dot">◆</span><span class="what-pt-text">Reveals insights about your personality, life path, and future possibilities.</span></div>
+        <div class="what-point"><span class="what-pt-dot">◆</span><span class="what-pt-text">Unlocks best opportunities through powerful Vedic astrology methods.</span></div>
+      </div>
+      <a href="#packages" class="btn-gold" style="display:inline-flex;">✦ Get My Kundli Report →</a>
+    </div>
+  </div>
+</div>
+
+<!-- PAIN — numbered timeline (Image 1 style) -->
+<!-- ══ SECTION 6: YOU'RE NOT ALONE (Pain) ══ -->
+<div class="pain-bg">
+  <div class="sec">
+    <div class="sec-eyebrow">✦ Sound Familiar?</div>
+    <h2 class="sec-h2">You're Not <em>Alone</em></h2>
+    <div class="sec-rule"></div>
+    <p class="pain-intro">These are the situations people are usually sitting with when they order a MySoul report.</p>
+
+    <div class="pain-timeline">
+      <div class="pain-tl-item">
+        <div class="pain-tl-left">
+          <div class="pain-tl-num active">1</div>
+        </div>
+        <div class="pain-tl-content">
+          <div class="pain-tl-title">"I work hard, but my career never quite moves."</div>
+          <div class="pain-tl-body">The effort is real. The result keeps not showing up. Your chart shows which phase you're in, and when the actual movement begins.</div>
+        </div>
+      </div>
+      <div class="pain-tl-item">
+        <div class="pain-tl-left">
+          <div class="pain-tl-num inactive">2</div>
+        </div>
+        <div class="pain-tl-content">
+          <div class="pain-tl-title">"My relationships always become complicated."</div>
+          <div class="pain-tl-body">Different people, same shape of story. Your 7th house and Venus placement are running a pattern — seeing it is the first step to changing it.</div>
+        </div>
+      </div>
+      <div class="pain-tl-item">
+        <div class="pain-tl-left">
+          <div class="pain-tl-num inactive">3</div>
+        </div>
+        <div class="pain-tl-content">
+          <div class="pain-tl-title">"I feel confused before making important decisions."</div>
+          <div class="pain-tl-body">Not every hesitation is doubt about the choice itself — sometimes it's about timing. Your chart can tell you which one you're actually facing.</div>
+        </div>
+      </div>
+      <div class="pain-tl-item">
+        <div class="pain-tl-left">
+          <div class="pain-tl-num inactive">4</div>
+        </div>
+        <div class="pain-tl-content">
+          <div class="pain-tl-title" style="font-style:italic;font-size:16px;">"Life doesn't always give clear answers. Sometimes you just need to see the pattern for yourself — written down, in your own context, for once."</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hl-dark">"This report doesn't make decisions for you — it gives you the clarity to make them <em>with confidence.</em>"</div>
+  </div>
+</div>
+
+<!-- PERSONA -->
+<!-- ══ SECTION 7: THIS REPORT IS FOR ══ -->
+<div class="persona-bg">
+  <div class="sec">
+    <div class="sec-eyebrow">✦ This Report Is For</div>
+    <h2 class="sec-h2">Anyone Facing <em>a Dilemma</em></h2>
+    <div class="sec-rule"></div>
+    <p class="persona-lead">Your chart speaks to every area of life. These are the situations people most often come to us with.</p>
+    <div class="persona-grid">
+      <div class="persona-card"><div class="persona-ck">✓</div><div><span class="persona-num">01</span><div class="persona-title">Students & Young Adults</div><p class="persona-body">Unclear which direction is right — career, further study, or something else entirely. Your chart shows your natural strengths and when the right opportunities open.</p></div></div>
+      <div class="persona-card"><div class="persona-ck">✓</div><div><span class="persona-num">02</span><div class="persona-title">Professionals & Job Seekers</div><p class="persona-body">Stuck in a role that doesn't fit, or waiting for a break that keeps not arriving. Your dasha period shows exactly where you are in that cycle right now.</p></div></div>
+      <div class="persona-card"><div class="persona-ck">✓</div><div><span class="persona-num">03</span><div class="persona-title">Business Owners</div><p class="persona-body">Facing decisions about timing, partnerships, or expansion with no clear signal. Your chart shows which periods favour bold action and which reward patience.</p></div></div>
+      <div class="persona-card"><div class="persona-ck">✓</div><div><span class="persona-num">04</span><div class="persona-title">Couples & Those Seeking Marriage</div><p class="persona-body">Delays, compatibility uncertainty, or a relationship that keeps repeating the same pattern. Your 7th house holds a pattern most people never see clearly.</p></div></div>
+      <div class="persona-card"><div class="persona-ck">✓</div><div><span class="persona-num">05</span><div class="persona-title">Parents</div><p class="persona-body">Clarity on your child's natural strengths and direction — early enough to actually matter. Their chart shows where their energy flows most naturally.</p></div></div>
+      <div class="persona-card"><div class="persona-ck">✓</div><div><span class="persona-num">06</span><div class="persona-title">Anyone in a Major Transition</div><p class="persona-body">A career shift, a move, a phase that won't resolve. Your chart shows what's happening energetically right now — and what's actually coming next.</p></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- OUTCOMES -->
+<!-- ══ SECTION 8: WHAT CHANGES AFTER ══ -->
+<div class="outcomes-bg">
+  <div class="outcomes-inner">
+    <div class="sec-eyebrow">✦ What Changes After</div>
+    <h2 class="sec-h2">What Changes <em>After Your Report</em></h2>
+    <div class="sec-rule"></div>
+    <div class="outcomes-grid">
+      <div class="outcome-card"><div class="outcome-title">Career Decisions</div><p class="outcome-body">You stop second-guessing every move and start recognising which opportunities are actually worth your energy right now.</p></div>
+      <div class="outcome-card"><div class="outcome-title">Relationship Clarity</div><p class="outcome-body">Patterns that felt random start making sense — what you're drawn to, and why certain situations keep repeating.</p></div>
+      <div class="outcome-card"><div class="outcome-title">Life Timing</div><p class="outcome-body">You learn to tell the difference between "wrong idea" and "right idea, wrong time" — and act accordingly.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- TRIED -->
+<!-- ══ SECTION 9: ALREADY TRIED? ══ -->
+<div class="tried-bg">
+  <div class="sec">
+    <div class="sec-eyebrow">✦ Already Tried Other Reports?</div>
+    <h2 class="sec-h2">Got a Kundli<br>and Still <em>Confused?</em></h2>
+    <div class="sec-rule"></div>
+    <div class="hl-box">Most people have. The problem isn't astrology — it's what the report actually did with your chart.</div>
+    <div class="tried-grid">
+      <div class="tried-card"><div class="tried-q">It showed you data, not meaning.</div><p class="tried-a">Planetary positions are raw information. A reading explains what they mean for your career, relationships, and timing in plain language.</p></div>
+      <div class="tried-card"><div class="tried-q">It felt generic because it was.</div><p class="tried-a">Software generates the same paragraphs for everyone born in your year. MySoul reports are written fresh for your exact birth data — by a person, not an algorithm.</p></div>
+      <div class="tried-card"><div class="tried-q">It used fear, not clarity.</div><p class="tried-a">Dosh warnings without context, predictions without remedies. A well-prepared report doesn't alarm you — it explains what you're working with and what to do.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- PRICING -->
+<!-- ══ SECTION 10: PRICING / RATE CARDS ══ -->
+<div class="pkg-bg" id="packages">
+  <div class="pkg-inner">
+    <div class="sec-eyebrow">✦ Choose Your Report</div>
+    <h2 class="sec-h2">Two Reports.<br><em>Pick What Fits You Best.</em></h2>
+    <div class="sec-rule center"></div>
+    <div class="pkg-timer-row">
+      <div class="pkg-timer">⏰ Offer ends in: <span class="pkg-timer-val" id="pkgTimer">05 h &nbsp;28 m &nbsp;54 s</span></div>
+    </div>
+    <div class="pkg-tabs">
+      <div class="pkg-tab-track">
+        <button class="pkg-tab on" onclick="pkgTab('basic',this)">📄 Basic</button>
+        <button class="pkg-tab" onclick="pkgTab('premium',this)">⭐ Premium</button>
+      </div>
+    </div>
+    <div class="pkg-grid">
+      <div class="pkg-card tab-on" id="pkg-basic">
+        <div class="badge-start">Good Starting Point</div>
+        <div class="pc-name">Basic Kundli Report</div>
+        <div class="pc-desc">A clear, focused reading across every major life area.</div>
+        <div class="price-row">
+          <span class="pr-old">₹899</span>
+          <span class="pr-arr">→</span>
+          <span class="pr-price">₹399</span>
+          <span class="pr-save">Save ₹500 · 56% OFF</span>
+        </div>
+        <div class="cdiv"></div>
+        <ul class="feat-list">
+          <li><span class="ck-m">✓</span> Personalised birth chart analysis</li>
+          <li><span class="ck-m">✓</span> Career & life path predictions</li>
+          <li><span class="ck-m">✓</span> Love & marriage insights (7th house)</li>
+          <li><span class="ck-m">✓</span> Financial patterns & wealth awareness</li>
+          <li><span class="ck-m">✓</span> Dasha timeline of major life periods</li>
+          <li><span class="ck-m">✓</span> 3 Remedies — mantra, colour, auspicious day</li>
+          <li><span class="ck-m">✓</span> Delivered in 48 hours via PDF + WhatsApp</li>
+          <li class="dimmed"><span class="ex-x">✗</span> Navamsa chart, 12-month forecast, Lal Kitab</li>
+        </ul>
+        <a href="#" class="btn-basic-pkg">Get Basic Report — ₹399</a>
+        <div class="cn-note"><span>⏱ 48 hrs</span><span class="cn-sep">|</span><span>🔒 Secure</span><span class="cn-sep">|</span><span>📄 PDF + WhatsApp</span></div>
+      </div>
+      <div class="pkg-card premium" id="pkg-premium">
+        <div class="badge-pop">⭐ Most Popular</div>
+        <div class="pc-name">Premium Kundli Report</div>
+        <div class="pc-desc">Complete picture — deeper analysis, year-ahead timing, full remedies.</div>
+        <div class="price-row">
+          <span class="pr-old">₹1,999</span>
+          <span class="pr-arr">→</span>
+          <span class="pr-price">₹799</span>
+          <span class="pr-save">Save ₹1,200 · 60% OFF</span>
+        </div>
+        <div class="cdiv"></div>
+        <div class="pkg-bonus">✦ Rajyogas + Lal Kitab Remedies + Life Block Section Included</div>
+        <ul class="feat-list">
+          <li><span class="ck-g">✓</span> Everything in Basic, plus:</li>
+          <li><span class="ck-g">✓</span> Navamsa chart — marriage depth analysis</li>
+          <li><span class="ck-g">✓</span> Rajyogas & Dhana Yogas in your chart</li>
+          <li><span class="ck-g">✓</span> Month-by-month forecast — next 12 months</li>
+          <li><span class="ck-g">✓</span> Lal Kitab remedies specific to your chart</li>
+          <li><span class="ck-g">✓</span> Your Biggest Life Block — identified & solved</li>
+          <li><span class="ck-g">✓</span> Sade Sati & Kaal Sarp Dosh check</li>
+          <li><span class="ck-g">✓</span> Priority 24-hour delivery via PDF + WhatsApp</li>
+        </ul>
+        <a href="#" class="btn-premium-pkg">Get Premium Report — ₹799 →</a>
+        <div class="cn-note"><span>⚡ 24 hr priority</span><span class="cn-sep">|</span><span>🔒 Secure</span><span class="cn-sep">|</span><span>📄 PDF + WhatsApp</span></div>
+        <div class="pkg-fine">Prepared by MySoul Astrology Team under Mehakleen's guidance. Aapke liye. Sirf aapke liye.</div>
+      </div>
+    </div>
+    <div class="pkg-bottom">
+      <div class="pkg-note">A session with a senior astrologer costs ₹2,000–₹5,000 for notes you'll forget by morning.<br>This is the same depth — permanently documented and yours forever.</div>
+      <div class="pkg-guar">
+        <div class="gi">🔒 <strong>7-Day Guarantee</strong></div><span class="gs">·</span>
+        <div class="gi">✅ <strong>Secure Checkout</strong></div><span class="gs">·</span>
+        <div class="gi">📄 <strong>PDF + WhatsApp</strong></div><span class="gs">·</span>
+        <div class="gi">⚡ <strong>Instant Confirmation</strong></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TRUST ROW -->
+<!-- ══ SECTION 11: TRUST STRIP (auto-scroll marquee — desktop + mobile) ══ -->
+<!-- ══ SECTION 11: TRUST STRIP (auto-scroll marquee) ══ -->
+<div class="trust-strip">
+  <div class="trust-track">
+    <div class="trust-m-item">🔒 100% Secure Payment</div>
+    <div class="trust-sep">✦</div>
+    <div class="trust-m-item">⭐ 4.9/5 Real Experts, Not Software</div>
+    <div class="trust-sep">✦</div>
+    <div class="trust-m-item">📄 WhatsApp 24-48 Hrs Delivery</div>
+    <div class="trust-sep">✦</div>
+    <div class="trust-m-item">💳 UPI/Card/Net Banking</div>
+    <div class="trust-sep">✦</div>
+    <div class="trust-m-item">🔒 100% Secure Payment</div>
+    <div class="trust-sep">✦</div>
+    <div class="trust-m-item">⭐ 4.9/5 Real Experts, Not Software</div>
+    <div class="trust-sep">✦</div>
+    <div class="trust-m-item">📄 WhatsApp 24-48 Hrs Delivery</div>
+    <div class="trust-sep">✦</div>
+    <div class="trust-m-item">💳 UPI/Card/Net Banking</div>
+    <div class="trust-sep">✦</div>
+  </div>
+</div>
+
+<!-- TESTIMONIALS -->
+<!-- ══ SECTION 12: TESTIMONIALS ══ -->
+<div class="testi-bg">
+  <div class="testi-head">
+    <div class="sec-eyebrow" style="text-align:center;">✦ Real Experiences</div>
+    <h2 class="sec-h2" style="text-align:center;">Different Stories.<br><em>Different Outcomes.</em></h2>
+    <div class="sec-rule center"></div>
+  </div>
+  <div class="marquee-row">
+    <div class="marquee-track go-l">
+      <div class="t-card"><span class="t-tag">Career</span><div class="t-stars">★★★★★</div><p class="t-text">I'd been waiting for a sign to switch jobs for months. The report named the exact phase I was in and why holding off made sense. Three weeks later, a better offer landed on its own.</p><div class="t-author"><div class="t-avatar">R</div><div><div class="t-name">Rahul S.</div><div class="t-city">Bengaluru</div></div></div></div>
+      <div class="t-card"><span class="t-tag">Relationship</span><div class="t-stars">★★★★★</div><p class="t-text">The way it described my relationship pattern felt uncomfortably accurate — in a good way. I finally understood why certain dynamics kept repeating, and that alone changed how I showed up.</p><div class="t-author"><div class="t-avatar">P</div><div><div class="t-name">Priya M.</div><div class="t-city">Delhi</div></div></div></div>
+      <div class="t-card"><span class="t-tag">Confidence</span><div class="t-stars">★★★★★</div><p class="t-text">I'm not someone who believed in any of this. But having a calm, specific explanation for why I was hesitating gave me the confidence to finally decide — and stop overthinking it.</p><div class="t-author"><div class="t-avatar">A</div><div><div class="t-name">Ananya R.</div><div class="t-city">Pune</div></div></div></div>
+      <div class="t-card"><span class="t-tag">Finance</span><div class="t-stars">★★★★★</div><p class="t-text">Money came in every month but nothing ever stayed. The report explained a specific 2nd house pattern — and gave remedies I could actually follow. Three months in, I have real savings for the first time in years.</p><div class="t-author"><div class="t-avatar">S</div><div><div class="t-name">Sneha K.</div><div class="t-city">Mumbai</div></div></div></div>
+      <div class="t-card"><span class="t-tag">Career</span><div class="t-stars">★★★★★</div><p class="t-text">I'd been waiting for a sign to switch jobs for months. The report named the exact phase I was in and why holding off made sense. Three weeks later, a better offer landed on its own.</p><div class="t-author"><div class="t-avatar">R</div><div><div class="t-name">Rahul S.</div><div class="t-city">Bengaluru</div></div></div></div>
+      <div class="t-card"><span class="t-tag">Relationship</span><div class="t-stars">★★★★★</div><p class="t-text">The way it described my relationship pattern felt uncomfortably accurate — in a good way. I finally understood why certain dynamics kept repeating, and that alone changed how I showed up.</p><div class="t-author"><div class="t-avatar">P</div><div><div class="t-name">Priya M.</div><div class="t-city">Delhi</div></div></div></div>
+      <div class="t-card"><span class="t-tag">Confidence</span><div class="t-stars">★★★★★</div><p class="t-text">I'm not someone who believed in any of this. But having a calm, specific explanation for why I was hesitating gave me the confidence to finally decide — and stop overthinking it.</p><div class="t-author"><div class="t-avatar">A</div><div><div class="t-name">Ananya R.</div><div class="t-city">Pune</div></div></div></div>
+      <div class="t-card"><span class="t-tag">Finance</span><div class="t-stars">★★★★★</div><p class="t-text">Money came in every month but nothing ever stayed. The report explained a specific 2nd house pattern — and gave remedies I could actually follow. Three months in, I have real savings for the first time in years.</p><div class="t-author"><div class="t-avatar">S</div><div><div class="t-name">Sneha K.</div><div class="t-city">Mumbai</div></div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- COMPARISON — Two column card (Image 2 style) -->
+<!-- ══ SECTION 13: THE REAL DIFFERENCE ══ -->
+<div class="compare-bg">
+  <div class="sec">
+    <div class="sec-eyebrow">✦ The Real Difference</div>
+    <h2 class="sec-h2">Free Apps Give You Data.<br><em>This Gives You Meaning.</em></h2>
+    <div class="sec-rule"></div>
+    <div class="compare-new">
+      <!-- Headers -->
+      <div class="compare-cols">
+        <div class="compare-col-head bad">
+          <span class="compare-col-head-label">Other Astrology Reports</span>
+          <span class="compare-col-head-sub">What most people settle for</span>
+        </div>
+        <div class="compare-col-head good">
+          <span class="compare-col-head-label">MySoul Kundli Report</span>
+          <span class="compare-col-head-sub">Why thousands trust it for clarity</span>
+        </div>
+      </div>
+      <!-- Row 1 -->
+      <div class="compare-row">
+        <div class="compare-cell bad-cell"><span class="cx">✗</span> Same paragraph for everyone born your year</div>
+        <div class="compare-cell good-cell"><span class="ck2">✓</span> Written for your exact chart and current life phase</div>
+      </div>
+      <!-- Row 2 -->
+      <div class="compare-row">
+        <div class="compare-cell bad-cell"><span class="cx">✗</span> Nobody actually reads your chart</div>
+        <div class="compare-cell good-cell"><span class="ck2">✓</span> Studied and written fresh by the MySoul Astrology Team</div>
+      </div>
+      <!-- Row 3 -->
+      <div class="compare-row">
+        <div class="compare-cell bad-cell"><span class="cx">✗</span> Dense jargon with no real-life context</div>
+        <div class="compare-cell good-cell"><span class="ck2">✓</span> Plain English you can understand and act on</div>
+      </div>
+      <!-- Row 4 -->
+      <div class="compare-row">
+        <div class="compare-cell bad-cell"><span class="cx">✗</span> Read once, forgotten by tomorrow</div>
+        <div class="compare-cell good-cell"><span class="ck2">✓</span> A reference you return to for real decisions</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- INSIDE YOUR REPORT -->
+<!-- ══ SECTION 14: INSIDE YOUR REPORT ══ -->
+<div class="inside-bg" id="inside">
+  <div class="sec">
+    <div class="sec-eyebrow">✦ Inside Your Report</div>
+    <h2 class="sec-h2">What You'll <em>Actually</em> Find</h2>
+    <div class="sec-rule"></div>
+    <p class="inside-sub">Every section of your report is written specifically for your chart — not generated, not templated.</p>
+      <div class="inside-grid">
+
+      <div class="inside-card">
+        <div class="ic-top-row">
+          <span class="inside-icon">💎</span>
+          <span class="inside-tag">Personality</span>
+        </div>
+        <div class="inside-title">Hidden Strengths</div>
+        <p class="inside-body">Qualities your chart shows you've been underusing — abilities that are already yours, just unrecognised.</p>
+      </div>
+
+      <div class="inside-card">
+        <div class="ic-top-row">
+          <span class="inside-icon">⏱️</span>
+          <span class="inside-tag">Timing</span>
+        </div>
+        <div class="inside-title">Decision Timing</div>
+        <p class="inside-body">Which periods favour bold moves, and which ones reward patience — based on your current dasha period.</p>
+      </div>
+
+      <div class="inside-card">
+        <div class="ic-top-row">
+          <span class="inside-icon">🔄</span>
+          <span class="inside-tag">Patterns</span>
+        </div>
+        <div class="inside-title">Recurring Life Patterns</div>
+        <p class="inside-body">The situations that keep returning in different forms, and the placement quietly running them.</p>
+      </div>
+
+      <div class="inside-card">
+        <div class="ic-top-row">
+          <span class="inside-icon">🔍</span>
+          <span class="inside-tag">Awareness</span>
+        </div>
+        <div class="inside-title">Personal Blind Spots</div>
+        <p class="inside-body">What your chart flags as worth watching — in health, money, or judgement — before it becomes a pattern.</p>
+      </div>
+
+      <div class="inside-card">
+        <div class="ic-top-row">
+          <span class="inside-icon">🌱</span>
+          <span class="inside-tag">Growth</span>
+        </div>
+        <div class="inside-title">Growth Opportunities</div>
+        <p class="inside-body">Where your chart is actively working in your favour right now, and how to use that window well.</p>
+      </div>
+
+      <div class="inside-card">
+        <div class="ic-top-row">
+          <span class="inside-icon">💞</span>
+          <span class="inside-tag">Relationships</span>
+        </div>
+        <div class="inside-title">Relationship Dynamics</div>
+        <p class="inside-body">Your 7th house and Venus placement explained — compatibility patterns and what they mean specifically for you.</p>
+      </div>
+    </div>
+    </div>
+    <div class="inside-footer">Delivered as PDF · WhatsApp + Email</div>
+  </div>
+</div>
+
+<!-- DOSH -->
+<!-- ══ SECTION 15: DOSH IN YOUR CHART ══ -->
+<div class="dosh-bg">
+  <div class="dosh-inner">
+    <div class="sec-eyebrow">✦ Dosh in Your Chart?</div>
+    <h2 class="sec-h2">Been Told You Have a Dosh?<br><em>Here's What Your Report Covers.</em></h2>
+    <div class="sec-rule"></div>
+    <p class="dosh-intro">Here's what your Premium report addresses for the three most commonly misunderstood ones.</p>
+    <div class="dosh-grid">
+      <div class="dosh-card"><span class="dosh-icon">🪐</span><div><div class="dosh-sub">Saturn Transit</div><div class="dosh-title">Sade Sati</div><p class="dosh-body">Saturn's 7.5-year transit across your moon sign. Widely feared, consistently misunderstood. Your report explains which of the three phases you're currently in — rising, peak, or setting — what it means for your career, health, and relationships, and specific remedies for your chart.</p></div></div>
+      <div class="dosh-card"><span class="dosh-icon">🐍</span><div><div class="dosh-sub">Rahu–Ketu Axis</div><div class="dosh-title">Kaal Sarp Dosh</div><p class="dosh-body">All planets between Rahu and Ketu. Your report clarifies whether your chart actually has it, how severe the effect is in your specific houses, and how to work with the energy rather than against it.</p></div></div>
+      <div class="dosh-card"><span class="dosh-icon">🔥</span><div><div class="dosh-sub">Mars Placement</div><div class="dosh-title">Mangal Dosh</div><p class="dosh-body">The most misrepresented dosh in Vedic astrology. Most people with Mangal Dosh lead completely normal relationship lives — because the actual impact depends on your specific Mars house, cancellations present, and your partner's chart.</p></div></div>
+    </div>
+    <div class="dosh-closing">A dosh is not a verdict. It is a placement. Understanding it — specifically, in your chart — changes everything.</div>
+  </div>
+</div>
+
+<!-- ABOUT -->
+<!-- ══ SECTION 16: ABOUT MEHAKLEEN ══ -->
+<div class="about-bg">
+  <div class="about-inner">
+    <div class="about-photo-wrap">
+      <div class="about-photo">
+        <div class="about-photo-icon">👤</div>
+        <div style="font-size:12px;color:var(--muted);position:relative;z-index:2;">Mehakleen's Photo</div>
+        <div class="about-photo-bottom"><strong>Mehakleen Kaur</strong><span>Founder · MySoulSchool</span></div>
+      </div>
+      <div class="about-stat-float"><span class="asn">30K+</span><span class="asl">Students Trained</span></div>
+    </div>
+    <div>
+      <div class="about-eyebrow">🧘‍♀️ Why MySoul Exists</div>
+      <div class="about-name">Mehakleen Kaur</div>
+      <div class="about-role">Reiki Grand Master · Founder, MySoulSchool</div>
+      <div class="hl-box" style="margin:0 0 20px;">A Note From Mehakleen</div>
+      <p class="about-body">I kept meeting people carrying the same quiet question — about a career that wasn't moving, a relationship that felt stuck, a decision they couldn't make. They weren't looking for predictions. They wanted someone to actually look at their chart and explain what it meant.<br><br>That's the gap MySoul fills. Not a verdict on your future — a way of seeing your own patterns clearly enough to act on them.<br><br><em>Aapki kundli ko yahan seriously liya jaata hai.</em></p>
+      <div class="about-creds">
+        <div class="about-cred"><span class="about-cred-dot"></span> Certified Reiki Grand Master</div>
+        <div class="about-cred"><span class="about-cred-dot"></span> 30,000+ Students Trained</div>
+        <div class="about-cred"><span class="about-cred-dot"></span> Founder — MySoulSchool & MySoulSpace</div>
+        <div class="about-cred"><span class="about-cred-dot"></span> Clarity-first, never fear-based</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PROCESS -->
+<!-- ══ SECTION 17: WHAT HAPPENS NEXT — Vertical numbered timeline (fits 1 screen mobile) ══ -->
+<!-- ══ SECTION 17: WHAT HAPPENS NEXT ══ -->
+<div class="process-bg">
+  <div class="sec sec-process">
+    <div class="sec-eyebrow" style="text-align:center;">✦ After You Order</div>
+    <h2 class="sec-h2" style="text-align:center;">What Happens <em>Next</em></h2>
+    <div class="sec-rule center"></div>
+    <div class="pain-timeline proc-timeline">
+      <div class="pain-tl-item">
+        <div class="pain-tl-left"><div class="pain-tl-num active">1</div></div>
+        <div class="pain-tl-content pain-tl-sm"><div class="pain-tl-title">Purchase</div><div class="pain-tl-body">Secure checkout, under 2 minutes.</div></div>
+      </div>
+      <div class="pain-tl-item">
+        <div class="pain-tl-left"><div class="pain-tl-num inactive">2</div></div>
+        <div class="pain-tl-content pain-tl-sm"><div class="pain-tl-title">Birth Details</div><div class="pain-tl-body">Share name, date, time & place.</div></div>
+      </div>
+      <div class="pain-tl-item">
+        <div class="pain-tl-left"><div class="pain-tl-num inactive">3</div></div>
+        <div class="pain-tl-content pain-tl-sm"><div class="pain-tl-title">Analysis</div><div class="pain-tl-body">Our team studies your chart.</div></div>
+      </div>
+      <div class="pain-tl-item">
+        <div class="pain-tl-left"><div class="pain-tl-num inactive">4</div></div>
+        <div class="pain-tl-content pain-tl-sm"><div class="pain-tl-title">Report Prepared</div><div class="pain-tl-body">Your personalised PDF is prepared.</div></div>
+      </div>
+      <div class="pain-tl-item pain-tl-last">
+        <div class="pain-tl-left"><div class="pain-tl-num inactive">5</div></div>
+        <div class="pain-tl-content pain-tl-sm"><div class="pain-tl-title">Delivery</div><div class="pain-tl-body">Sent to WhatsApp & email.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FAQ -->
+<!-- ══ SECTION 18: FAQ ══ -->
+<div class="faq-bg">
+  <div class="sec">
+    <div class="faq-inner">
+      <div class="sec-eyebrow" style="text-align:center;">✦ Frequently Asked Questions</div>
+      <h2 class="sec-h2" style="text-align:center;">Questions You're<br><em>Already Thinking</em></h2>
+      <div class="sec-rule center"></div>
+      <div class="faq-list">
+        <div class="faq-item open"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Is this report generated by software? <span class="faq-arrow">▾</span></div><div class="faq-a">No. Our team manually studies your chart and writes your report from it — that's why it takes 24–48 hours, not seconds.</div></div>
+        <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">What birth details do you need? <span class="faq-arrow">▾</span></div><div class="faq-a">We need your full name, date of birth, birth time (approximate is fine), and birth city. If you don't know the exact time, mention morning/afternoon/evening.</div></div>
+        <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">What if I don't know my exact birth time? <span class="faq-arrow">▾</span></div><div class="faq-a">No problem. Share the closest approximation. Many important sections don't require an exact birth time. We clearly indicate what's affected.</div></div>
+        <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">How is this different from a free Kundli app? <span class="faq-arrow">▾</span></div><div class="faq-a">Free apps show raw data — planetary positions, house numbers, dasha dates. This report is the interpretation: what your career timing, relationship patterns, and wealth energy mean for your actual life right now.</div></div>
+        <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">How long does delivery take? <span class="faq-arrow">▾</span></div><div class="faq-a">Basic reports within 48 hours. Premium reports within 24 hours. Both sent as PDF to WhatsApp and email.</div></div>
+        <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">What's your refund policy? <span class="faq-arrow">▾</span></div><div class="faq-a">We offer a 7-day satisfaction window. If the report doesn't feel specific or genuinely helpful, reach out and we'll address it — no questions asked.</div></div>
+        <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Can I order for someone else? <span class="faq-arrow">▾</span></div><div class="faq-a">Yes. Just share their birth details at checkout. Many people order for a spouse, parent, or child.</div></div>
+        <div class="faq-item"><div class="faq-q" onclick="this.parentElement.classList.toggle('open')">What's included in the Premium vs Basic? <span class="faq-arrow">▾</span></div><div class="faq-a">Basic covers career, relationships, wealth, health, dasha timeline, and 3 remedies. Premium adds Navamsa chart, Rajyogas & Dhana Yogas, month-by-month 12-month forecast, Lal Kitab remedies, your Biggest Life Block, and Sade Sati / Kaal Sarp Dosh check.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FINAL CTA -->
+<!-- ══ SECTION 19: FINAL CTA ══ -->
+<div class="final-bg">
+  <div class="final-inner">
+    <h2 class="final-h2">Give Yourself <span>the Clarity</span><br>You've Been Looking For</h2>
+    <p class="final-sub">Your chart has been there your whole life. It takes 2 minutes to share your details. The report arrives in 24–48 hours — and stays with you forever.</p>
+    <div class="final-btns">
+      <a href="#packages" class="btn-gold" style="font-size:16px;padding:16px 32px;">✦ Get My Kundli Report</a>
+      <a href="https://wa.me/919999999999?text=Hi%2C%20I%20want%20to%20know%20more%20about%20the%20MySoul%20Kundli%20Report" class="btn-wa" target="_blank" rel="noopener">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.557 4.123 1.528 5.853L.057 23.25a.75.75 0 00.916.916l5.397-1.471A11.95 11.95 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22a9.95 9.95 0 01-5.091-1.396l-.364-.217-3.768 1.027 1.028-3.768-.217-.364A9.95 9.95 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg>
+        Ask on WhatsApp
+      </a>
+    </div>
+    <div class="final-note">🔒 Secure Payment · PDF + WhatsApp · Prepared by MySoul Astrology Team</div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<!-- ══ SECTION 20: FOOTER ══ -->
+<footer>
+  <div class="foot-logo">My<span>Soul</span></div>
+  <div class="foot-sub">Lifestyle · Spirituality · Transformation</div>
+  <div class="foot-links">
+    <a href="#">Terms of Service</a>
+    <a href="#">Privacy Policy</a>
+    <a href="#">Refund Policy</a>
+  </div>
+  <div class="foot-copy">© 2026 MySoul · astro.shopmysoul.com · All rights reserved</div>
+</footer>
+
+<!-- FIXED BAR -->
+<!-- ══ MOBILE FIXED BOTTOM BAR ══ -->
+<div class="fixbar" id="fixBar">
+  <div class="fixbar-left">
+    <span class="fixbar-from">Starting from</span>
+    <span class="fixbar-price">₹399</span>
+    <span class="fixbar-sub">2 reports · WhatsApp delivery</span>
+  </div>
+  <a href="#packages" class="fixbar-btn">Get Your Report →</a>
+</div>
+
+<!-- ══ GLOBAL JAVASCRIPT — ADD ONCE IN FLEXIFUNNELS ══ -->
+<script>
+document.querySelectorAll('.faq-q').forEach(function(q){
+  q.addEventListener('click',function(){q.parentElement.classList.toggle('open');});
+});
+function pkgTab(tab,btn){
+  document.querySelectorAll('.pkg-tab').forEach(function(t){t.classList.remove('on');});
+  btn.classList.add('on');
+  document.querySelectorAll('.pkg-card').forEach(function(c){c.classList.remove('tab-on');});
+  document.getElementById('pkg-'+tab).classList.add('tab-on');
+}
+(function(){
+  var end=new Date();end.setHours(end.getHours()+5);end.setMinutes(end.getMinutes()+28);end.setSeconds(end.getSeconds()+54);
+  function tick(){var diff=Math.max(0,end-new Date());var h=Math.floor(diff/3600000);var m=Math.floor((diff%3600000)/60000);var s=Math.floor((diff%60000)/1000);var el=document.getElementById('pkgTimer');if(el)el.innerHTML=p(h)+' h &nbsp;'+p(m)+' m &nbsp;'+p(s)+' s';if(diff>0)setTimeout(tick,1000);}
+  function p(n){return n<10?'0'+n:n;}tick();
+})();
+(function(){
+  var bar=document.getElementById('fixBar');var pkg=document.getElementById('packages');if(!bar||!pkg)return;
+  function check(){var r=pkg.getBoundingClientRect();var v=r.top<window.innerHeight*.88&&r.bottom>0;bar.style.opacity=v?'0':'1';bar.style.transform=v?'translateY(100%)':'translateY(0)';bar.style.pointerEvents=v?'none':'all';}
+  bar.style.transition='opacity .26s,transform .26s';window.addEventListener('scroll',check,{passive:true});check();
+})();
+</script>
+</body>
+</html>
