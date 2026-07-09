@@ -1,9 +1,11 @@
 const TABS = [
-  { key: 'marketing', label: 'Marketing'   },
-  { key: 'sales',     label: 'Sales'       },
-  { key: 'finance',   label: 'Finance'     },
-  { key: 'emi',       label: 'SUPER & RGM' },
-  { key: 'ltvfunnel', label: 'LTV & Funnel'},
+  { key: 'marketing',   label: 'Marketing'    },
+  { key: 'sales',       label: 'Sales'        },
+  { key: 'crm',         label: 'CRM'          },
+  { key: 'performance', label: 'Performance'  },
+  { key: 'finance',     label: 'Finance'      },
+  { key: 'emi',         label: 'SUPER & RGM'  },
+  { key: 'ltvfunnel',   label: 'LTV & Funnel' },
 ];
 export default function TabNav({ active, onChange }) {
   return (
