@@ -8,6 +8,7 @@ const PERIODS = [
   { key: 'today',       label: 'Today'       },
   { key: 'yesterday',   label: 'Yesterday'   },
   { key: 'thisWeek',    label: 'This Week'   },
+  { key: 'lastWeek',    label: 'Last Week'   },
   { key: 'thisMonth',   label: 'This Month'  },
   { key: 'lastMonth',   label: 'Last Month'  },
   { key: 'last3months', label: 'Last 3M'     },
