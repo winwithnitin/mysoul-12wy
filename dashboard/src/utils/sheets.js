@@ -1,5 +1,5 @@
 import { toISO, todayISO, monthStartISO } from './dates.js';
-import { SHEETS, SALES_SHEET, FINANCE_URL, EMI_URL, BATCH_EMI_URL } from '../config.js';
+import { SHEETS, SALES_SHEET, FINANCE_URL, EMI_URL, BATCH_EMI_URL, SUPER_EMI, RGM_EMI } from '../config.js';
 
 // --- Shared helpers -----------------------------------------------------------
 export function parseCSV(text) {
@@ -249,18 +249,114 @@ export function detectDuplicates(enrollments) {
   return { type1, type2 };
 }
 
-// --- All Batch Data -- calls the Batch EMI Apps Script -----------------------
-// The Apps Script runs server-side with Google credentials, so it can access
-// ALL restricted batch sheets. Returns per-batch breakdown + combined totals.
-// Response shape: { batches: [{batch, program, students, received}], superTotal, rgmTotal }
+// --- Response EMI reader -- reads directly from SUPER & RGM master sheets ----
+// Column structure (confirmed, same across all tabs):
+// r[0]=Timestamp | r[1]=Email address (submitter) | r[2]=Name | r[3]=Helper Column
+// r[4]=Email (student) | r[5]=Amount Received | r[6]=Amount Received On Date (M/D/YYYY)
+// r[7]=Payment Screenshot | r[8]=Received Via | r[9]=Which EMI (0=onboarding)
+// r[10]=Next Planned Date (M/D/YYYY HH:MM:SS)
+
+function parseMDY(raw) {
+  // Parses M/D/YYYY or M/D/YYYY H:MM:SS into YYYY-MM-DD
+  const s = String(raw || '').trim();
+  const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  return m ? `${m[3]}-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}` : null;
+}
+
+async function readResponseEMITab(sheetId, tabName, program) {
+  try {
+    const rows = await fetchCSV(sheetId, tabName);
+    if (rows.length < 2) return null;
+
+    const dataRows = rows.slice(1).filter(r => r[4]?.trim() && r[5]?.trim());
+
+    const studentMap = {};
+    for (const r of dataRows) {
+      const email       = (r[4] || '').toLowerCase().trim();
+      const name        = (r[2] || '').trim();
+      const amount      = parseFloat(String(r[5] || '').replace(/[^0-9.]/g, '')) || 0;
+      const receivedDate = parseMDY(r[6]);
+      const emiNum      = parseInt(r[9]) || 0;
+      const nextDate    = parseMDY(r[10]);
+
+      if (amount <= 0) continue;
+      const key = email || name;
+      if (!key) continue;
+
+      if (!studentMap[key]) studentMap[key] = { name, email, received: 0, payments: [] };
+      studentMap[key].received += amount;
+      studentMap[key].payments.push({ amount, date: receivedDate, emiNum, nextDate });
+    }
+
+    const studentList = Object.values(studentMap).map(s => {
+      // Most recent payment = latest receivedDate
+      const sorted = [...s.payments].sort((a, b) => (b.date || '') > (a.date || '') ? 1 : -1);
+      const latest = sorted[0] || {};
+      return {
+        ...s,
+        latestEmiNum: latest.emiNum ?? 0,
+        latestDate:   latest.date   || null,
+        nextDueDate:  latest.nextDate || null,
+      };
+    });
+
+    return {
+      batch:       tabName,
+      program,
+      students:    studentList.length,
+      received:    studentList.reduce((t, s) => t + s.received, 0),
+      studentList,
+    };
+  } catch (_) {
+    return null;
+  }
+}
 
 export async function loadAllBatchData() {
-  const res = await fetch(BATCH_EMI_URL);
-  if (!res.ok) throw new Error('Batch EMI API ' + res.status);
-  const data = await res.json();
-  if (data.error) throw new Error('Batch EMI Script error: ' + data.error);
-  // Normalise to the array shape used by HighTicketTab
-  return Array.isArray(data.batches) ? data.batches : [];
+  const results = await Promise.all([
+    ...SUPER_EMI.tabs.map(tab => readResponseEMITab(SUPER_EMI.id, tab, 'SUPER')),
+    ...RGM_EMI.tabs.map(tab => readResponseEMITab(RGM_EMI.id,   tab, 'RGM')),
+  ]);
+  return results.filter(Boolean);
+}
+
+// --- Lead attribution lookup (Tarot + Reiki leads sheets) --------------------
+// Tarot: LeadsMasterSheet cols: Email(0) Phone(1) ... AdSource(13) Campaign(14) AdGroup(15) AdName(16)
+// Reiki: Free_Leads + Paid_Leads same column order
+export async function loadLeadAttributionData() {
+  const [tarotRows, reikiFreeRows, reikiPaidRows] = await Promise.all([
+    fetchCSV(SHEETS.tarot.id, 'LeadsMasterSheet').catch(() => []),
+    fetchCSV(SHEETS.reiki.id, 'Free_Leads').catch(() => []),
+    fetchCSV(SHEETS.reiki.id, 'Paid_Leads').catch(() => []),
+  ]);
+
+  function buildMap(rows) {
+    const byEmail = {}, byPhone = {};
+    for (const r of rows.slice(1)) {
+      const email = (r[0] || '').toLowerCase().trim();
+      const phone = (r[1] || '').replace(/\D/g, '').slice(-10);
+      const attr  = {
+        source:   (r[13] || '').trim(),
+        campaign: (r[14] || '').trim(),
+        adGroup:  (r[15] || '').trim(),
+        adName:   (r[16] || '').trim(),
+      };
+      if (email && !byEmail[email]) byEmail[email] = attr;
+      if (phone && phone.length >= 10 && !byPhone[phone]) byPhone[phone] = attr;
+    }
+    return { byEmail, byPhone };
+  }
+
+  const tarotMap = buildMap(tarotRows);
+  const reikiMap = buildMap([...reikiFreeRows, ...reikiPaidRows]);
+
+  // Combined: Tarot first, Reiki fills gaps
+  const combined = {
+    byEmail: { ...reikiMap.byEmail, ...tarotMap.byEmail },
+    byPhone: { ...reikiMap.byPhone, ...tarotMap.byPhone },
+  };
+
+  return { tarotMap, reikiMap, combined };
 }
 
 // --- Finance ------------------------------------------------------------------
