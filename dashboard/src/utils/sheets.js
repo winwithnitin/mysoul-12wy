@@ -52,7 +52,7 @@ export async function loadMarketingData() {
     program:  r[off + 1]?.trim(),
     platform: r[off + 2]?.trim(),
     account:  r[off + 3]?.trim(),
-    spend:    parseFloat(String(r[off + 4] || '').replace(/[Rs.,\s]/g, '')) || 0,
+    spend:    parseFloat(String(r[off + 4] || '').replace(/[^0-9.]/g, '')) || 0,
     leadsAd:  parseInt(r[off + 5]) || 0,
   }));
 
