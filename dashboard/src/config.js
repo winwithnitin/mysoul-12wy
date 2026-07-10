@@ -3,7 +3,6 @@ export const SHEETS = {
   adSpend: { id: '10fhstijcgw_qAKCfoF04i3NIsiFegnlcMgOG3px7BfA', tab: 'Ad_Spend' },
   tarot:   { id: '1K1NqGSAGb7Hc9fSD5EQuBJvsJ8GfFkgwbr1CqJBPX0M', tab: 'LeadsMasterSheet', dateCol: 5 },
   reiki:   { id: '1F_HLtYFY6g61vVslmMUz64BLHWCvOCc9-A2BG_tOicI', tab: 'Free_Leads',        dateCol: 5 },
-  // PCOS removed -- MySoulSpace closed June 2026
 };
 
 // --- Enrollment Sheet (Sales tab) --------------------------------------------
@@ -17,7 +16,18 @@ export const FINANCE_URL   = 'https://script.google.com/macros/s/AKfycbwhmj1f3nh
 export const EMI_URL       = 'https://script.google.com/macros/s/AKfycbwgKK2X3PYGLlOOu-D_ZJKvYQKpdPVAtXE3T1bkaybI-IIl5vX0_IU6DktaKdqhZnPg_A/exec';
 export const BATCH_EMI_URL = 'https://script.google.com/macros/s/AKfycbwmzaip3K9TWI5m_elU1bQ2G5ZK3gYcBH__RFbViBnsihxcjsv63cXXYy_zeHnFJWGd/exec';
 
-// --- Programs -- Tarot & Reiki only (PCOS removed) ----------------------------
+// --- Response EMI master sheets (SUPER & RGM separate, maintained by Aravind) -
+// When a new batch tab is added, append its name to the tabs array below + push.
+export const SUPER_EMI = {
+  id:   '1yOPp5A_34VK0IIgt7XgVwdBS8zD_2jG0M_fEA4Y0vKw',
+  tabs: ['May 2025 SUPER', 'Aug 2025 SUPER', 'Dec 2025 SUPER', 'Apr 2026 SUPER', 'July 2026 SUPER'],
+};
+export const RGM_EMI = {
+  id:   '1aeGTJUwq8pufyude9z75jzIy4S_2fMgRsZ0HSz0t_08',
+  tabs: ['Oct 2025 RGM', 'Apr 2026 RGM'],
+};
+
+// --- Programs -----------------------------------------------------------------
 export const PROGRAMS = [
   { key: 'Tarot', color: 'var(--tarot)', dim: 'var(--tarot-dim)', cplTarget: 280 },
   { key: 'Reiki', color: 'var(--reiki)', dim: 'var(--reiki-dim)', cplTarget: 750 },
@@ -44,7 +54,7 @@ export function getFunnel(program) {
   return 'Other';
 }
 
-// --- Batch Registry (SUPER & RGM batch sheets) -------------------------------
+// --- Batch Registry ----------------------------------------------------------
 export const BATCH_REGISTRY = {
   id:  '1b3IZYUmRlG9nHp27b3i1ObxfUIV1Zq9jmzNtnN_iyYg',
   tab: 'Sheet1',
@@ -58,7 +68,7 @@ export function applyGST(amount, mode) {
   return mode === 'excl' ? exclGST(amount) : inclGST(amount);
 }
 
-// --- Slack --------------------------------------------------------------------
+// --- Slack -------------------------------------------------------------------
 export const SLACK = {
   dollyId:  'U07Q0BNK3L6',
   channel:  '#delegation',
