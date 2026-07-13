@@ -571,7 +571,7 @@ body {
     <!-- Assign -->
     <div class="divlabel">Assign Primary Focus</div>
     <div class="assign-panel">
-      <div class="assign-grid">
+      <div class="assign-grid" style="grid-template-columns: 1fr 2fr 1fr">
         <div class="af-group">
           <div class="af-label">Team Member</div>
           <select class="af-sel" id="afPerson">
@@ -588,20 +588,8 @@ body {
           </select>
         </div>
         <div class="af-group">
-          <div class="af-label">Category</div>
-          <select class="af-sel" id="afCat">
-            <option value="">Category…</option>
-            <option>MySoulSchool</option>
-            <option>MySoulStore</option>
-            <option>Real Estate</option>
-            <option>Health & Family</option>
-            <option>Personal Growth</option>
-            <option>Admin & Ops</option>
-          </select>
-        </div>
-        <div class="af-group">
           <div class="af-label">Primary Focus Task</div>
-          <input class="af-input" id="afTask" type="text" placeholder="e.g. Get first 10 MySoulStore orders live…">
+          <input class="af-input" id="afTask" type="text" placeholder="e.g. Get first 10 MySoulStore orders live, ads running, creatives tested…">
         </div>
         <div class="af-group">
           <div class="af-label">&nbsp;</div>
@@ -692,7 +680,7 @@ let newWeekDates = {};
 // ════════════════════════════════════════════════════════════
 // TEAM FOCUS STATE
 // ════════════════════════════════════════════════════════════
-// TF = { viewWeek: 8, focuses: { [id]: { id, person, category, task, week, assignedDate, updates:[], active } } }
+// TF = { viewWeek: 8, focuses: { [id]: { id, person, task, week, assignedDate, updates:[], active } } }
 let TF = { viewWeek: 8, focuses: {} };
 
 // ════════════════════════════════════════════════════════════
@@ -1082,7 +1070,6 @@ function tfRenderDashboard() {
     const last  = tfLatestUpdate(f);
     const ds    = tfDaysSince(f);
     const color = TF_COLORS[f.person] || '#818cf8';
-    const cc    = CAT_CHIP_COLORS[f.category] || { bg:'rgba(255,255,255,.06)', color:'#8892b0' };
 
     let rowCls='', daysCls='none', daysLbl='No update yet';
     if (ds === null)      { rowCls='row-alert'; daysCls='alert'; daysLbl='No update yet 🔴'; }
@@ -1099,7 +1086,6 @@ function tfRenderDashboard() {
           ${esc(f.person)}
         </div>
       </td>
-      <td><span class="cat-chip" style="background:${cc.bg};color:${cc.color}">${esc(f.category)}</span></td>
       <td>
         <div class="focus-task-cell">${esc(f.task)}<small>Assigned ${f.assignedDate||''}</small></div>
       </td>
@@ -1121,7 +1107,7 @@ function tfRenderDashboard() {
 
   el.innerHTML = `<table class="focus-table">
     <thead><tr>
-      <th>Person</th><th>Category</th><th>Primary Focus</th>
+      <th>Person</th><th>Primary Focus</th>
       <th>Latest Update</th><th>Last Seen</th><th>Actions</th>
     </tr></thead>
     <tbody>${rows}</tbody>
@@ -1133,7 +1119,7 @@ function tfRenderHistory() {
   const el = document.getElementById('tfHistoryCard');
   const allUpdates = [];
   focuses.forEach(f => {
-    (f.updates||[]).forEach(u => allUpdates.push({ ...u, person:f.person, task:f.task, category:f.category }));
+    (f.updates||[]).forEach(u => allUpdates.push({ ...u, person:f.person, task:f.task }));
   });
   allUpdates.sort((a,b) => new Date(b.ts||b.date) - new Date(a.ts||a.date));
 
@@ -1149,7 +1135,6 @@ function tfRenderHistory() {
 
   const rows = allUpdates.map(u => {
     const color = TF_COLORS[u.person] || '#818cf8';
-    const cc    = CAT_CHIP_COLORS[u.category] || { bg:'rgba(255,255,255,.06)', color:'#8892b0' };
     return `<tr>
       <td>
         <div class="person-chip">
@@ -1157,14 +1142,13 @@ function tfRenderHistory() {
           ${esc(u.person)}
         </div>
       </td>
-      <td><span class="cat-chip" style="background:${cc.bg};color:${cc.color}">${esc(u.category)}</span></td>
-      <td style="color:var(--t1);max-width:280px">"${esc(u.text)}"</td>
+      <td style="color:var(--t1);max-width:340px">"${esc(u.text)}"</td>
       <td style="color:var(--t3);white-space:nowrap">${u.date||''}</td>
     </tr>`;
   }).join('');
 
   el.innerHTML = head + `<table class="history-table">
-    <thead><tr><th>Person</th><th>Category</th><th>Update</th><th>Date</th></tr></thead>
+    <thead><tr><th>Person</th><th>Update</th><th>Date</th></tr></thead>
     <tbody>${rows}</tbody>
   </table>`;
 }
@@ -1174,20 +1158,18 @@ function tfRenderHistory() {
 // ════════════════════════════════════════════════════════════
 function tfAssign() {
   const person = document.getElementById('afPerson').value;
-  const cat    = document.getElementById('afCat').value;
   const task   = document.getElementById('afTask').value.trim();
-  if (!person || !cat || !task) { toast('Fill in all 3 fields first', 'red'); return; }
+  if (!person || !task) { toast('Select a person and enter a task first', 'red'); return; }
 
   const btn = document.getElementById('assignBtn');
   btn.disabled = true; btn.textContent = '⟳ Assigning…';
 
   const id = uid();
-  TF.focuses[id] = { id, person, category:cat, task, week:TF.viewWeek, assignedDate:todayStr(), updates:[], active:true };
+  TF.focuses[id] = { id, person, task, week:TF.viewWeek, assignedDate:todayStr(), updates:[], active:true };
 
   tfPush('assign_focus', { focus: TF.focuses[id], updateBase: UPDATE_BASE });
 
   document.getElementById('afPerson').value = '';
-  document.getElementById('afCat').value    = '';
   document.getElementById('afTask').value   = '';
   btn.disabled = false; btn.textContent = '⚡ Assign & Notify';
 
