@@ -175,9 +175,10 @@ const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').repl
 function getParams() {
   const p = new URLSearchParams(window.location.search);
   return {
-    id:   p.get('id')   || '',
-    name: p.get('name') || '',
-    task: p.get('task') || '',
+    token: p.get('t')    || '',   // short link token
+    id:    p.get('id')   || '',   // legacy direct param
+    name:  p.get('name') || '',
+    task:  p.get('task') || '',
   };
 }
 
@@ -271,8 +272,32 @@ async function submitUpdate(id, name, task) {
 }
 
 // ─── INIT ──────────────────────────────────────────────────────────
-(function init() {
+(async function init() {
   const params = getParams();
+
+  // Short token flow — resolve ?t=xxxxx via Apps Script
+  if (params.token) {
+    document.getElementById('wrap').innerHTML = `
+      <div class="logo">My<span>Soul</span><div class="logo-sub">Daily Update</div></div>
+      <div style="text-align:center;padding:60px 20px;color:var(--t2);font-size:13px">
+        <div style="width:28px;height:28px;border:2.5px solid rgba(255,255,255,.1);border-top-color:#818cf8;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 16px"></div>
+        Loading your task…
+      </div>`;
+    try {
+      const res  = await fetch(API + '?t=' + encodeURIComponent(params.token) + '&ts=' + Date.now(), { mode: 'cors' });
+      const data = JSON.parse(await res.text());
+      if (data.ok && data.focusId && data.person) {
+        renderForm({ id: data.focusId, name: data.person, task: data.task || '' });
+      } else {
+        renderError();
+      }
+    } catch(e) {
+      renderError();
+    }
+    return;
+  }
+
+  // Legacy direct param flow
   if (!params.id || !params.name) {
     renderError();
     return;
