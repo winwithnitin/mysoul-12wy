@@ -412,6 +412,15 @@ body {
 .copy-link-btn:hover { background: rgba(99,102,241,.2); }
 .remove-focus-btn { background: none; border: none; color: var(--line2); cursor: pointer; font-size: 16px; line-height: 1; padding: 0 2px; transition: color .15s; }
 .remove-focus-btn:hover { color: var(--red); }
+.tf-edit-btn { font-family: 'Inter', sans-serif; font-size: 12px; padding: 4px 7px; border-radius: 6px; background: rgba(99,102,241,.1); border: 1px solid rgba(99,102,241,.2); color: var(--accent2); cursor: pointer; transition: all .15s; }
+.tf-edit-btn:hover { background: rgba(99,102,241,.2); }
+.tf-done-btn { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 6px; background: rgba(52,211,153,.1); border: 1px solid rgba(52,211,153,.25); color: var(--green); cursor: pointer; transition: all .15s; white-space: nowrap; }
+.tf-done-btn:hover { background: rgba(52,211,153,.2); }
+.delivery-badge { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 20px; margin-top: 4px; }
+.delivery-badge.ok      { background: rgba(52,211,153,.1); color: var(--green); border: 1px solid rgba(52,211,153,.2); }
+.delivery-badge.warn    { background: rgba(251,191,36,.1);  color: var(--amber); border: 1px solid rgba(251,191,36,.2); }
+.delivery-badge.err     { background: rgba(248,113,113,.1); color: var(--red);   border: 1px solid rgba(248,113,113,.2); }
+.delivery-badge.pending { background: transparent; color: var(--t3); border: 1px solid var(--line2); }
 
 .tf-empty { padding: 40px 20px; text-align: center; color: var(--t3); font-size: 13px; }
 .tf-empty strong { display: block; color: var(--t2); font-size: 14px; margin-bottom: 6px; }
@@ -639,6 +648,37 @@ body {
     </div>
 
   </div><!-- /tab-focus -->
+
+  <!-- Edit Focus Modal -->
+  <div class="overlay hidden" id="tfEditOverlay">
+    <div class="modal">
+      <div class="modal-head">
+        <div class="modal-title">✏️ Edit Primary Focus</div>
+        <button class="modal-close" onclick="closeOverlay('tfEditOverlay')">×</button>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom:10px">
+          <div class="af-label" style="margin-bottom:6px">Team Member</div>
+          <div id="tfEditPerson" style="font-size:14px;font-weight:600;color:var(--t1)"></div>
+        </div>
+        <div>
+          <div class="af-label" style="margin-bottom:6px">Primary Focus Task</div>
+          <textarea class="af-textarea" id="tfEditTask" rows="6"></textarea>
+        </div>
+        <div style="margin-top:10px">
+          <div class="af-label" style="margin-bottom:6px">Notify via</div>
+          <div class="notify-toggle">
+            <button class="ntoggle-btn active" id="tfEditNtDM" onclick="setEditNotify('dm')">🔒 Personal DM</button>
+            <button class="ntoggle-btn" id="tfEditNtChannel" onclick="setEditNotify('channel')">📢 Channel</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="abtn" onclick="closeOverlay('tfEditOverlay')">Cancel</button>
+        <button class="abtn blue" onclick="tfSaveEdit()">💾 Save &amp; Re-notify</button>
+      </div>
+    </div>
+  </div>
 
 </div><!-- /page -->
 
@@ -1111,26 +1151,37 @@ function tfRenderDashboard() {
 
     const showNudge = ds === null || ds >= 2;
 
+    const deliveryBadge = f.deliveryStatus === 'sent'
+      ? '<span class="delivery-badge ok">✓ Sent</span>'
+      : f.deliveryStatus === 'fallback'
+      ? '<span class="delivery-badge warn">⚠️ Channel</span>'
+      : f.deliveryStatus === 'failed'
+      ? '<span class="delivery-badge err">✗ Failed</span>'
+      : '<span class="delivery-badge pending">— Pending</span>';
+
     return `<tr class="${rowCls}">
       <td>
         <div class="person-chip">
           <div class="person-avatar" style="background:${color}">${tfInitials(f.person)}</div>
-          ${esc(f.person)}
+          <span style="font-size:11px">${esc(f.person.split(' ')[0])}</span>
         </div>
+        ${deliveryBadge}
       </td>
       <td>
-        <div class="focus-task-cell">${escNl(f.task)}<small>Assigned ${f.assignedDate||''} · ${f.notifyMode==='dm'?'🔒 DM':'📢 Channel'}</small></div>
+        <div class="focus-task-cell">${escNl(f.task)}<small>W${f.week} · ${f.notifyMode==='dm'?'🔒 DM':'📢 Channel'} · ${f.assignedDate||''}</small></div>
       </td>
       <td>
         ${last
-          ? `<div class="update-text-cell has-update">"${esc(last.text)}"</div>`
+          ? `<div class="update-text-cell has-update">"${esc(last.text)}"<small>${last.date}</small></div>`
           : `<div class="update-text-cell no-update">No update yet</div>`}
       </td>
       <td><span class="days-badge ${daysCls}">${daysLbl}</span></td>
       <td>
-        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-          ${showNudge ? `<button class="nudge-btn" onclick="tfNudge('${f.id}')">⚡ Nudge</button>` : ''}
-          <button class="copy-link-btn" onclick="tfCopyLink('${f.id}')" title="Copy update link">🔗 Link</button>
+        <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
+          <button class="tf-edit-btn" onclick="tfEdit('${f.id}')" title="Edit focus">✏️</button>
+          ${showNudge ? `<button class="nudge-btn" onclick="tfNudge('${f.id}')">⚡</button>` : ''}
+          <button class="tf-done-btn" onclick="tfMarkComplete('${f.id}')">✓ Done</button>
+          <button class="copy-link-btn" onclick="tfCopyLink('${f.id}')" title="Copy update link">🔗</button>
           <button class="remove-focus-btn" onclick="tfRemove('${f.id}')">×</button>
         </div>
       </td>
@@ -1138,6 +1189,13 @@ function tfRenderDashboard() {
   }).join('');
 
   el.innerHTML = `<table class="focus-table">
+    <colgroup>
+      <col style="width:10%">
+      <col style="width:50%">
+      <col style="width:30%">
+      <col style="width:10%">
+      <col style="width:10%">
+    </colgroup>
     <thead><tr>
       <th>Person</th><th>Primary Focus</th>
       <th>Latest Update</th><th>Last Seen</th><th>Actions</th>
@@ -1199,14 +1257,41 @@ function tfAssign() {
   const id = uid();
   TF.focuses[id] = { id, person, task, week:TF.viewWeek, assignedDate:todayStr(), notifyMode, updates:[], active:true };
 
-  tfPush('assign_focus', { focus: TF.focuses[id], updateBase: UPDATE_BASE, notifyMode });
+  // Use fetch with cors to read delivery status back
+  tfSave();
+  setSyncPill('busy', '⟳ Saving…');
+  fetch(API, {
+    method: 'POST', mode: 'no-cors',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify({ type: 'assign_focus', focus: TF.focuses[id], teamFocus: TF, updateBase: UPDATE_BASE, notifyMode })
+  }).then(() => {
+    // no-cors can't read response body — poll for delivery status after 3s
+    setTimeout(() => tfPollDelivery(id), 3000);
+    setSyncPill('ok', '✓ Saved');
+  }).catch(() => setSyncPill('err', '⚡ Offline'));
 
   document.getElementById('afPerson').value = '';
   document.getElementById('afTask').value   = '';
   btn.disabled = false; btn.textContent = '⚡ Assign & Notify';
 
   tfRender();
-  toast(`Focus assigned to ${person} — Slack notified 🚀`, 'purple');
+  toast(`Focus assigned to ${person} — Slack sending… 🚀`, 'purple');
+}
+
+// Poll sheet after a delay to read delivery status back
+async function tfPollDelivery(id) {
+  try {
+    const res  = await fetch(API + '?tf=1&t=' + Date.now(), { mode: 'cors' });
+    const data = JSON.parse(await res.text());
+    if (data.focuses && data.focuses[id]) {
+      TF.focuses[id].deliveryStatus = data.focuses[id].deliveryStatus;
+      tfSave(); tfRender();
+      const ds = data.focuses[id].deliveryStatus;
+      if (ds === 'sent')     toast('✓ DM delivered successfully', 'green');
+      else if (ds === 'fallback') toast('⚠️ DM failed — posted to channel instead', 'amber');
+      else if (ds === 'failed')   toast('✗ Slack delivery failed — check bot token scopes', 'red');
+    }
+  } catch(e) { /* silent fail */ }
 }
 
 function tfNudge(id) {
@@ -1443,6 +1528,61 @@ function toast(msg, type='green') {
   const el = document.getElementById('toast');
   el.textContent = msg; el.className = `toast ${type} show`;
   clearTimeout(window._tt); window._tt = setTimeout(()=>el.classList.remove('show'), 3200);
+}
+
+// ════════════════════════════════════════════════════════════
+// TEAM FOCUS — EDIT & COMPLETE
+// ════════════════════════════════════════════════════════════
+let tfEditId = null;
+let tfEditNotifyMode = 'dm';
+
+function tfEdit(id) {
+  const f = TF.focuses[id]; if (!f) return;
+  tfEditId = id;
+  tfEditNotifyMode = f.notifyMode || 'dm';
+  document.getElementById('tfEditPerson').textContent = f.person;
+  document.getElementById('tfEditTask').value = f.task;
+  setEditNotify(tfEditNotifyMode);
+  document.getElementById('tfEditOverlay').classList.remove('hidden');
+}
+
+function setEditNotify(mode) {
+  tfEditNotifyMode = mode;
+  document.getElementById('tfEditNtDM').classList.toggle('active', mode === 'dm');
+  document.getElementById('tfEditNtChannel').classList.toggle('active', mode === 'channel');
+}
+
+function tfSaveEdit() {
+  const f = TF.focuses[tfEditId]; if (!f) return;
+  const newTask = document.getElementById('tfEditTask').value.trim();
+  if (!newTask) { toast('Task cannot be empty', 'red'); return; }
+  f.task = newTask;
+  f.notifyMode = tfEditNotifyMode;
+  f.deliveryStatus = null; // reset — will be updated after re-notify
+  const eid = f.id;
+  tfSave();
+  setSyncPill('busy', '⟳ Saving…');
+  fetch(API, {
+    method: 'POST', mode: 'no-cors',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify({ type: 'assign_focus', focus: f, teamFocus: TF, updateBase: UPDATE_BASE, notifyMode: tfEditNotifyMode })
+  }).then(() => {
+    setTimeout(() => tfPollDelivery(eid), 3000);
+    setSyncPill('ok', '✓ Saved');
+  }).catch(() => setSyncPill('err', '⚡ Offline'));
+  closeOverlay('tfEditOverlay');
+  tfRender();
+  toast(`Focus updated — Slack sending… 🚀`, 'purple');
+}
+
+function tfMarkComplete(id) {
+  const f = TF.focuses[id]; if (!f) return;
+  if (!confirm(`Mark "${f.person}'s" focus as completed?`)) return;
+  f.active = false;
+  f.completedDate = new Date().toISOString().split('T')[0];
+  tfPush('team_focus', {});
+  tfRender();
+  toast(`${f.person.split(' ')[0]}'s focus marked complete ✓`, 'green');
 }
 
 // ════════════════════════════════════════════════════════════
