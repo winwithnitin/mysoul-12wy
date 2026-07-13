@@ -369,6 +369,14 @@ body {
 .af-textarea:focus { border-color: var(--accent2); }
 .af-textarea::placeholder { color: var(--t3); line-height: 1.7; }
 .af-hint { font-size: 11px; color: var(--t3); margin-top: 6px; }
+.notify-toggle { display: flex; border-radius: var(--rs); overflow: hidden; border: 1px solid var(--line2); }
+.ntoggle-btn {
+  font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600;
+  padding: 7px 13px; border: none; background: transparent;
+  color: var(--t3); cursor: pointer; transition: all .15s; white-space: nowrap;
+}
+.ntoggle-btn.active { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; }
+.ntoggle-btn:not(.active):hover { background: var(--card2); color: var(--t1); }
 .assign-btn { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; padding: 8px 18px; border-radius: var(--rs); background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; color: #fff; cursor: pointer; transition: opacity .15s; white-space: nowrap; }
 .assign-btn:hover { opacity: .88; }
 .assign-btn:disabled { opacity: .4; cursor: not-allowed; }
@@ -597,7 +605,14 @@ body {
             <option>Mehakleen Kaur</option>
           </select>
         </div>
-        <button class="assign-btn" id="assignBtn" onclick="tfAssign()">⚡ Assign &amp; Notify Slack</button>
+        <div class="af-group" style="flex:0 0 auto">
+          <div class="af-label">Notify via</div>
+          <div class="notify-toggle" id="notifyToggle">
+            <button class="ntoggle-btn active" id="ntDM" onclick="setNotify('dm')">🔒 Personal DM</button>
+            <button class="ntoggle-btn" id="ntChannel" onclick="setNotify('channel')">📢 Channel</button>
+          </div>
+        </div>
+        <button class="assign-btn" id="assignBtn" onclick="tfAssign()">⚡ Assign &amp; Notify</button>
       </div>
       <div class="af-group" style="margin-top:12px">
         <div class="af-label" style="margin-bottom:6px">Primary Focus — list everything they need to own this week</div>
@@ -710,6 +725,12 @@ function switchTab(tab) {
 // HELPERS
 // ════════════════════════════════════════════════════════════
 const uid  = () => Date.now().toString(36) + Math.random().toString(36).substr(2,5);
+let notifyMode = 'dm'; // 'dm' or 'channel'
+function setNotify(mode) {
+  notifyMode = mode;
+  document.getElementById('ntDM').classList.toggle('active', mode === 'dm');
+  document.getElementById('ntChannel').classList.toggle('active', mode === 'channel');
+}
 const newT = () => ({ id:uid(), text:'', status:'todo', startDate:'', delegatedTo:'', dueDate:'', delegationContext:'' });
 const defWeek = () => { const w={goal:'',cats:{}}; CATS.forEach(c=>{w.cats[c.id]={goal:'',notes:'',tactics:[newT()]}}); return w; };
 const getW  = n => { if(!S.weeks[n]) S.weeks[n]=defWeek(); return S.weeks[n]; };
@@ -1098,7 +1119,7 @@ function tfRenderDashboard() {
         </div>
       </td>
       <td>
-        <div class="focus-task-cell">${escNl(f.task)}<small>Assigned ${f.assignedDate||''}</small></div>
+        <div class="focus-task-cell">${escNl(f.task)}<small>Assigned ${f.assignedDate||''} · ${f.notifyMode==='dm'?'🔒 DM':'📢 Channel'}</small></div>
       </td>
       <td>
         ${last
@@ -1176,9 +1197,9 @@ function tfAssign() {
   btn.disabled = true; btn.textContent = '⟳ Assigning…';
 
   const id = uid();
-  TF.focuses[id] = { id, person, task, week:TF.viewWeek, assignedDate:todayStr(), updates:[], active:true };
+  TF.focuses[id] = { id, person, task, week:TF.viewWeek, assignedDate:todayStr(), notifyMode, updates:[], active:true };
 
-  tfPush('assign_focus', { focus: TF.focuses[id], updateBase: UPDATE_BASE });
+  tfPush('assign_focus', { focus: TF.focuses[id], updateBase: UPDATE_BASE, notifyMode });
 
   document.getElementById('afPerson').value = '';
   document.getElementById('afTask').value   = '';
