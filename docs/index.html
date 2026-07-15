@@ -633,7 +633,9 @@ body {
     </div>
 
     <!-- Dashboard -->
-    <div class="divlabel">Live Focus Dashboard — <span id="tfDashWeek" style="color:var(--accent2);font-size:11px;text-transform:none;letter-spacing:0">Week 8</span></div>
+    <div class="divlabel">Live Focus Dashboard — <span id="tfDashWeek" style="color:var(--accent2);font-size:11px;text-transform:none;letter-spacing:0">Week 8</span>
+      <button onclick="tfRefresh()" style="margin-left:8px;font-family:Inter,sans-serif;font-size:10px;font-weight:600;padding:3px 10px;border-radius:6px;border:1px solid var(--line2);background:transparent;color:var(--t3);cursor:pointer" title="Refresh from sheet">↻ Refresh</button>
+    </div>
     <div class="focus-card" id="tfFocusCard">
       <div class="tf-empty"><strong>No focus tasks yet</strong>Assign a primary focus above to get started.</div>
     </div>
@@ -752,13 +754,43 @@ let TF = { viewWeek: 8, focuses: {} };
 // TAB SWITCHING
 // ════════════════════════════════════════════════════════════
 let activeTab = 'planner';
+let tfPollInterval = null;
+
 function switchTab(tab) {
   activeTab = tab;
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.main-tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.add('active');
   document.getElementById('tab-' + tab + '-btn').classList.add('active');
-  if (tab === 'focus') { TF.viewWeek = S.cur; tfRender(); }
+  if (tab === 'focus') {
+    TF.viewWeek = S.cur;
+    tfRefresh();                          // immediate pull on tab open
+    tfPollInterval = setInterval(tfRefresh, 30000); // then every 30s
+  } else {
+    clearInterval(tfPollInterval);        // stop polling when leaving tab
+  }
+}
+
+async function tfRefresh(quiet) {
+  setSyncPill('busy', '⟳ Refreshing…');
+  try {
+    const res  = await fetch(API + '?tf=1&t=' + Date.now(), { mode: 'cors' });
+    const data = JSON.parse(await res.text());
+    if (data.focuses) {
+      // Merge — don't overwrite local focuses that aren't in sheet yet
+      Object.keys(data.focuses).forEach(id => {
+        TF.focuses[id] = data.focuses[id];
+      });
+      if (data.cur) TF.curWeek = data.cur;
+      tfSave();
+      setSyncPill('ok', '✓ Synced');
+      tfRender();
+    } else {
+      setSyncPill('ok', '✓ Ready');
+    }
+  } catch(e) {
+    setSyncPill('err', '⚡ Offline');
+  }
 }
 
 // ════════════════════════════════════════════════════════════
@@ -1600,6 +1632,17 @@ async function init() {
   render();
   document.getElementById('loader').classList.add('gone');
 }
+
+// Pause polling when tab is hidden, resume when visible
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    clearInterval(tfPollInterval);
+  } else if (activeTab === 'focus') {
+    tfRefresh(true);
+    tfPollInterval = setInterval(tfRefresh, 30000);
+  }
+});
+
 init();
 </script>
 </body>
