@@ -263,6 +263,7 @@ async function submitUpdate() {
     focusId: id,
     person: name,
     task: task,
+    week: _currentParams.week || 1,
     updateText: text,
     date: new Date().toISOString().split('T')[0],
     ts: new Date().toISOString(),
@@ -297,7 +298,7 @@ async function submitUpdate() {
       const res  = await fetch(API + '?t=' + encodeURIComponent(params.token) + '&ts=' + Date.now(), { mode: 'cors' });
       const data = JSON.parse(await res.text());
       if (data.ok && data.focusId && data.person) {
-        renderForm({ id: data.focusId, name: data.person, task: data.task || '' });
+        renderForm({ id: data.focusId, name: data.person, task: data.task || '', week: data.week || 1 });
       } else {
         renderError();
       }
