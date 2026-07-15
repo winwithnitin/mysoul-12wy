@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>MySoul — Daily Update</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:     #181c2a;
+  --bg2:    #1e2236;
+  --card:   #222843;
+  --card2:  #28304e;
+  --line:   rgba(255,255,255,.07);
+  --line2:  rgba(255,255,255,.12);
+  --t1:     #e4e9f7;
+  --t2:     #8892b0;
+  --t3:     #4e587a;
+  --accent: #6366f1;
+  --accent2:#818cf8;
+  --green:  #34d399;
+  --amber:  #fbbf24;
+  --red:    #f87171;
+  --purple: #a78bfa;
+  --r:      14px;
+  --rs:     8px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; }
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  background-image:
+    radial-gradient(ellipse 70% 50% at 50% 0%, rgba(99,102,241,.2) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 100% 100%, rgba(52,211,153,.08) 0%, transparent 50%);
+  color: var(--t1);
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+
+.wrap {
+  width: 100%; max-width: 500px;
+}
+
+/* Logo */
+.logo {
+  font-size: 15px; font-weight: 700; color: var(--t1);
+  text-align: center; margin-bottom: 32px; letter-spacing: -.2px;
+}
+.logo span { color: var(--accent2); }
+.logo-sub { font-size: 11px; color: var(--t3); font-weight: 500; margin-top: 3px; }
+
+/* Card */
+.card {
+  background: linear-gradient(160deg, var(--card) 0%, var(--card2) 100%);
+  border: 1px solid var(--line2); border-radius: var(--r);
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0,0,0,.4), 0 0 0 1px rgba(99,102,241,.08);
+}
+
+.card-head {
+  padding: 22px 24px 18px;
+  background: linear-gradient(135deg, rgba(99,102,241,.12) 0%, transparent 60%);
+  border-bottom: 1px solid var(--line);
+}
+.ch-eyebrow {
+  font-size: 10px; font-weight: 600; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--accent2); margin-bottom: 8px;
+}
+.ch-person {
+  font-size: 20px; font-weight: 700; letter-spacing: -.3px; line-height: 1.2;
+}
+.ch-sub { font-size: 12px; color: var(--t3); margin-top: 4px; }
+
+.task-block {
+  margin: 18px 24px; padding: 14px 16px;
+  background: rgba(99,102,241,.07); border: 1px solid rgba(99,102,241,.18);
+  border-radius: var(--rs);
+}
+.tb-label {
+  font-size: 10px; font-weight: 600; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--accent2); margin-bottom: 6px;
+}
+.tb-task {
+  font-size: 14px; font-weight: 600; color: var(--t1); line-height: 1.4;
+}
+
+.form-block { padding: 4px 24px 24px; }
+.f-label {
+  font-size: 10px; font-weight: 600; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--t3); margin-bottom: 8px; display: block;
+}
+
+.f-textarea {
+  width: 100%; background: var(--bg2);
+  border: 1px solid var(--line2); border-radius: var(--rs);
+  color: var(--t1); font-family: 'Inter', sans-serif;
+  font-size: 14px; padding: 13px 15px; outline: none;
+  resize: none; min-height: 100px; line-height: 1.6;
+  transition: border-color .15s;
+}
+.f-textarea:focus { border-color: rgba(99,102,241,.5); }
+.f-textarea::placeholder { color: var(--t3); }
+
+.char-hint {
+  font-size: 11px; color: var(--t3); margin-top: 5px;
+  text-align: right;
+}
+
+.submit-btn {
+  width: 100%; margin-top: 14px;
+  font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700;
+  padding: 13px; border-radius: var(--rs);
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border: none; color: #fff; cursor: pointer;
+  transition: opacity .15s, transform .1s;
+  letter-spacing: -.1px;
+}
+.submit-btn:hover  { opacity: .9; }
+.submit-btn:active { transform: scale(.99); }
+.submit-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+/* Success state */
+.success-card {
+  background: linear-gradient(160deg, var(--card), var(--card2));
+  border: 1px solid rgba(52,211,153,.25); border-radius: var(--r);
+  padding: 44px 32px; text-align: center;
+  box-shadow: 0 0 40px rgba(52,211,153,.08);
+}
+.success-icon {
+  font-size: 48px; margin-bottom: 16px; line-height: 1;
+}
+.success-title {
+  font-size: 20px; font-weight: 700; color: var(--green);
+  margin-bottom: 8px; letter-spacing: -.3px;
+}
+.success-sub {
+  font-size: 13px; color: var(--t2); line-height: 1.6;
+  max-width: 280px; margin: 0 auto;
+}
+.success-name {
+  margin-top: 20px; padding-top: 16px;
+  border-top: 1px solid var(--line);
+  font-size: 12px; color: var(--t3);
+}
+
+/* Error state */
+.error-card {
+  background: linear-gradient(160deg, var(--card), var(--card2));
+  border: 1px solid rgba(248,113,113,.25); border-radius: var(--r);
+  padding: 44px 32px; text-align: center;
+}
+.error-title { font-size: 18px; font-weight: 700; color: var(--red); margin-bottom: 8px; }
+.error-sub   { font-size: 13px; color: var(--t2); }
+
+/* Footer */
+.footer {
+  text-align: center; margin-top: 20px;
+  font-size: 11px; color: var(--t3);
+}
+</style>
+</head>
+<body>
+
+<div class="wrap" id="wrap">
+  <!-- Content rendered by JS -->
+</div>
+
+<script>
+const API = 'https://script.google.com/macros/s/AKfycbwAnRCgx7A9ucRSx4OH39Eufhq1_Doami_wGqFgmQvu5vNhI6q1q5ldXWgkNKH2k_pz/exec';
+
+const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+function getParams() {
+  const p = new URLSearchParams(window.location.search);
+  return {
+    token: p.get('t')    || '',   // short link token
+    id:    p.get('id')   || '',   // legacy direct param
+    name:  p.get('name') || '',
+    task:  p.get('task') || '',
+  };
+}
+
+// Store current params globally so onclick doesn't need to embed them
+let _currentParams = {};
+
+function renderForm(params) {
+  _currentParams = params; // safe reference, no inline embedding
+  const today = new Date().toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long' });
+  // Show task with line breaks preserved
+  const taskHtml = esc(params.task || '').replace(/\n/g, '<br>');
+  document.getElementById('wrap').innerHTML = `
+    <div class="logo">My<span>Soul</span><div class="logo-sub">Daily Team Update</div></div>
+    <div class="card">
+      <div class="card-head">
+        <div class="ch-eyebrow">Daily Progress Check-in</div>
+        <div class="ch-person">Hey, ${esc(params.name)} 👋</div>
+        <div class="ch-sub">${today} — takes 30 seconds</div>
+      </div>
+      <div class="task-block">
+        <div class="tb-label">Your Primary Focus This Week</div>
+        <div class="tb-task">${taskHtml || 'Primary focus task'}</div>
+      </div>
+      <div class="form-block">
+        <label class="f-label">What happened today on this task?</label>
+        <textarea class="f-textarea" id="updateText" maxlength="500"
+          placeholder="e.g. Ads are live, got 3 orders. Testing new creative tomorrow…&#10;&#10;Even 1 sentence is perfect."
+          oninput="updateChar()"></textarea>
+        <div class="char-hint"><span id="charCount">0</span>/500</div>
+        <button class="submit-btn" id="submitBtn" onclick="submitUpdate()">
+          Submit Update →
+        </button>
+      </div>
+    </div>
+    <div class="footer">MySoul · 12 Week Year · Team Focus System</div>
+  `;
+}
+
+function renderError() {
+  document.getElementById('wrap').innerHTML = `
+    <div class="logo">My<span>Soul</span></div>
+    <div class="error-card">
+      <div class="error-title">Invalid Link</div>
+      <div class="error-sub">This update link doesn't look right. Ask Nitin to resend your focus task link.</div>
+    </div>
+  `;
+}
+
+function renderSuccess(name) {
+  document.getElementById('wrap').innerHTML = `
+    <div class="logo">My<span>Soul</span></div>
+    <div class="success-card">
+      <div class="success-icon">✅</div>
+      <div class="success-title">Update submitted!</div>
+      <div class="success-sub">Nitin can see your update in the Team Focus dashboard. See you tomorrow.</div>
+      <div class="success-name">— ${esc(name)}</div>
+    </div>
+    <div class="footer">MySoul · 12 Week Year · Team Focus System</div>
+  `;
+}
+
+function updateChar() {
+  const el = document.getElementById('updateText');
+  const cc = document.getElementById('charCount');
+  if (cc) cc.textContent = el.value.length;
+}
+
+async function submitUpdate() {
+  const id   = _currentParams.id   || '';
+  const name = _currentParams.name || '';
+  const task = _currentParams.task || '';
+  const text = (document.getElementById('updateText')?.value || '').trim();
+
+  if (!text) { alert('Please write at least one line before submitting.'); return; }
+  if (!id)   { alert('Invalid task ID. Ask Nitin to resend your link.'); return; }
+
+  const btn = document.getElementById('submitBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '⟳ Submitting…'; }
+
+  const payload = {
+    type: 'focus_update',
+    focusId: id,
+    person: name,
+    task: task,
+    updateText: text,
+    date: new Date().toISOString().split('T')[0],
+    ts: new Date().toISOString(),
+  };
+
+  try {
+    await fetch(API, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(payload)
+    });
+    renderSuccess(name);
+  } catch(e) {
+    // no-cors fetch always throws on response read — treat as success
+    renderSuccess(name);
+  }
+}
+
+// ─── INIT ──────────────────────────────────────────────────────────
+(async function init() {
+  const params = getParams();
+
+  // Short token flow — resolve ?t=xxxxx via Apps Script
+  if (params.token) {
+    document.getElementById('wrap').innerHTML = `
+      <div class="logo">My<span>Soul</span><div class="logo-sub">Daily Update</div></div>
+      <div style="text-align:center;padding:60px 20px;color:var(--t2);font-size:13px">
+        <div style="width:28px;height:28px;border:2.5px solid rgba(255,255,255,.1);border-top-color:#818cf8;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 16px"></div>
+        Loading your task…
+      </div>`;
+    try {
+      const res  = await fetch(API + '?t=' + encodeURIComponent(params.token) + '&ts=' + Date.now(), { mode: 'cors' });
+      const data = JSON.parse(await res.text());
+      if (data.ok && data.focusId && data.person) {
+        renderForm({ id: data.focusId, name: data.person, task: data.task || '' });
+      } else {
+        renderError();
+      }
+    } catch(e) {
+      renderError();
+    }
+    return;
+  }
+
+  // Legacy direct param flow
+  if (!params.id || !params.name) {
+    renderError();
+    return;
+  }
+  renderForm(params);
+})();
+</script>
+</body>
+</html>
