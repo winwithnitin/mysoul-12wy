@@ -182,8 +182,14 @@ function getParams() {
   };
 }
 
+// Store current params globally so onclick doesn't need to embed them
+let _currentParams = {};
+
 function renderForm(params) {
+  _currentParams = params; // safe reference, no inline embedding
   const today = new Date().toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long' });
+  // Show task with line breaks preserved
+  const taskHtml = esc(params.task || '').replace(/\n/g, '<br>');
   document.getElementById('wrap').innerHTML = `
     <div class="logo">My<span>Soul</span><div class="logo-sub">Daily Team Update</div></div>
     <div class="card">
@@ -194,7 +200,7 @@ function renderForm(params) {
       </div>
       <div class="task-block">
         <div class="tb-label">Your Primary Focus This Week</div>
-        <div class="tb-task">${esc(params.task) || 'Primary focus task'}</div>
+        <div class="tb-task">${taskHtml || 'Primary focus task'}</div>
       </div>
       <div class="form-block">
         <label class="f-label">What happened today on this task?</label>
@@ -202,7 +208,7 @@ function renderForm(params) {
           placeholder="e.g. Ads are live, got 3 orders. Testing new creative tomorrow…&#10;&#10;Even 1 sentence is perfect."
           oninput="updateChar()"></textarea>
         <div class="char-hint"><span id="charCount">0</span>/500</div>
-        <button class="submit-btn" id="submitBtn" onclick="submitUpdate('${esc(params.id)}','${esc(params.name)}','${esc(params.task)}')">
+        <button class="submit-btn" id="submitBtn" onclick="submitUpdate()">
           Submit Update →
         </button>
       </div>
@@ -240,10 +246,14 @@ function updateChar() {
   if (cc) cc.textContent = el.value.length;
 }
 
-async function submitUpdate(id, name, task) {
+async function submitUpdate() {
+  const id   = _currentParams.id   || '';
+  const name = _currentParams.name || '';
+  const task = _currentParams.task || '';
   const text = (document.getElementById('updateText')?.value || '').trim();
+
   if (!text) { alert('Please write at least one line before submitting.'); return; }
-  if (!id)   { alert('Invalid task ID. Ask Nitin for the correct link.'); return; }
+  if (!id)   { alert('Invalid task ID. Ask Nitin to resend your link.'); return; }
 
   const btn = document.getElementById('submitBtn');
   if (btn) { btn.disabled = true; btn.textContent = '⟳ Submitting…'; }
@@ -253,6 +263,7 @@ async function submitUpdate(id, name, task) {
     focusId: id,
     person: name,
     task: task,
+    week: _currentParams.week || 1,
     updateText: text,
     date: new Date().toISOString().split('T')[0],
     ts: new Date().toISOString(),
@@ -266,7 +277,7 @@ async function submitUpdate(id, name, task) {
     });
     renderSuccess(name);
   } catch(e) {
-    // no-cors always throws on response read, treat as success
+    // no-cors fetch always throws on response read — treat as success
     renderSuccess(name);
   }
 }
@@ -287,7 +298,7 @@ async function submitUpdate(id, name, task) {
       const res  = await fetch(API + '?t=' + encodeURIComponent(params.token) + '&ts=' + Date.now(), { mode: 'cors' });
       const data = JSON.parse(await res.text());
       if (data.ok && data.focusId && data.person) {
-        renderForm({ id: data.focusId, name: data.person, task: data.task || '' });
+        renderForm({ id: data.focusId, name: data.person, task: data.task || '', week: data.week || 1 });
       } else {
         renderError();
       }
