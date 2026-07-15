@@ -763,8 +763,9 @@ function switchTab(tab) {
   document.getElementById('tab-' + tab).classList.add('active');
   document.getElementById('tab-' + tab + '-btn').classList.add('active');
   if (tab === 'focus') {
-    TF.viewWeek = S.cur;
-    tfRefresh();                          // immediate pull on tab open
+    if (!TF.viewWeek) TF.viewWeek = S.cur; // only default if not already set
+    tfRender();                           // render immediately from localStorage
+    tfRefresh();                          // then pull fresh from sheet
     tfPollInterval = setInterval(tfRefresh, 30000); // then every 30s
   } else {
     clearInterval(tfPollInterval);        // stop polling when leaving tab
@@ -1352,7 +1353,10 @@ function tfRemove(id) {
 }
 
 function tfSetWeek(w) {
-  TF.viewWeek = w; tfSave(); tfRender();
+  TF.viewWeek = w;
+  tfSave();
+  tfRender();
+  toast('Showing Week ' + w, 'blue');
 }
 
 // ════════════════════════════════════════════════════════════
