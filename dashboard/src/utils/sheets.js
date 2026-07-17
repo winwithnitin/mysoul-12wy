@@ -4,18 +4,51 @@ import { SHEETS, SALES_SHEET, FINANCE_URL, EMI_URL, BATCH_EMI_URL, SUPER_EMI, RG
 // --- Shared helpers -----------------------------------------------------------
 export function parseCSV(text) {
   const rows = [];
-  for (const line of text.split('\n')) {
-    if (!line.trim()) continue;
-    const cols = []; let inQ = false, cur = '';
-    for (const ch of line) {
-      if (ch === '"') inQ = !inQ;
-      else if (ch === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
-      else cur += ch;
+  let row = [];
+  let cur = '';
+  let inQ = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    const next = text[i + 1];
+
+    if (ch === '"') {
+      if (inQ && next === '"') {
+        cur += '"';
+        i++;
+      } else {
+        inQ = !inQ;
+      }
+    } else if (ch === ',' && !inQ) {
+      row.push(cur.trim());
+      cur = '';
+    } else if ((ch === '\n' || ch === '\r') && !inQ) {
+      if (ch === '\r' && next === '\n') i++;
+      row.push(cur.trim());
+      if (row.some(cell => cell !== '')) rows.push(row);
+      row = [];
+      cur = '';
+    } else {
+      cur += ch;
     }
-    cols.push(cur.trim());
-    rows.push(cols);
   }
+
+  row.push(cur.trim());
+  if (row.some(cell => cell !== '')) rows.push(row);
   return rows;
+}
+
+export function parseAmount(raw) {
+  if (raw === null || raw === undefined || raw === '') return 0;
+  if (typeof raw === 'number') return Number.isFinite(raw) ? raw : 0;
+
+  const normalized = String(raw)
+    .replace(/[₹,\s]/g, '')
+    .replace(/rs\.?/gi, '')
+    .replace(/[^\d.-]/g, '');
+
+  const value = Number.parseFloat(normalized);
+  return Number.isFinite(value) ? value : 0;
 }
 
 export async function fetchCSV(sheetId, tab) {
@@ -52,7 +85,7 @@ export async function loadMarketingData() {
     program:  r[off + 1]?.trim(),
     platform: r[off + 2]?.trim(),
     account:  r[off + 3]?.trim(),
-    spend:    parseFloat(String(r[off + 4] || '').replace(/[^0-9.]/g, '')) || 0,
+    spend:    parseAmount(r[off + 4]),
     leadsAd:  parseInt(r[off + 5]) || 0,
   }));
 
@@ -151,7 +184,7 @@ function parseTransactionRows(rows, defaultType) {
         email:       (r[cols.email]?.trim() || '').toLowerCase(),
         phone:       (r[cols.phone]?.trim() || '').replace(/\D/g,'').slice(-10),
         program:     r[cols.program]?.trim() || '',
-        amount:      parseFloat(String(r[cols.amount] || '').replace(/[^0-9.]/g, '')) || 0,
+        amount:      parseAmount(r[cols.amount]),
         paidThrough: r[cols.paid]?.trim()   || '',
         closer:      r[cols.closer]?.trim() || '',
         type:        defaultType,
@@ -182,12 +215,12 @@ export async function loadSalesData() {
     email:         r[3]?.trim()?.toLowerCase() || '',
     phone:         r[4]?.trim()?.replace(/\D/g, '').slice(-10) || '',
     program:       r[5]?.trim() || '',
-    bookingAmount: parseFloat(r[6]) || 0,
+    bookingAmount: parseAmount(r[6]),
     paidThrough:   r[7]?.trim() || '',
-    programFee:    parseFloat(r[8]) || 0,
+    programFee:    parseAmount(r[8]),
     pymtStatus:    r[9]?.trim() || '',
-    amtReceived:   parseFloat(r[10]) || 0,
-    amtDue:        parseFloat(r[11]) || 0,
+    amtReceived:   parseAmount(r[10]),
+    amtDue:        parseAmount(r[11]),
     closedBy:      r[12]?.trim() || 'Unknown',
   }));
 }
@@ -274,7 +307,7 @@ async function readResponseEMITab(sheetId, tabName, program) {
     for (const r of dataRows) {
       const email       = (r[4] || '').toLowerCase().trim();
       const name        = (r[2] || '').trim();
-      const amount      = parseFloat(String(r[5] || '').replace(/[^0-9.]/g, '')) || 0;
+      const amount      = parseAmount(r[5]);
       const receivedDate = parseMDY(r[6]);
       const emiNum      = parseInt(r[9]) || 0;
       const nextDate    = parseMDY(r[10]);
@@ -366,15 +399,15 @@ export async function loadFinanceData() {
   const data = await res.json();
   return data.map(row => ({
     month:         row.Month                   || '',
-    studentFees:   parseFloat(row.Student_Fees)   || 0,
-    adGoogle:      parseFloat(row.Ad_Google)       || 0,
-    adMeta:        parseFloat(row.Ad_Meta)         || 0,
-    tools:         parseFloat(row.Tools)           || 0,
-    salary:        parseFloat(row.Salary)          || 0,
-    otherPayments: parseFloat(row.Other_Payments)  || 0,
-    gstPaid:       parseFloat(row.GST_Paid)        || 0,
-    tdsPaid:       parseFloat(row.TDS_Paid)        || 0,
-    cashWithdraw:  parseFloat(row.Cash_Withdraw)   || 0,
+    studentFees:   parseAmount(row.Student_Fees),
+    adGoogle:      parseAmount(row.Ad_Google),
+    adMeta:        parseAmount(row.Ad_Meta),
+    tools:         parseAmount(row.Tools),
+    salary:        parseAmount(row.Salary),
+    otherPayments: parseAmount(row.Other_Payments),
+    gstPaid:       parseAmount(row.GST_Paid),
+    tdsPaid:       parseAmount(row.TDS_Paid),
+    cashWithdraw:  parseAmount(row.Cash_Withdraw),
   }));
 }
 
@@ -427,8 +460,8 @@ export async function loadLTVFunnelData() {
     email:       r[3]?.toLowerCase().trim() || '',
     phone:       r[4]?.replace(/\D/g,'').slice(-10) || '',
     program:     r[5]?.trim() || '',
-    programFee:  parseFloat(r[8])  || 0,
-    amtReceived: parseFloat(r[10]) || 0,
+    programFee:  parseAmount(r[8]),
+    amtReceived: parseAmount(r[10]),
   }));
 
   const hdr = spendRows[0] || [];
@@ -437,7 +470,7 @@ export async function loadLTVFunnelData() {
   const adSpend = spendRows.slice(1).filter(r => r[off]).map(r => ({
     date:    toISO(r[off], true),
     program: r[off + 1]?.trim(),
-    spend:   parseFloat(String(r[off + 4] || '').replace(/[Rs.,\s]/g, '')) || 0,
+    spend:   parseAmount(r[off + 4]),
   }));
 
   return {
