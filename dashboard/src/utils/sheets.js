@@ -1,5 +1,16 @@
 import { toISO, todayISO, monthStartISO } from './dates.js';
-import { SHEETS, SALES_SHEET, FINANCE_URL, EMI_URL, BATCH_EMI_URL, SUPER_EMI, RGM_EMI } from '../config.js';
+import {
+  SHEETS,
+  SALES_SHEET,
+  FINANCE_URL,
+  EMI_URL,
+  BATCH_EMI_URL,
+  SUPER_EMI,
+  RGM_EMI,
+  WORKSHOP_PMS,
+  WORKSHOP_PERFORMANCE,
+  INTERNS_KPI,
+} from '../config.js';
 
 // --- Shared helpers -----------------------------------------------------------
 export function parseCSV(text) {
@@ -56,6 +67,168 @@ export async function fetchCSV(sheetId, tab) {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`HTTP ${res.status} for ${tab}`);
   return parseCSV(await res.text());
+}
+
+function findHeaderIndex(header, terms, fallback = -1) {
+  const h = (header || []).map(c => String(c || '').toLowerCase().trim());
+  const idx = h.findIndex(c => terms.some(t => c.includes(t)));
+  return idx >= 0 ? idx : fallback;
+}
+
+function parseAnyDate(raw, forceDDMM = false) {
+  if (!raw) return null;
+  const iso = toISO(raw, forceDDMM);
+  if (iso) return iso;
+
+  const s = String(raw).trim().replace(/^[A-Za-z]+,\s*/, '');
+  const named = s.match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/);
+  if (named) {
+    const months = { jan:'01', feb:'02', mar:'03', apr:'04', may:'05', jun:'06', jul:'07', aug:'08', sep:'09', oct:'10', nov:'11', dec:'12' };
+    const mo = months[named[2].toLowerCase().slice(0, 3)];
+    if (mo) return `${named[3]}-${mo}-${named[1].padStart(2, '0')}`;
+  }
+  return null;
+}
+
+async function listPublicSheetTabs(sheetId) {
+  try {
+    const url = `https://spreadsheets.google.com/feeds/worksheets/${sheetId}/public/basic?alt=json`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`worksheet feed ${res.status}`);
+    const data = await res.json();
+    const entries = data?.feed?.entry || [];
+    return entries.map(e => e?.title?.$t).filter(Boolean);
+  } catch (_) {
+    return [];
+  }
+}
+
+// --- Workshop audit data ------------------------------------------------------
+export function classifyWorkshop(value) {
+  const s = String(value || '').toLowerCase();
+  if (s.includes('r12') || s.includes('reiki')) return 'Reiki';
+  if (s.includes('utw') || s.includes('icp') || s.includes('thw') || s.includes('tarot')) return 'Tarot';
+  return 'Other';
+}
+
+export async function loadWorkshopPlan() {
+  const rows = await fetchCSV(WORKSHOP_PMS.id, WORKSHOP_PMS.tab);
+  if (rows.length < 2) return [];
+
+  const header = rows[0] || [];
+  const cols = {
+    id:     findHeaderIndex(header, ['workshop id'], 0),
+    days:   findHeaderIndex(header, ['workshop days', 'days'], 2),
+    name:   findHeaderIndex(header, ['workshop name', 'name'], 3),
+    start:  findHeaderIndex(header, ['start date', 'date'], 4),
+    time:   findHeaderIndex(header, ['start time', 'time'], 5),
+    day:    findHeaderIndex(header, ['start day', 'day'], 6),
+    status: findHeaderIndex(header, ['status'], 7),
+  };
+
+  return rows.slice(1)
+    .map(r => {
+      const id = r[cols.id]?.trim() || '';
+      const name = r[cols.name]?.trim() || '';
+      const startDate = parseAnyDate(r[cols.start], true);
+      return {
+        id,
+        name,
+        days: parseInt(r[cols.days]) || 1,
+        startDate,
+        startTime: r[cols.time]?.trim() || '',
+        startDay: r[cols.day]?.trim() || '',
+        status: r[cols.status]?.trim() || '',
+        funnel: classifyWorkshop(`${id} ${name}`),
+      };
+    })
+    .filter(w => w.id && w.startDate && w.status.toLowerCase() === 'done')
+    .sort((a, b) => a.startDate.localeCompare(b.startDate));
+}
+
+export async function loadWorkshopShowUpData() {
+  const rows = await fetchCSV(WORKSHOP_PERFORMANCE.id, WORKSHOP_PERFORMANCE.showUpTab);
+  if (rows.length < 2) return [];
+
+  const header = rows[0] || [];
+  const cols = {
+    timestamp: findHeaderIndex(header, ['timestamp'], 0),
+    name:      findHeaderIndex(header, ['workshop name'], 2),
+    day:       findHeaderIndex(header, ['workshop day'], 3),
+    start:     findHeaderIndex(header, ['workshop start date', 'start date'], 4),
+    leads:     findHeaderIndex(header, ['total leads'], 5),
+    show:      findHeaderIndex(header, ['maximum showup', 'maximum people', 'showed up'], 6),
+  };
+
+  return rows.slice(1).map(r => ({
+    timestamp: r[cols.timestamp]?.trim() || '',
+    workshopName: r[cols.name]?.trim() || '',
+    workshopDay: String(r[cols.day] || '').trim(),
+    startDate: parseAnyDate(r[cols.start], true),
+    reportedLeads: parseAmount(r[cols.leads]),
+    maxShowUp: parseAmount(r[cols.show]),
+  })).filter(r => r.workshopName && r.startDate && r.maxShowUp > 0);
+}
+
+export async function loadAuditMemory() {
+  const rows = await fetchCSV(WORKSHOP_PERFORMANCE.id, WORKSHOP_PERFORMANCE.memoryTab).catch(() => []);
+  return rows.slice(1).map(r => ({
+    week: r[0]?.trim() || '',
+    auditType: r[1]?.trim() || '',
+    jsonData: r[2]?.trim() || '',
+    lastUpdated: r[3]?.trim() || '',
+  })).filter(r => r.week || r.jsonData);
+}
+
+function emptyInternTotals() {
+  return { leadsAssigned: 0, callsAttempted: 0, connected: 0, rows: 0, latestDate: null, tabs: [], errors: [] };
+}
+
+function addInternRow(total, row, cols) {
+  total.leadsAssigned += parseAmount(row[cols.leads]);
+  total.callsAttempted += parseAmount(row[cols.calls]);
+  total.connected += parseAmount(row[cols.connected]);
+  total.rows += 1;
+}
+
+export async function loadInternKPIData({ from, to, funnel }) {
+  const discoveredTabs = await listPublicSheetTabs(INTERNS_KPI.id);
+  const tabs = (discoveredTabs.length ? discoveredTabs : INTERNS_KPI.fallbackTabs)
+    .filter(tab => tab && !(INTERNS_KPI.skipTabs || []).includes(tab));
+
+  const cols = funnel === 'Reiki'
+    ? { leads: 7, calls: 8, connected: 9 }
+    : { leads: 3, calls: 4, connected: 5 };
+
+  const total = emptyInternTotals();
+  const tabResults = await Promise.all(tabs.map(async tab => {
+    try {
+      const rows = await fetchCSV(INTERNS_KPI.id, tab);
+      let tabRows = 0;
+      let tabLatest = null;
+
+      for (const row of rows) {
+        const date = parseAnyDate(row[1]);
+        if (!date || date < from || date > to) continue;
+        const numeric = [cols.leads, cols.calls, cols.connected].some(i => parseAmount(row[i]) > 0);
+        if (!numeric) continue;
+        addInternRow(total, row, cols);
+        tabRows += 1;
+        if (!tabLatest || date > tabLatest) tabLatest = date;
+        if (!total.latestDate || date > total.latestDate) total.latestDate = date;
+      }
+
+      return { tab, rows: tabRows, latestDate: tabLatest };
+    } catch (e) {
+      return { tab, rows: 0, latestDate: null, error: e.message };
+    }
+  }));
+
+  total.tabs = tabResults;
+  total.errors = tabResults.filter(t => t.error).map(t => `${t.tab}: ${t.error}`);
+  total.connectedRatio = total.callsAttempted > 0 ? (total.connected / total.callsAttempted) * 100 : null;
+  total.discoveryMode = discoveredTabs.length ? 'auto' : 'fallback';
+  return total;
 }
 
 // --- Count leads in a date range from raw rows --------------------------------

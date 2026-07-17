@@ -11,6 +11,29 @@ export const SALES_SHEET = {
   tab: 'Dashboard',
 };
 
+// --- Workshop Performance -----------------------------------------------------
+export const WORKSHOP_PMS = {
+  id:  '1uZjFt08m5pXSctFse7a3XrscFcZ0nr3kWcTQvbUU3nk',
+  tab: 'Plan',
+};
+
+export const WORKSHOP_PERFORMANCE = {
+  id:          '1Wi5TiXosj2MDnWv_9kxnQt0V6x6pSBZeUdsLypSllBQ',
+  showUpTab:   'ShowUp',
+  memoryTab:   'AuditMemory',
+};
+
+export const INTERNS_KPI = {
+  id: '1WxlbrmNC2W9pRxmTOTNbVlMwyHjuR79nOK19tVJKar8',
+  fallbackTabs: ['Harpreet', 'Ishika', 'Prerna', 'Niranjana', 'Niyati'],
+  skipTabs: ['Daily Call Recordings', 'Meeting Attendance'],
+};
+
+export const WORKSHOP_BENCHMARKS = {
+  Tarot: { cpl: 250, showD1: 28, showD2: 18, showD3: 13, conversion: 2 },
+  Reiki: { cpl: 120, showD1: 28, conversion: 1 },
+};
+
 // --- Apps Script URLs ---------------------------------------------------------
 export const FINANCE_URL   = 'https://script.google.com/macros/s/AKfycbwhmj1f3nhS4mRFzS1fxlf3EeF8Q0BIXhzLDn9BLlgupjFU8WqNJJqC5e9epsP4jVE-/exec';
 export const EMI_URL       = 'https://script.google.com/macros/s/AKfycbwgKK2X3PYGLlOOu-D_ZJKvYQKpdPVAtXE3T1bkaybI-IIl5vX0_IU6DktaKdqhZnPg_A/exec';
