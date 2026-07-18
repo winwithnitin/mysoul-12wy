@@ -62,7 +62,9 @@ function countScopedLeads(marketing, scope, from, to) {
 }
 
 function scopedSalesRows(sales, scope) {
-  return scope === "Combined" ? (sales || []) : (sales || []).filter(e => isFunnelEnrollment(e, scope));
+  return scope === "Combined"
+    ? (sales || []).filter(e => isFunnelEnrollment(e, "Tarot") || isFunnelEnrollment(e, "Reiki"))
+    : (sales || []).filter(e => isFunnelEnrollment(e, scope));
 }
 
 function roas(revenue, spend) {
@@ -177,15 +179,40 @@ export function aggregateInternKPI(internHistory, { from, to, funnel = null }) {
   return total;
 }
 
+function equivalentPreviousWindow(window) {
+  if (window.months) {
+    return {
+      from: monthsBack(addDays(window.from, -1), window.months),
+      to: addDays(window.from, -1),
+    };
+  }
+  return {
+    from: addDays(window.from, -window.days),
+    to: addDays(window.from, -1),
+  };
+}
+
 export function buildTrajectoryOverview(data, scope = "Combined", today = iso(new Date())) {
   const windows = [
-    { label: "Last 7 Days", from: addDays(today, -6), to: today },
-    { label: "Last 30 Days", from: addDays(today, -29), to: today },
-    { label: "Last 90 Days", from: addDays(today, -89), to: today },
-    { label: "Last 6 Months", from: monthsBack(today, 6), to: today },
+    { label: "Last 7 Days", days: 7, from: addDays(today, -6), to: today, group: "pulse" },
+    { label: "Last 14 Days", days: 14, from: addDays(today, -13), to: today, group: "pulse" },
+    { label: "Last 21 Days", days: 21, from: addDays(today, -20), to: today, group: "pulse" },
+    { label: "Last 30 Days", days: 30, from: addDays(today, -29), to: today, group: "pulse" },
+    { label: "Last 60 Days", days: 60, from: addDays(today, -59), to: today, group: "strategic" },
+    { label: "Last 90 Days", days: 90, from: addDays(today, -89), to: today, group: "strategic" },
+    { label: "Last 6 Months", months: 6, from: monthsBack(today, 6), to: today, group: "strategic" },
   ];
 
-  return windows.map(w => ({ ...w, ...summarizeBusinessWindow(data, w.from, w.to, scope) }));
+  return windows.map(w => {
+    const previousWindow = equivalentPreviousWindow(w);
+    return {
+      ...w,
+      ...summarizeBusinessWindow(data, w.from, w.to, scope),
+      previous: summarizeBusinessWindow(data, previousWindow.from, previousWindow.to, scope),
+      previousFrom: previousWindow.from,
+      previousTo: previousWindow.to,
+    };
+  });
 }
 
 function workshopShowUpForWeek(showRows, weekStart, weekEnd, kind = "UTW") {
@@ -259,7 +286,13 @@ function preferredWorkshopForWeek(data, weekStart, weekEnd, scope = "Combined") 
     .filter(w => w.startDate >= weekStart && w.startDate <= weekEnd)
     .filter(w => scope === "Combined" || w.funnel === scope)
     .sort((a, b) => a.startDate.localeCompare(b.startDate));
-  return inWeek.find(w => workshopKind(w) === targetKind) || inWeek[0] || fallbackWorkshopFromShowUp(data.showUp, weekStart, weekEnd, scope);
+  const planned = inWeek.find(w => workshopKind(w) === targetKind) || inWeek[0] || null;
+  if (scope === "Reiki") return planned;
+  return planned || fallbackWorkshopFromShowUp(data.showUp, weekStart, weekEnd, scope);
+}
+
+function weekdayLabel(dateStr) {
+  return new Date(`${dateStr}T12:00:00`).toLocaleDateString("en-IN", { weekday: "short" });
 }
 
 function avgPct(values) {
@@ -340,6 +373,7 @@ export function buildRollingPerformance(data, internHistory, weeks = 12, scope =
       salesTo,
       hasWorkshop,
       workshopId: workshop?.id || null,
+      workshopDay: weekdayLabel(rowStart),
       tarotLeads,
       reikiLeads,
       leads,
@@ -507,7 +541,11 @@ export function getShowUp(showRows, workshop) {
 }
 
 function isFunnelEnrollment(enrollment, funnel) {
-  if (funnel === "Tarot") return getFunnel(enrollment.program) === "Tarot";
+  if (funnel === "Tarot") {
+    const program = String(enrollment.program || "").toLowerCase();
+    const isCoreTarot = program.includes("tarot") && (program.includes("diploma") || program.includes("mastery"));
+    return isCoreTarot && !program.includes("health");
+  }
   if (funnel === "Reiki") return getFunnel(enrollment.program) === "Reiki";
   return false;
 }

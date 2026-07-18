@@ -80,23 +80,52 @@ function PillToggle({ options, value, onChange }) {
   );
 }
 
-function TrajectoryCard({ row, scope }) {
+function trendFor(current, previous, direction = "upGood") {
+  if (current === null || current === undefined || previous === null || previous === undefined || previous === 0) return null;
+  const delta = ((current - previous) / previous) * 100;
+  if (Math.abs(delta) < 0.05) return { arrow: "→", color: "var(--text3)", pct: "0%" };
+  const up = delta > 0;
+  const good = direction === "downGood" ? !up : up;
+  return {
+    arrow: up ? "▲" : "▼",
+    color: good ? "var(--success)" : "var(--danger)",
+    pct: `${Math.abs(delta).toFixed(0)}%`,
+  };
+}
+
+function TrendMetric({ label, value, trend, color }) {
+  return (
+    <div>
+      <div style={{ fontSize: 10, color: "var(--text3)", textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 3 }}>{label}</div>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 6, flexWrap: "wrap" }}>
+        <span style={{ fontSize: 16, fontWeight: 700, color: color || "var(--text2)" }}>{value}</span>
+        {trend && (
+          <span style={{ fontSize: 11 }}>
+            <span style={{ color: trend.color, fontWeight: 700 }}>{trend.arrow}</span>
+            <span style={{ color: "var(--text3)", marginLeft: 3 }}>{trend.pct}</span>
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function TrajectoryCard({ row, scope, compact = false }) {
   const leadLabel = scope === "Combined" ? "Total Leads" : `${scope} Leads`;
   const cplLabel = scope === "Combined" ? "Blended CPL" : `${scope} CPL`;
   const cplOk = scope === "Combined" || !row.blendedCpl || row.blendedCpl <= WORKSHOP_BENCHMARKS[scope].cpl;
   return (
-    <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, padding: "16px 18px" }}>
+    <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, padding: compact ? "12px 14px" : "16px 18px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10, marginBottom: 12 }}>
         <div style={{ fontSize: 13, color: "var(--text)", fontWeight: 700 }}>{row.label}</div>
         <div style={{ fontSize: 10, color: "var(--text3)" }}>{fmtDisplay(row.from)} - {fmtDisplay(row.to)}</div>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: compact ? "1fr 1fr" : "1fr 1fr 1fr", gap: compact ? 10 : 12 }}>
         <MiniMetric label={leadLabel} value={num(row.leads)} />
-        <MiniMetric label="Total Spend" value={inr(Math.round(row.spend))} color="var(--warning)" />
-        <MiniMetric label={cplLabel} value={row.blendedCpl ? inr(row.blendedCpl) : "--"} color={scope === "Combined" ? undefined : cplOk ? "var(--success)" : "var(--danger)"} />
-        <MiniMetric label={`${scope === "Combined" ? "" : scope} Enrollments`.trim()} value={num(row.enrollments)} />
-        <MiniMetric label={`${scope === "Combined" ? "" : scope} Revenue`.trim()} value={inr(Math.round(row.revenue))} color="var(--success)" />
-        <MiniMetric label="ROAS" value={row.roas === null || row.roas === undefined ? "--" : `${row.roas.toFixed(2)}x`} color={roasColor(row.roas)} />
+        <TrendMetric label={cplLabel} value={row.blendedCpl ? inr(row.blendedCpl) : "--"} color={scope === "Combined" ? undefined : cplOk ? "var(--success)" : "var(--danger)"} trend={trendFor(row.blendedCpl, row.previous?.blendedCpl, "downGood")} />
+        <TrendMetric label={`${scope === "Combined" ? "" : scope} Enrollments`.trim()} value={num(row.enrollments)} trend={trendFor(row.enrollments, row.previous?.enrollments)} />
+        <TrendMetric label={`${scope === "Combined" ? "" : scope} Revenue`.trim()} value={inr(Math.round(row.revenue))} color="var(--success)" trend={trendFor(row.revenue, row.previous?.revenue)} />
+        <TrendMetric label="ROAS" value={row.roas === null || row.roas === undefined ? "--" : `${row.roas.toFixed(2)}x`} color={roasColor(row.roas)} trend={trendFor(row.roas, row.previous?.roas)} />
       </div>
     </div>
   );
@@ -121,11 +150,18 @@ function SectionTitle({ title, subtitle }) {
 }
 
 function TrajectoryOverview({ rows, scope }) {
+  const pulseRows = rows.filter(row => row.group === "pulse");
+  const strategicRows = rows.filter(row => row.group === "strategic");
   return (
     <section style={{ marginBottom: 26 }}>
-      <SectionTitle title="Trajectory Overview" subtitle="Rolling health check across leads, CPL, enrollments, and cash revenue." />
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 14 }}>
-        {rows.map(row => <TrajectoryCard key={row.label} row={row} scope={scope} />)}
+      <SectionTitle title="Weekly Pulse — Ad Optimization View" />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 12, marginBottom: 20 }}>
+        {pulseRows.map(row => <TrajectoryCard key={row.label} row={row} scope={scope} compact />)}
+      </div>
+
+      <SectionTitle title="Strategic View — Business Health" />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 14 }}>
+        {strategicRows.map(row => <TrajectoryCard key={row.label} row={row} scope={scope} />)}
       </div>
     </section>
   );
@@ -180,8 +216,8 @@ function RollingPerformanceTable({ rows, scope, tableMode, onTableModeChange }) 
       ? ["Month", "Tarot Leads", "Reiki Leads", "Total Ad Spend", "Blended CPL", "UTW D1 Avg", "UTW D2 Avg", "UTW D3 Avg", "Intern Connect", "Enrollments", "Revenue", "ROAS", "MoM Revenue"]
       : ["Month", `${scope} Leads`, `${scope} Ad Spend`, `${scope} CPL`, scope === "Reiki" ? "R12 D1 Avg" : "UTW D1 Avg", scope === "Reiki" ? "R12 D2 Avg" : "UTW D2 Avg", scope === "Reiki" ? "R12 D3 Avg" : "UTW D3 Avg", "Intern Connect", `${scope} Enrollments`, `${scope} Revenue`, "ROAS", "MoM Revenue"])
     : (scope === "Combined"
-      ? ["Workshop Start", "Tarot Leads", "Reiki Leads", "Total Ad Spend", "Blended CPL", "UTW D1", "UTW D2", "UTW D3", "Intern Connect", "Enrollments", "Revenue", "ROAS", "WoW Revenue"]
-      : ["Workshop Start", `${scope} Leads`, `${scope} Ad Spend`, `${scope} CPL`, scope === "Reiki" ? "R12 D1" : "UTW D1", scope === "Reiki" ? "R12 D2" : "UTW D2", scope === "Reiki" ? "R12 D3" : "UTW D3", "Intern Connect", `${scope} Enrollments`, `${scope} Revenue`, "ROAS", "WoW Revenue"]);
+      ? ["Workshop Start", "W Day", "Tarot Leads", "Reiki Leads", "Total Ad Spend", "Blended CPL", "UTW D1", "UTW D2", "UTW D3", "Intern Connect", "Enrollments", "Revenue", "ROAS", "WoW Revenue"]
+      : ["Workshop Start", "W Day", `${scope} Leads`, `${scope} Ad Spend`, `${scope} CPL`, scope === "Reiki" ? "R12 D1" : "UTW D1", scope === "Reiki" ? "R12 D2" : "UTW D2", scope === "Reiki" ? "R12 D3" : "UTW D3", "Intern Connect", `${scope} Enrollments`, `${scope} Revenue`, "ROAS", "WoW Revenue"]);
 
   return (
     <section style={{ marginBottom: 30 }}>
@@ -204,6 +240,7 @@ function RollingPerformanceTable({ rows, scope, tableMode, onTableModeChange }) 
               return (
                 <tr key={monthly ? row.month : row.weekStart} style={{ background: rowBg(row.status) }}>
                   <td style={{ ...td("left"), color: "var(--text)", fontWeight: 700 }}>{monthly ? row.monthLabel : fmtDisplay(row.weekStart)}</td>
+                  {!monthly && <td style={td()}>{row.workshopDay || "--"}</td>}
                   {scope === "Combined" && <td style={td()}>{num(row.tarotLeads)}</td>}
                   {scope === "Combined" && <td style={td()}>{num(row.reikiLeads)}</td>}
                   {scope !== "Combined" && <td style={td()}>{num(row.leads)}</td>}
