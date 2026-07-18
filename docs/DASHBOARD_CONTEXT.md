@@ -5,6 +5,7 @@ This dashboard is for MySoulSchool / 12WY business review.
 ## Main Tabs
 
 - `Marketing`: ad spend, leads, CPL, tracking gaps.
+- `Ads Intelligence`: campaign/ad set/ad creative CPL and budget split from Siddhi's weekly Meta export.
 - `Sales`: enrollments, cashflow, closers, company revenue.
 - `CRM`: students, defaulters, duplicates, ads performance.
 - `Performance`: weekly workshop audit engine.
@@ -16,6 +17,7 @@ This dashboard is for MySoulSchool / 12WY business review.
 
 - Sales/conversion/revenue truth: Students Records `Dashboard` tab configured as `SALES_SHEET`.
 - Ad spend and lead pools: existing `SHEETS` config.
+- Campaign/ad set/ad creative performance: `ADS_INTELLIGENCE`; Siddhi updates the sheet every Monday by 10am.
 - Workshop calendar: `WORKSHOP_PMS`, tab `Plan`, where `STATUS = Done` means approved/happened.
 - Daily show-up: `WORKSHOP_PERFORMANCE`, tab `ShowUp`, filled by Tanvi form.
 - Audit notes/memory: `WORKSHOP_PERFORMANCE`, tab `AuditMemory`; current UI stores notes in browser localStorage until a write endpoint is added.

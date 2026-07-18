@@ -8,6 +8,7 @@ import EMI from './tabs/EMI.jsx';
 import LTVFunnel from './tabs/LTVFunnel.jsx';
 import CRM from './tabs/CRM.jsx';
 import Performance from './tabs/Performance.jsx';
+import AdsIntelligence from './tabs/AdsIntelligence.jsx';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('marketing');
@@ -16,6 +17,7 @@ export default function App() {
       <Header />
       <TabNav active={activeTab} onChange={setActiveTab} />
       {activeTab === 'marketing'   && <Marketing />}
+      {activeTab === 'adsintel'     && <AdsIntelligence />}
       {activeTab === 'sales'       && <Sales />}
       {activeTab === 'crm'         && <CRM />}
       {activeTab === 'performance' && <Performance />}

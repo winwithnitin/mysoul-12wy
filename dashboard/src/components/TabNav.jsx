@@ -1,5 +1,6 @@
 const TABS = [
   { key: 'marketing',   label: 'Marketing'    },
+  { key: 'adsintel',    label: 'Ads Intelligence' },
   { key: 'sales',       label: 'Sales'        },
   { key: 'crm',         label: 'CRM'          },
   { key: 'performance', label: 'Performance'  },

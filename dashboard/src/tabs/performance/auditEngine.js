@@ -281,13 +281,8 @@ function fallbackWorkshopFromShowUp(showRows, weekStart, weekEnd, scope = "Combi
 }
 
 function preferredWorkshopForWeek(data, weekStart, weekEnd, scope = "Combined") {
-  const targetKind = scope === "Reiki" ? "R12" : "UTW";
-  const inWeek = (data.workshops || [])
-    .filter(w => w.startDate >= weekStart && w.startDate <= weekEnd)
-    .filter(w => scope === "Combined" || w.funnel === scope)
-    .sort((a, b) => a.startDate.localeCompare(b.startDate));
-  const planned = inWeek.find(w => workshopKind(w) === targetKind) || inWeek[0] || null;
-  return planned || fallbackWorkshopFromShowUp(data.showUp, weekStart, weekEnd, scope);
+  const showUpWorkshop = fallbackWorkshopFromShowUp(data.showUp, weekStart, weekEnd, scope);
+  return showUpWorkshop;
 }
 
 function weekdayLabel(dateStr) {
