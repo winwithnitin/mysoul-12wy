@@ -45,6 +45,72 @@ function sumSpend(adSpend, from, to, program = null) {
     .reduce((s, r) => s + (r.spend || 0), 0);
 }
 
+function scopedFunnels(scope) {
+  if (scope === "Tarot") return ["Tarot"];
+  if (scope === "Reiki") return ["Reiki"];
+  return ["Tarot", "Reiki"];
+}
+
+function countScopedLeads(marketing, scope, from, to) {
+  const tarotLeads = countFunnelLeads(marketing, "Tarot", from, to);
+  const reikiLeads = countFunnelLeads(marketing, "Reiki", from, to);
+  return {
+    tarotLeads,
+    reikiLeads,
+    leads: scope === "Tarot" ? tarotLeads : scope === "Reiki" ? reikiLeads : tarotLeads + reikiLeads,
+  };
+}
+
+function scopedSalesRows(sales, scope) {
+  return scope === "Combined" ? (sales || []) : (sales || []).filter(e => isFunnelEnrollment(e, scope));
+}
+
+function roas(revenue, spend) {
+  return spend > 0 ? +(revenue / spend).toFixed(2) : null;
+}
+
+function monthLabel(dateStr) {
+  const d = new Date(`${dateStr}T12:00:00`);
+  return d.toLocaleDateString("en-IN", { month: "short", year: "numeric" });
+}
+
+function monthStart(dateStr) {
+  return `${dateStr.slice(0, 7)}-01`;
+}
+
+function monthEnd(dateStr) {
+  const d = new Date(`${dateStr.slice(0, 7)}-01T12:00:00`);
+  d.setMonth(d.getMonth() + 1);
+  d.setDate(0);
+  return iso(d);
+}
+
+function avgWeeklySpend(adSpend, program, beforeDate) {
+  let total = 0;
+  for (let i = 1; i <= 4; i++) {
+    const to = addDays(beforeDate, -1 - ((i - 1) * 7));
+    const from = addDays(to, -6);
+    total += sumSpend(adSpend, from, to, program);
+  }
+  return total / 4;
+}
+
+function bulkSpendFlag(adSpend, from, to, scope = "Combined") {
+  const programs = scopedFunnels(scope);
+  const flagged = (adSpend || [])
+    .filter(r => r.date >= from && r.date <= to && programs.includes(r.program))
+    .filter(r => {
+      const avg = avgWeeklySpend(adSpend, r.program, from);
+      return avg > 0 && (r.spend || 0) > avg * 2;
+    });
+
+  if (!flagged.length) return null;
+  return {
+    count: flagged.length,
+    rows: flagged.map(r => ({ date: r.date, program: r.program, spend: r.spend })),
+  };
+}
+
 function countFunnelLeads(marketing, funnel, from, to) {
   const rows = funnel === "Tarot" ? marketing.tarotRows : marketing.reikiRows;
   return countLeadsInRange(rows || [], LEAD_DATE_COLS[funnel], from, to);
@@ -65,12 +131,9 @@ function monthsBack(dateStr, months) {
 }
 
 function summarizeBusinessWindow(data, from, to, scope = "Combined") {
-  const tarotLeads = countFunnelLeads(data.marketing, "Tarot", from, to);
-  const reikiLeads = countFunnelLeads(data.marketing, "Reiki", from, to);
-  const leads = scope === "Tarot" ? tarotLeads : scope === "Reiki" ? reikiLeads : tarotLeads + reikiLeads;
+  const { tarotLeads, reikiLeads, leads } = countScopedLeads(data.marketing, scope, from, to);
   const spend = sumSpend(data.marketing.adSpend, from, to, scope === "Combined" ? null : scope);
-  const scopedSales = scope === "Combined" ? data.sales : (data.sales || []).filter(e => isFunnelEnrollment(e, scope));
-  const sales = rangeSales(scopedSales, from, to);
+  const sales = rangeSales(scopedSalesRows(data.sales, scope), from, to);
 
   return {
     from,
@@ -82,6 +145,7 @@ function summarizeBusinessWindow(data, from, to, scope = "Combined") {
     blendedCpl: leads > 0 ? Math.round(spend / leads) : null,
     enrollments: sales.enrollments,
     revenue: sales.revenue,
+    roas: roas(sales.revenue, spend),
   };
 }
 
@@ -149,28 +213,50 @@ function workshopShowUpForWeek(showRows, weekStart, weekEnd, kind = "UTW") {
   };
 }
 
+function preferredWorkshopForWeek(workshops, weekStart, weekEnd, scope = "Combined") {
+  const targetKind = scope === "Reiki" ? "R12" : "UTW";
+  const inWeek = (workshops || [])
+    .filter(w => w.startDate >= weekStart && w.startDate <= weekEnd)
+    .filter(w => scope === "Combined" || w.funnel === scope)
+    .sort((a, b) => a.startDate.localeCompare(b.startDate));
+  return inWeek.find(w => workshopKind(w) === targetKind) || inWeek[0] || null;
+}
+
 export function buildRollingPerformance(data, internHistory, weeks = 12, scope = "Combined") {
   const anchor = lastCompletedWeekStart();
   const firstWeek = addDays(anchor, -(weeks - 1) * 7);
   const chronological = [];
 
   for (let i = 0; i < weeks; i++) {
-    const weekStart = addDays(firstWeek, i * 7);
-    const weekEnd = addDays(weekStart, 6);
-    const tarotLeads = countFunnelLeads(data.marketing, "Tarot", weekStart, weekEnd);
-    const reikiLeads = countFunnelLeads(data.marketing, "Reiki", weekStart, weekEnd);
-    const leads = scope === "Tarot" ? tarotLeads : scope === "Reiki" ? reikiLeads : tarotLeads + reikiLeads;
-    const spend = sumSpend(data.marketing.adSpend, weekStart, weekEnd, scope === "Combined" ? null : scope);
-    const scopedSales = scope === "Combined" ? data.sales : (data.sales || []).filter(e => isFunnelEnrollment(e, scope));
-    const sales = rangeSales(scopedSales, weekStart, weekEnd);
-    const intern = aggregateInternKPI(internHistory, { from: weekStart, to: weekEnd, funnel: scope === "Combined" ? null : scope });
-    const show = workshopShowUpForWeek(data.showUp, weekStart, weekEnd, scope === "Reiki" ? "R12" : "UTW");
+    const calendarWeekStart = addDays(firstWeek, i * 7);
+    const calendarWeekEnd = addDays(calendarWeekStart, 6);
+    const workshop = preferredWorkshopForWeek(data.workshops, calendarWeekStart, calendarWeekEnd, scope);
+    const rowStart = workshop?.startDate || calendarWeekStart;
+    const hasWorkshop = Boolean(workshop);
+    const spendFrom = hasWorkshop ? addDays(rowStart, -7) : calendarWeekStart;
+    const spendTo = hasWorkshop ? addDays(rowStart, -1) : calendarWeekEnd;
+    const salesFrom = rowStart;
+    const salesTo = addDays(rowStart, 6);
+    const { tarotLeads, reikiLeads, leads } = countScopedLeads(data.marketing, scope, spendFrom, spendTo);
+    const spend = sumSpend(data.marketing.adSpend, spendFrom, spendTo, scope === "Combined" ? null : scope);
+    const sales = hasWorkshop ? rangeSales(scopedSalesRows(data.sales, scope), salesFrom, salesTo) : { enrollments: null, revenue: null };
+    const calls = hasWorkshop ? callWindow(workshop) : null;
+    const intern = calls ? aggregateInternKPI(internHistory, { from: calls.from, to: calls.to, funnel: scope === "Combined" ? null : scope }) : { connectedRatio: null };
+    const show = hasWorkshop ? workshopShowUpForWeek(data.showUp, salesFrom, salesTo, scope === "Reiki" ? "R12" : "UTW") : { d1: null, d2: null, d3: null };
     const prev = chronological[chronological.length - 1];
-    const revenueChange = prev ? sales.revenue - prev.revenue : null;
+    const revenueChange = prev && sales.revenue !== null && prev.revenue !== null ? sales.revenue - prev.revenue : null;
 
     chronological.push({
-      weekStart,
-      weekEnd,
+      weekStart: rowStart,
+      weekEnd: salesTo,
+      calendarWeekStart,
+      calendarWeekEnd,
+      spendFrom,
+      spendTo,
+      salesFrom,
+      salesTo,
+      hasWorkshop,
+      workshopId: workshop?.id || null,
       tarotLeads,
       reikiLeads,
       leads,
@@ -182,6 +268,47 @@ export function buildRollingPerformance(data, internHistory, weeks = 12, scope =
       internConnectedRatio: intern.connectedRatio,
       enrollments: sales.enrollments,
       revenue: sales.revenue,
+      roas: sales.revenue !== null ? roas(sales.revenue, spend) : null,
+      bulkSpendFlag: bulkSpendFlag(data.marketing.adSpend, spendFrom, spendTo, scope),
+      revenueChange,
+      status: revenueChange === null ? "neutral" : revenueChange >= 0 ? "up" : "down",
+    });
+  }
+
+  return chronological.reverse();
+}
+
+export function buildMonthlyPerformance(data, months = 6, scope = "Combined", today = iso(new Date())) {
+  const current = monthStart(today);
+  const startDate = new Date(`${current}T12:00:00`);
+  startDate.setMonth(startDate.getMonth() - (months - 1));
+  const chronological = [];
+
+  for (let i = 0; i < months; i++) {
+    const d = new Date(startDate);
+    d.setMonth(startDate.getMonth() + i);
+    const from = iso(d);
+    const to = monthEnd(from);
+    const { tarotLeads, reikiLeads, leads } = countScopedLeads(data.marketing, scope, from, to);
+    const spend = sumSpend(data.marketing.adSpend, from, to, scope === "Combined" ? null : scope);
+    const sales = rangeSales(scopedSalesRows(data.sales, scope), from, to);
+    const prev = chronological[chronological.length - 1];
+    const revenueChange = prev ? sales.revenue - prev.revenue : null;
+
+    chronological.push({
+      month: from.slice(0, 7),
+      monthLabel: monthLabel(from),
+      from,
+      to,
+      tarotLeads,
+      reikiLeads,
+      leads,
+      spend,
+      blendedCpl: leads > 0 ? Math.round(spend / leads) : null,
+      enrollments: sales.enrollments,
+      revenue: sales.revenue,
+      roas: roas(sales.revenue, spend),
+      bulkSpendFlag: bulkSpendFlag(data.marketing.adSpend, from, to, scope),
       revenueChange,
       status: revenueChange === null ? "neutral" : revenueChange >= 0 ? "up" : "down",
     });
@@ -196,7 +323,7 @@ export function buildWorkshopAudit(data, selectedWorkshop, internHistory) {
   const leadFrom = addDays(selectedWorkshop.startDate, -7);
   const leadTo = addDays(selectedWorkshop.startDate, -1);
   const conversionFrom = selectedWorkshop.startDate;
-  const conversionTo = addDays(selectedWorkshop.startDate, 7);
+  const conversionTo = addDays(selectedWorkshop.startDate, 6);
   const funnel = selectedWorkshop.funnel === "Reiki" ? "Reiki" : "Tarot";
   const leads = countFunnelLeads(data.marketing, funnel, leadFrom, leadTo);
   const spend = sumSpend(data.marketing.adSpend, leadFrom, leadTo, funnel);

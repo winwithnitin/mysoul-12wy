@@ -112,10 +112,27 @@ export function classifyWorkshop(value) {
 }
 
 export async function loadWorkshopPlan() {
-  const rows = await fetchCSV(WORKSHOP_PMS.id, WORKSHOP_PMS.tab);
+  let rows = [];
+  try {
+    rows = await fetchCSV(WORKSHOP_PMS.id, WORKSHOP_PMS.tab);
+  } catch (e) {
+    console.warn('[WorkshopPlan] failed to fetch CSV', {
+      sheetId: WORKSHOP_PMS.id,
+      tab: WORKSHOP_PMS.tab,
+      error: e.message,
+    });
+    throw e;
+  }
+  console.log('[WorkshopPlan] raw CSV rows', {
+    sheetId: WORKSHOP_PMS.id,
+    tab: WORKSHOP_PMS.tab,
+    rowCount: rows.length,
+    sample: rows.slice(0, 5),
+  });
   if (rows.length < 2) return [];
 
-  const header = rows[0] || [];
+  const headerRowIndex = rows.findIndex(r => r.some(c => String(c || '').toLowerCase().includes('workshop id')));
+  const header = rows[headerRowIndex >= 0 ? headerRowIndex : 0] || [];
   const cols = {
     id:     findHeaderIndex(header, ['workshop id'], 0),
     days:   findHeaderIndex(header, ['workshop days', 'days'], 2),
@@ -126,7 +143,7 @@ export async function loadWorkshopPlan() {
     status: findHeaderIndex(header, ['status'], 7),
   };
 
-  return rows.slice(1)
+  const parsed = rows.slice((headerRowIndex >= 0 ? headerRowIndex : 0) + 1)
     .map(r => {
       const id = r[cols.id]?.trim() || '';
       const name = r[cols.name]?.trim() || '';
@@ -144,6 +161,13 @@ export async function loadWorkshopPlan() {
     })
     .filter(w => w.id && w.startDate && w.status.toLowerCase() === 'done')
     .sort((a, b) => a.startDate.localeCompare(b.startDate));
+  console.log('[WorkshopPlan] parsed workshops', {
+    count: parsed.length,
+    header,
+    cols,
+    first: parsed[0] || null,
+  });
+  return parsed;
 }
 
 export async function loadWorkshopShowUpData() {

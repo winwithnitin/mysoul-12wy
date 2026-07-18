@@ -10,10 +10,12 @@ import {
 } from "../utils/sheets.js";
 import { fmtDisplay } from "../utils/dates.js";
 import { inr, num } from "../utils/format.js";
+import WorkshopAudit from "./WorkshopAudit.jsx";
 import {
   addCallFlags,
   buildAudit,
   buildAuditCallData,
+  buildMonthlyPerformance,
   buildQuestions,
   buildRollingPerformance,
   buildTrajectoryOverview,
@@ -54,7 +56,8 @@ function MetricCard({ label, value, color }) {
   );
 }
 
-const PERFORMANCE_SCOPES = ["Combined", "Tarot", "Reiki"];
+const PERFORMANCE_SCOPES = ["Combined", "Tarot", "Reiki", "Workshop Audit"];
+const TABLE_MODES = ["Weekly", "Monthly"];
 
 function ScopeSelector({ scope, onChange }) {
   return (
@@ -68,6 +71,24 @@ function ScopeSelector({ scope, onChange }) {
           fontWeight: 500,
           background: scope === option ? "var(--tarot)" : "transparent",
           color: scope === option ? "#fff" : "var(--text3)",
+        }}>{option}</button>
+      ))}
+    </div>
+  );
+}
+
+function PillToggle({ options, value, onChange }) {
+  return (
+    <div style={{ display: "flex", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, overflow: "hidden" }}>
+      {options.map(option => (
+        <button key={option} onClick={() => onChange(option)} style={{
+          border: "none",
+          borderRadius: 0,
+          padding: "5px 13px",
+          fontSize: 12,
+          fontWeight: 500,
+          background: value === option ? "var(--tarot)" : "transparent",
+          color: value === option ? "#fff" : "var(--text3)",
         }}>{option}</button>
       ))}
     </div>
@@ -123,50 +144,92 @@ function TrajectoryOverview({ rows, scope }) {
   );
 }
 
-function RollingPerformanceTable({ rows, scope }) {
+function roasColor(value) {
+  if (value === null || value === undefined) return "var(--text3)";
+  if (value < 0.5) return "var(--danger)";
+  if (value <= 1) return "var(--warning)";
+  return "var(--success)";
+}
+
+function SpendCell({ row }) {
+  return (
+    <td style={td()}>
+      {inr(Math.round(row.spend))}
+      {row.bulkSpendFlag && (
+        <span title="Bulk entry detected — verify with Siddhi." style={{ color: "var(--warning)", marginLeft: 6, cursor: "help" }}>⚠</span>
+      )}
+    </td>
+  );
+}
+
+function RevenueChangeCell({ row, label = "WoW" }) {
+  const changeColor = row.status === "up" ? "var(--success)" : row.status === "down" ? "var(--danger)" : "var(--text3)";
+  const arrow = row.revenueChange === null ? "" : row.revenueChange >= 0 ? "▲" : "▼";
+  return (
+    <td style={{ ...td(), color: changeColor, fontWeight: 700 }}>
+      {row.revenueChange === null ? "--" : `${arrow} ${inr(Math.abs(Math.round(row.revenueChange)))}`}
+    </td>
+  );
+}
+
+function RoasCell({ value }) {
+  return <td style={{ ...td(), color: roasColor(value), fontWeight: value === null || value === undefined ? 400 : 700 }}>{value === null || value === undefined ? "--" : `${value.toFixed(2)}x`}</td>;
+}
+
+function RollingPerformanceTable({ rows, scope, tableMode, onTableModeChange }) {
   const rowBg = status => {
     if (status === "up") return "rgba(16,185,129,0.08)";
     if (status === "down") return "rgba(239,68,68,0.08)";
     return "rgba(148,163,184,0.07)";
   };
 
+  const monthly = tableMode === "Monthly";
+  const title = monthly ? "Monthly Performance" : "12-Week Rolling Performance";
+  const subtitle = monthly
+    ? "Last 6 calendar months. Monthly view hides workshop-level show-up and intern-call columns."
+    : "The main weekly business trajectory view. Revenue color compares each workshop row against the previous row.";
+  const headers = monthly
+    ? (scope === "Combined"
+      ? ["Month", "Tarot Leads", "Reiki Leads", "Total Ad Spend", "Blended CPL", "Enrollments", "Revenue", "ROAS", "MoM Revenue"]
+      : ["Month", `${scope} Leads`, `${scope} Ad Spend`, `${scope} CPL`, `${scope} Enrollments`, `${scope} Revenue`, "ROAS", "MoM Revenue"])
+    : (scope === "Combined"
+      ? ["Workshop Start", "Tarot Leads", "Reiki Leads", "Total Ad Spend", "Blended CPL", "UTW D1", "UTW D2", "UTW D3", "Intern Connect", "Enrollments", "Revenue", "ROAS", "WoW Revenue"]
+      : ["Workshop Start", `${scope} Leads`, `${scope} Ad Spend`, `${scope} CPL`, scope === "Reiki" ? "R12 D1" : "UTW D1", scope === "Reiki" ? "R12 D2" : "UTW D2", scope === "Reiki" ? "R12 D3" : "UTW D3", "Intern Connect", `${scope} Enrollments`, `${scope} Revenue`, "ROAS", "WoW Revenue"]);
+
   return (
     <section style={{ marginBottom: 30 }}>
-      <SectionTitle title="12-Week Rolling Performance" subtitle="The main weekly business trajectory view. Revenue color compares each week against the week before it." />
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 14, marginBottom: 12 }}>
+        <SectionTitle title={title} subtitle={subtitle} />
+        <PillToggle options={TABLE_MODES} value={tableMode} onChange={onTableModeChange} />
+      </div>
       <div style={box}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr>
-              {(scope === "Combined"
-                ? ["Week", "Tarot Leads", "Reiki Leads", "Total Ad Spend", "Blended CPL", "UTW D1", "UTW D2", "UTW D3", "Intern Connect", "Enrollments", "Revenue", "WoW Revenue"]
-                : ["Week", `${scope} Leads`, `${scope} Ad Spend`, `${scope} CPL`, scope === "Reiki" ? "R12 D1" : "UTW D1", scope === "Reiki" ? "R12 D2" : "UTW D2", scope === "Reiki" ? "R12 D3" : "UTW D3", "Intern Connect", `${scope} Enrollments`, `${scope} Revenue`, "WoW Revenue"]
-              ).map((h, i) => (
+              {headers.map((h, i) => (
                 <th key={h} style={i === 0 ? thL : th}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {rows.map(row => {
-              const changeColor = row.status === "up" ? "var(--success)" : row.status === "down" ? "var(--danger)" : "var(--text3)";
-              const arrow = row.revenueChange === null ? "" : row.revenueChange >= 0 ? "▲" : "▼";
               const cplOk = scope === "Combined" || !row.blendedCpl || row.blendedCpl <= WORKSHOP_BENCHMARKS[scope].cpl;
               return (
-                <tr key={row.weekStart} style={{ background: rowBg(row.status) }}>
-                  <td style={{ ...td("left"), color: "var(--text)", fontWeight: 700 }}>{fmtDisplay(row.weekStart)}</td>
+                <tr key={monthly ? row.month : row.weekStart} style={{ background: rowBg(row.status) }}>
+                  <td style={{ ...td("left"), color: "var(--text)", fontWeight: 700 }}>{monthly ? row.monthLabel : fmtDisplay(row.weekStart)}</td>
                   {scope === "Combined" && <td style={td()}>{num(row.tarotLeads)}</td>}
                   {scope === "Combined" && <td style={td()}>{num(row.reikiLeads)}</td>}
                   {scope !== "Combined" && <td style={td()}>{num(row.leads)}</td>}
-                  <td style={td()}>{inr(Math.round(row.spend))}</td>
+                  <SpendCell row={row} />
                   <td style={{ ...td(), color: scope === "Combined" ? "var(--text2)" : cplOk ? "var(--success)" : "var(--danger)", fontWeight: scope === "Combined" ? 400 : 700 }}>{row.blendedCpl ? inr(row.blendedCpl) : "--"}</td>
-                  <td style={td()}>{pctText(row.showD1Pct)}</td>
-                  <td style={td()}>{pctText(row.showD2Pct)}</td>
-                  <td style={td()}>{pctText(row.showD3Pct)}</td>
-                  <td style={td()}>{pctText(row.internConnectedRatio)}</td>
-                  <td style={td()}>{num(row.enrollments)}</td>
-                  <td style={{ ...td(), color: "var(--success)", fontWeight: 700 }}>{inr(Math.round(row.revenue))}</td>
-                  <td style={{ ...td(), color: changeColor, fontWeight: 700 }}>
-                    {row.revenueChange === null ? "--" : `${arrow} ${inr(Math.abs(Math.round(row.revenueChange)))}`}
-                  </td>
+                  {!monthly && <td style={td()}>{pctText(row.showD1Pct)}</td>}
+                  {!monthly && <td style={td()}>{pctText(row.showD2Pct)}</td>}
+                  {!monthly && <td style={td()}>{pctText(row.showD3Pct)}</td>}
+                  {!monthly && <td style={td()}>{pctText(row.internConnectedRatio)}</td>}
+                  <td style={td()}>{row.enrollments === null || row.enrollments === undefined ? "--" : num(row.enrollments)}</td>
+                  <td style={{ ...td(), color: row.revenue === null || row.revenue === undefined ? "var(--text3)" : "var(--success)", fontWeight: 700 }}>{row.revenue === null || row.revenue === undefined ? "--" : inr(Math.round(row.revenue))}</td>
+                  <RoasCell value={row.roas} />
+                  <RevenueChangeCell row={row} label={monthly ? "MoM" : "WoW"} />
                 </tr>
               );
             })}
@@ -300,6 +363,7 @@ export default function Performance() {
   const [notes, setNotes] = useState("");
   const [copied, setCopied] = useState(false);
   const [scope, setScope] = useState("Combined");
+  const [tableMode, setTableMode] = useState("Weekly");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -332,8 +396,14 @@ export default function Performance() {
 
   const audit = useMemo(() => data ? buildAudit(data, weekStart) : null, [data, weekStart]);
   const callData = useMemo(() => audit ? buildAuditCallData(audit, data?.internHistory) : {}, [audit, data]);
-  const trajectoryRows = useMemo(() => data ? buildTrajectoryOverview(data, scope) : [], [data, scope]);
-  const rollingRows = useMemo(() => data ? buildRollingPerformance(data, data.internHistory, 12, scope) : [], [data, scope]);
+  const scoreScope = scope === "Workshop Audit" ? "Combined" : scope;
+  const trajectoryRows = useMemo(() => data ? buildTrajectoryOverview(data, scoreScope) : [], [data, scoreScope]);
+  const rollingRows = useMemo(() => {
+    if (!data) return [];
+    return tableMode === "Monthly"
+      ? buildMonthlyPerformance(data, 6, scoreScope)
+      : buildRollingPerformance(data, data.internHistory, 12, scoreScope);
+  }, [data, scoreScope, tableMode]);
 
   const flags = useMemo(() => audit ? addCallFlags(audit, callData) : [], [audit, callData]);
 
@@ -362,31 +432,37 @@ export default function Performance() {
           <ScopeSelector scope={scope} onChange={setScope} />
         </div>
 
-        <TrajectoryOverview rows={trajectoryRows} scope={scope} />
+        {scope === "Workshop Audit" ? (
+          <WorkshopAudit sharedData={data} sharedLoading={loading} sharedUpdated={updated} onRefresh={load} embedded />
+        ) : (
+          <>
+            <TrajectoryOverview rows={trajectoryRows} scope={scoreScope} />
 
-        <RollingPerformanceTable rows={rollingRows} scope={scope} />
+            <RollingPerformanceTable rows={rollingRows} scope={scoreScope} tableMode={tableMode} onTableModeChange={setTableMode} />
 
-        <SectionTitle title="Workshop Audit" subtitle="The week picker above controls this audit section only." />
+            <SectionTitle title="Workshop Audit" subtitle="The week picker above controls this audit section only." />
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 1, background: "var(--border)", marginBottom: 24 }}>
-          <MetricCard label="Workshops" value={num(audit.workshopRows.length)} />
-          <MetricCard label="Lead Pool" value={num(totalLeads)} />
-          <MetricCard label="Ad Spend" value={inr(Math.round(totalSpend))} color="var(--warning)" />
-          <MetricCard label="Cash Revenue" value={inr(Math.round(totalRevenue))} color="var(--success)" />
-          <MetricCard label="Audit Flags" value={num(flags.length)} color={flags.length ? "var(--danger)" : "var(--success)"} />
-        </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 1, background: "var(--border)", marginBottom: 24 }}>
+              <MetricCard label="Workshops" value={num(audit.workshopRows.length)} />
+              <MetricCard label="Lead Pool" value={num(totalLeads)} />
+              <MetricCard label="Ad Spend" value={inr(Math.round(totalSpend))} color="var(--warning)" />
+              <MetricCard label="Cash Revenue" value={inr(Math.round(totalRevenue))} color="var(--success)" />
+              <MetricCard label="Audit Flags" value={num(flags.length)} color={flags.length ? "var(--danger)" : "var(--success)"} />
+            </div>
 
-        <div style={{ fontSize: 11, color: "var(--text3)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10 }}>Funnel Performance</div>
-        <FunnelTable rows={audit.funnelRows} />
+            <div style={{ fontSize: 11, color: "var(--text3)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10 }}>Funnel Performance</div>
+            <FunnelTable rows={audit.funnelRows} />
 
-        <div style={{ fontSize: 11, color: "var(--text3)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10 }}>Workshop Show-up and Calls</div>
-        <WorkshopTable rows={audit.workshopRows} callData={callData} />
+            <div style={{ fontSize: 11, color: "var(--text3)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10 }}>Workshop Show-up and Calls</div>
+            <WorkshopTable rows={audit.workshopRows} callData={callData} />
 
-        <AuditPanel flags={flags} questions={questions} notes={notes} onNotesChange={setNotes} onCopy={copySummary} copied={copied} />
+            <AuditPanel flags={flags} questions={questions} notes={notes} onNotesChange={setNotes} onCopy={copySummary} copied={copied} />
 
-        <div style={{ fontSize: 11, color: "var(--text3)", lineHeight: 1.6, marginTop: 4 }}>
-          Notes: ICP is treated as no-call. TMR is ignored. Intern tabs are auto-discovered when Google exposes worksheet metadata; otherwise the dashboard uses the configured intern tabs and marks KPI mode as fallback.
-        </div>
+            <div style={{ fontSize: 11, color: "var(--text3)", lineHeight: 1.6, marginTop: 4 }}>
+              Notes: ICP is treated as no-call. TMR is ignored. Intern tabs are auto-discovered when Google exposes worksheet metadata; otherwise the dashboard uses the configured intern tabs and marks KPI mode as fallback.
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

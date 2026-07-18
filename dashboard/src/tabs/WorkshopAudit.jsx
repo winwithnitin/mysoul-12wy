@@ -82,16 +82,16 @@ function makeWorkshopSummary(audit, notes) {
   ].join("\n");
 }
 
-export default function WorkshopAudit() {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+export default function WorkshopAudit({ sharedData = null, sharedLoading = false, sharedUpdated = null, onRefresh = null, embedded = false }) {
+  const [ownData, setOwnData] = useState(null);
+  const [ownLoading, setOwnLoading] = useState(true);
   const [selectedId, setSelectedId] = useState("");
   const [notes, setNotes] = useState("");
   const [copied, setCopied] = useState(false);
-  const [updated, setUpdated] = useState(null);
+  const [ownUpdated, setOwnUpdated] = useState(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const ownLoad = useCallback(async () => {
+    setOwnLoading(true);
     try {
       const [workshops, showUp, marketing, sales, internHistory] = await Promise.all([
         loadWorkshopPlan().catch(() => []),
@@ -100,14 +100,21 @@ export default function WorkshopAudit() {
         loadSalesData(),
         loadInternKPIHistory().catch(() => ({ rows: [], tabs: [], discoveryMode: "unavailable" })),
       ]);
-      setData({ workshops, showUp, marketing, sales, internHistory });
+      setOwnData({ workshops, showUp, marketing, sales, internHistory });
     } finally {
-      setLoading(false);
-      setUpdated(new Date());
+      setOwnLoading(false);
+      setOwnUpdated(new Date());
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    if (!sharedData) ownLoad();
+  }, [ownLoad, sharedData]);
+
+  const data = sharedData || ownData;
+  const loading = sharedData ? sharedLoading : ownLoading;
+  const updated = sharedData ? sharedUpdated : ownUpdated;
+  const refresh = onRefresh || ownLoad;
 
   const workshops = useMemo(() => (data?.workshops || []).slice().sort((a, b) => b.startDate.localeCompare(a.startDate)), [data]);
   const selectedWorkshop = useMemo(() => workshops.find(w => w.id === selectedId) || null, [workshops, selectedId]);
@@ -147,10 +154,10 @@ export default function WorkshopAudit() {
           </select>
           <span style={{ fontSize: 12, color: "var(--text3)" }}>{workshops.length} workshops loaded</span>
         </div>
-        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+        {!embedded && <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
           {updated && <span style={{ fontSize: 11, color: "var(--text3)" }}>{updated.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}</span>}
-          <button onClick={load}>Refresh</button>
-        </div>
+          <button onClick={refresh}>Refresh</button>
+        </div>}
       </div>
 
       {!audit ? (
