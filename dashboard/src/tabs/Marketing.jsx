@@ -16,6 +16,91 @@ const PERIODS = [
 ];
 
 const LEAD_DATE_COLS = { Tarot: 5, Reiki: 5 };
+const TREND_DAYS = 60;
+
+function isoLocal(date) {
+  return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+}
+
+function buildTrendRows(adSpend) {
+  const today = new Date();
+  const rows = [];
+  for (let i = TREND_DAYS - 1; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    rows.push({
+      date: isoLocal(d),
+      Tarot: { leads: 0, spend: 0, cpl: null },
+      Reiki: { leads: 0, spend: 0, cpl: null },
+    });
+  }
+
+  const byDate = Object.fromEntries(rows.map(r => [r.date, r]));
+  for (const r of adSpend) {
+    if (!byDate[r.date] || !byDate[r.date][r.program]) continue;
+    byDate[r.date][r.program].leads += r.leadsAd || 0;
+    byDate[r.date][r.program].spend += r.spend || 0;
+  }
+
+  return rows.map(r => ({
+    ...r,
+    Tarot: { ...r.Tarot, cpl: r.Tarot.leads > 0 ? Math.round(r.Tarot.spend / r.Tarot.leads) : null },
+    Reiki: { ...r.Reiki, cpl: r.Reiki.leads > 0 ? Math.round(r.Reiki.spend / r.Reiki.leads) : null },
+  }));
+}
+
+function LineChart({ rows, metric, title, formatValue, benchmarks }) {
+  const width = 720, height = 210;
+  const pad = { top: 18, right: 22, bottom: 30, left: 46 };
+  const innerW = width - pad.left - pad.right;
+  const innerH = height - pad.top - pad.bottom;
+  const series = [
+    { key: 'Tarot', color: 'var(--tarot)' },
+    { key: 'Reiki', color: 'var(--reiki)' },
+  ];
+  const values = rows.flatMap(r => series.map(s => r[s.key][metric]).filter(v => v !== null && v !== undefined));
+  const benchValues = benchmarks ? Object.values(benchmarks) : [];
+  const max = Math.max(...values, ...benchValues, 1);
+  const yMax = Math.ceil(max * 1.15);
+  const x = i => pad.left + (rows.length <= 1 ? 0 : (i / (rows.length - 1)) * innerW);
+  const y = v => pad.top + innerH - (v / yMax) * innerH;
+  const pathFor = key => rows.map((r, i) => {
+    const v = r[key][metric];
+    if (v === null || v === undefined) return null;
+    return `${i === 0 || rows.slice(0, i).every(prev => prev[key][metric] === null || prev[key][metric] === undefined) ? 'M' : 'L'} ${x(i).toFixed(1)} ${y(v).toFixed(1)}`;
+  }).filter(Boolean).join(' ');
+  const ticks = [0, Math.round(yMax / 2), yMax];
+  const labelIdx = [0, 14, 29, 44, 59].filter(i => i < rows.length);
+
+  return (
+    <div style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:12, padding:'14px 16px' }}>
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
+        <div style={{ fontSize:12, fontWeight:600, color:'var(--text)' }}>{title}</div>
+        <div style={{ display:'flex', gap:14 }}>
+          {series.map(s => <span key={s.key} style={{ fontSize:11, color:s.color }}>■ {s.key}</span>)}
+        </div>
+      </div>
+      <svg viewBox={`0 0 ${width} ${height}`} style={{ width:'100%', display:'block' }} role="img" aria-label={title}>
+        {ticks.map(t => (
+          <g key={t}>
+            <line x1={pad.left} x2={width-pad.right} y1={y(t)} y2={y(t)} stroke="var(--border2)" />
+            <text x={pad.left-8} y={y(t)+4} textAnchor="end" fontSize="10" fill="var(--text3)">{formatValue(t)}</text>
+          </g>
+        ))}
+        {benchmarks && series.map(s => benchmarks[s.key] ? (
+          <g key={`${s.key}-bench`}>
+            <line x1={pad.left} x2={width-pad.right} y1={y(benchmarks[s.key])} y2={y(benchmarks[s.key])} stroke={s.color} strokeDasharray="4 5" opacity="0.65" />
+            <text x={width-pad.right} y={y(benchmarks[s.key])-5} textAnchor="end" fontSize="10" fill={s.color}>{s.key} benchmark {formatValue(benchmarks[s.key])}</text>
+          </g>
+        ) : null)}
+        {series.map(s => <path key={s.key} d={pathFor(s.key)} fill="none" stroke={s.color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />)}
+        {labelIdx.map(i => (
+          <text key={i} x={x(i)} y={height-9} textAnchor="middle" fontSize="10" fill="var(--text3)">{rows[i].date.slice(5)}</text>
+        ))}
+      </svg>
+    </div>
+  );
+}
 
 export default function Marketing() {
   const [data,    setData]    = useState(null);
@@ -56,6 +141,7 @@ export default function Marketing() {
   const totSpend   = PROGRAMS.reduce((s, p) => s + byProg[p.key].spend, 0);
   const totLeads   = PROGRAMS.reduce((s, p) => s + byProg[p.key].lSheet, 0);
   const blendedCpl = totLeads > 0 ? Math.round(totSpend / totLeads) : null;
+  const trendRows = buildTrendRows(adSpend);
 
   // Spend table rows for selected period
   const periodRows = adSpend.filter(r => r.date >= from && r.date <= to);
@@ -111,6 +197,25 @@ export default function Marketing() {
       </div>
 
       <div style={{ padding:'0 24px 32px' }}>
+        {/* 60-day trends */}
+        <div style={{ fontSize:11, color:'var(--text3)', textTransform:'uppercase', letterSpacing:.5, marginBottom:12 }}>
+          Daily trends — last {TREND_DAYS} days
+        </div>
+        <div style={{ display:'grid', gridTemplateColumns:'1fr', gap:16, marginBottom:28 }}>
+          <LineChart
+            rows={trendRows}
+            metric="leads"
+            title="Daily Leads"
+            formatValue={v => num(v)}
+          />
+          <LineChart
+            rows={trendRows}
+            metric="cpl"
+            title="Daily CPL"
+            formatValue={v => '₹'+num(v)}
+            benchmarks={{ Tarot: 250, Reiki: 120 }}
+          />
+        </div>
 
         {/* Program cards */}
         <div style={{ fontSize:11, color:'var(--text3)', textTransform:'uppercase', letterSpacing:.5, marginBottom:12 }}>
