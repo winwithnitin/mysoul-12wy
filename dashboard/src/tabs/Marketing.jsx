@@ -49,9 +49,28 @@ function buildTrendRows(adSpend) {
   }));
 }
 
-function LineChart({ rows, metric, title, formatValue, benchmarks }) {
-  const width = 720, height = 210;
-  const pad = { top: 18, right: 22, bottom: 30, left: 46 };
+function percentile(values, p) {
+  const nums = values.filter(v => v !== null && v !== undefined && isFinite(v)).sort((a, b) => a - b);
+  if (!nums.length) return 1;
+  const idx = Math.min(nums.length - 1, Math.max(0, Math.ceil((p / 100) * nums.length) - 1));
+  return nums[idx];
+}
+
+function rollingAverage(rows, key, metric, window = 7) {
+  return rows.map((_, i) => {
+    const vals = rows.slice(Math.max(0, i - window + 1), i + 1)
+      .map(r => r[key][metric])
+      .filter(v => v !== null && v !== undefined);
+    if (!vals.length) return null;
+    return vals.reduce((s, v) => s + v, 0) / vals.length;
+  });
+}
+
+function LineChart({ rows, metric, title, formatValue, benchmarks, showRolling=false }) {
+  const [removeSpikes, setRemoveSpikes] = useState(true);
+  const [hoverIndex, setHoverIndex] = useState(null);
+  const width = 720, height = 170;
+  const pad = { top: 14, right: 20, bottom: 28, left: 44 };
   const innerW = width - pad.left - pad.right;
   const innerH = height - pad.top - pad.bottom;
   const series = [
@@ -60,27 +79,57 @@ function LineChart({ rows, metric, title, formatValue, benchmarks }) {
   ];
   const values = rows.flatMap(r => series.map(s => r[s.key][metric]).filter(v => v !== null && v !== undefined));
   const benchValues = benchmarks ? Object.values(benchmarks) : [];
-  const max = Math.max(...values, ...benchValues, 1);
+  const visibleMax = removeSpikes ? percentile(values, 95) : Math.max(...values, 1);
+  const max = Math.max(visibleMax, ...benchValues, 1);
   const yMax = Math.ceil(max * 1.15);
   const x = i => pad.left + (rows.length <= 1 ? 0 : (i / (rows.length - 1)) * innerW);
-  const y = v => pad.top + innerH - (v / yMax) * innerH;
-  const pathFor = key => rows.map((r, i) => {
-    const v = r[key][metric];
-    if (v === null || v === undefined) return null;
-    return `${i === 0 || rows.slice(0, i).every(prev => prev[key][metric] === null || prev[key][metric] === undefined) ? 'M' : 'L'} ${x(i).toFixed(1)} ${y(v).toFixed(1)}`;
-  }).filter(Boolean).join(' ');
+  const y = v => pad.top + innerH - (Math.min(v, yMax) / yMax) * innerH;
+  const pathFromValues = vals => {
+    let started = false;
+    return vals.map((v, i) => {
+      if (v === null || v === undefined) { started = false; return null; }
+      const cmd = started ? 'L' : 'M';
+      started = true;
+      return `${cmd} ${x(i).toFixed(1)} ${y(v).toFixed(1)}`;
+    }).filter(Boolean).join(' ');
+  };
+  const pathFor = key => pathFromValues(rows.map(r => r[key][metric]));
+  const rollingFor = key => pathFromValues(rollingAverage(rows, key, metric));
+  const tooltip = hoverIndex !== null ? rows[hoverIndex] : null;
+  const tooltipX = hoverIndex !== null ? x(hoverIndex) : 0;
+  const tooltipY = pad.top + 8;
+  const hoverToIndex = event => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const relX = ((event.clientX - rect.left) / rect.width) * width;
+    const idx = Math.round(((relX - pad.left) / innerW) * (rows.length - 1));
+    setHoverIndex(Math.max(0, Math.min(rows.length - 1, idx)));
+  };
   const ticks = [0, Math.round(yMax / 2), yMax];
-  const labelIdx = [0, 14, 29, 44, 59].filter(i => i < rows.length);
+  const labelIdx = rows.map((_, i) => i).filter(i => i % 7 === 0 || i === rows.length - 1);
 
   return (
-    <div style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:12, padding:'14px 16px' }}>
-      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
-        <div style={{ fontSize:12, fontWeight:600, color:'var(--text)' }}>{title}</div>
-        <div style={{ display:'flex', gap:14 }}>
-          {series.map(s => <span key={s.key} style={{ fontSize:11, color:s.color }}>■ {s.key}</span>)}
+    <div style={{ height:220, background:'var(--surface)', border:'1px solid var(--border)', borderRadius:12, padding:'12px 14px', position:'relative' }}>
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:4, gap:10 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
+          <div style={{ fontSize:12, fontWeight:600, color:'var(--text)' }}>{title}</div>
+          <button onClick={() => setRemoveSpikes(v => !v)} style={{
+            padding:'3px 8px', fontSize:10, borderRadius:5,
+            background:removeSpikes?'var(--tarot-dim)':'var(--surface2)',
+            color:removeSpikes?'var(--tarot)':'var(--text3)',
+          }}>Remove Spikes {removeSpikes?'On':'Off'}</button>
+        </div>
+        <div style={{ display:'flex', gap:12, flexShrink:0 }}>
+          {series.map(s => <span key={s.key} style={{ fontSize:10, color:s.color }}>■ {s.key}</span>)}
         </div>
       </div>
-      <svg viewBox={`0 0 ${width} ${height}`} style={{ width:'100%', display:'block' }} role="img" aria-label={title}>
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        style={{ width:'100%', height:170, display:'block' }}
+        role="img"
+        aria-label={title}
+        onMouseMove={hoverToIndex}
+        onMouseLeave={() => setHoverIndex(null)}
+      >
         {ticks.map(t => (
           <g key={t}>
             <line x1={pad.left} x2={width-pad.right} y1={y(t)} y2={y(t)} stroke="var(--border2)" />
@@ -90,14 +139,48 @@ function LineChart({ rows, metric, title, formatValue, benchmarks }) {
         {benchmarks && series.map(s => benchmarks[s.key] ? (
           <g key={`${s.key}-bench`}>
             <line x1={pad.left} x2={width-pad.right} y1={y(benchmarks[s.key])} y2={y(benchmarks[s.key])} stroke={s.color} strokeDasharray="4 5" opacity="0.65" />
-            <text x={width-pad.right} y={y(benchmarks[s.key])-5} textAnchor="end" fontSize="10" fill={s.color}>{s.key} benchmark {formatValue(benchmarks[s.key])}</text>
+            <text x={width-pad.right} y={y(benchmarks[s.key])-5} textAnchor="end" fontSize="10" fill={s.color}>{s.key} {formatValue(benchmarks[s.key])}</text>
           </g>
         ) : null)}
-        {series.map(s => <path key={s.key} d={pathFor(s.key)} fill="none" stroke={s.color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />)}
+        {showRolling && series.map(s => <path key={`${s.key}-avg`} d={rollingFor(s.key)} fill="none" stroke={s.color} strokeWidth="1.5" strokeDasharray="2 5" opacity="0.45" strokeLinecap="round" strokeLinejoin="round" />)}
+        {series.map(s => <path key={s.key} d={pathFor(s.key)} fill="none" stroke={s.color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />)}
+        {hoverIndex !== null && (
+          <g>
+            <line x1={tooltipX} x2={tooltipX} y1={pad.top} y2={height-pad.bottom} stroke="var(--border)" />
+            {series.map(s => {
+              const v = tooltip[s.key][metric];
+              if (v === null || v === undefined) return null;
+              return <circle key={s.key} cx={tooltipX} cy={y(v)} r="3.5" fill={s.color} stroke="var(--surface)" strokeWidth="1.5" />;
+            })}
+          </g>
+        )}
         {labelIdx.map(i => (
           <text key={i} x={x(i)} y={height-9} textAnchor="middle" fontSize="10" fill="var(--text3)">{rows[i].date.slice(5)}</text>
         ))}
       </svg>
+      {tooltip && (
+        <div style={{
+          position:'absolute',
+          top:tooltipY + 28,
+          left:`min(${Math.max(8, (tooltipX / width) * 100)}%, calc(100% - 170px))`,
+          width:160,
+          background:'var(--surface2)',
+          border:'1px solid var(--border)',
+          borderRadius:8,
+          padding:'8px 10px',
+          boxShadow:'0 8px 24px rgba(0,0,0,0.25)',
+          pointerEvents:'none',
+          zIndex:2,
+        }}>
+          <div style={{ fontSize:11, color:'var(--text)', fontWeight:700, marginBottom:5 }}>{fmtDisplay(tooltip.date)}</div>
+          {series.map(s => {
+            const v = tooltip[s.key][metric];
+            return <div key={s.key} style={{ display:'flex', justifyContent:'space-between', fontSize:11, color:s.color, padding:'2px 0' }}>
+              <span>{s.key}</span><strong>{v === null || v === undefined ? '—' : formatValue(v)}</strong>
+            </div>;
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -201,12 +284,13 @@ export default function Marketing() {
         <div style={{ fontSize:11, color:'var(--text3)', textTransform:'uppercase', letterSpacing:.5, marginBottom:12 }}>
           Daily trends — last {TREND_DAYS} days
         </div>
-        <div style={{ display:'grid', gridTemplateColumns:'1fr', gap:16, marginBottom:28 }}>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(2, minmax(0, 1fr))', gap:16, marginBottom:28 }}>
           <LineChart
             rows={trendRows}
             metric="leads"
             title="Daily Leads"
             formatValue={v => num(v)}
+            showRolling
           />
           <LineChart
             rows={trendRows}
