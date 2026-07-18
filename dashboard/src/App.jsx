@@ -8,6 +8,7 @@ import EMI from './tabs/EMI.jsx';
 import LTVFunnel from './tabs/LTVFunnel.jsx';
 import CRM from './tabs/CRM.jsx';
 import Performance from './tabs/Performance.jsx';
+import WorkshopAudit from './tabs/WorkshopAudit.jsx';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('marketing');
@@ -19,6 +20,7 @@ export default function App() {
       {activeTab === 'sales'       && <Sales />}
       {activeTab === 'crm'         && <CRM />}
       {activeTab === 'performance' && <Performance />}
+      {activeTab === 'workshopAudit' && <WorkshopAudit />}
       {activeTab === 'finance'     && <Finance />}
       {activeTab === 'emi'         && <EMI />}
       {activeTab === 'ltvfunnel'   && <LTVFunnel />}

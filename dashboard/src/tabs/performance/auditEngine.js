@@ -64,12 +64,13 @@ function monthsBack(dateStr, months) {
   return iso(d);
 }
 
-function summarizeBusinessWindow(data, from, to) {
+function summarizeBusinessWindow(data, from, to, scope = "Combined") {
   const tarotLeads = countFunnelLeads(data.marketing, "Tarot", from, to);
   const reikiLeads = countFunnelLeads(data.marketing, "Reiki", from, to);
-  const leads = tarotLeads + reikiLeads;
-  const spend = sumSpend(data.marketing.adSpend, from, to);
-  const sales = rangeSales(data.sales, from, to);
+  const leads = scope === "Tarot" ? tarotLeads : scope === "Reiki" ? reikiLeads : tarotLeads + reikiLeads;
+  const spend = sumSpend(data.marketing.adSpend, from, to, scope === "Combined" ? null : scope);
+  const scopedSales = scope === "Combined" ? data.sales : (data.sales || []).filter(e => isFunnelEnrollment(e, scope));
+  const sales = rangeSales(scopedSales, from, to);
 
   return {
     from,
@@ -112,7 +113,7 @@ export function aggregateInternKPI(internHistory, { from, to, funnel = null }) {
   return total;
 }
 
-export function buildTrajectoryOverview(data, today = iso(new Date())) {
+export function buildTrajectoryOverview(data, scope = "Combined", today = iso(new Date())) {
   const windows = [
     { label: "Last 7 Days", from: addDays(today, -6), to: today },
     { label: "Last 30 Days", from: addDays(today, -29), to: today },
@@ -120,13 +121,15 @@ export function buildTrajectoryOverview(data, today = iso(new Date())) {
     { label: "Last 6 Months", from: monthsBack(today, 6), to: today },
   ];
 
-  return windows.map(w => ({ ...w, ...summarizeBusinessWindow(data, w.from, w.to) }));
+  return windows.map(w => ({ ...w, ...summarizeBusinessWindow(data, w.from, w.to, scope) }));
 }
 
-function utwShowUpForWeek(showRows, weekStart, weekEnd) {
+function workshopShowUpForWeek(showRows, weekStart, weekEnd, kind = "UTW") {
   const matching = (showRows || []).filter(row => {
     const name = row.workshopName.toLowerCase();
-    return row.startDate >= weekStart && row.startDate <= weekEnd && (name.includes("utw") || name.includes("wand"));
+    const isUTW = name.includes("utw") || name.includes("wand");
+    const isR12 = name.includes("r12") || name.includes("reiki");
+    return row.startDate >= weekStart && row.startDate <= weekEnd && (kind === "R12" ? isR12 : isUTW);
   });
 
   const byDay = {};
@@ -146,7 +149,7 @@ function utwShowUpForWeek(showRows, weekStart, weekEnd) {
   };
 }
 
-export function buildRollingPerformance(data, internHistory, weeks = 12) {
+export function buildRollingPerformance(data, internHistory, weeks = 12, scope = "Combined") {
   const anchor = lastCompletedWeekStart();
   const firstWeek = addDays(anchor, -(weeks - 1) * 7);
   const chronological = [];
@@ -156,11 +159,12 @@ export function buildRollingPerformance(data, internHistory, weeks = 12) {
     const weekEnd = addDays(weekStart, 6);
     const tarotLeads = countFunnelLeads(data.marketing, "Tarot", weekStart, weekEnd);
     const reikiLeads = countFunnelLeads(data.marketing, "Reiki", weekStart, weekEnd);
-    const leads = tarotLeads + reikiLeads;
-    const spend = sumSpend(data.marketing.adSpend, weekStart, weekEnd);
-    const sales = rangeSales(data.sales, weekStart, weekEnd);
-    const intern = aggregateInternKPI(internHistory, { from: weekStart, to: weekEnd });
-    const show = utwShowUpForWeek(data.showUp, weekStart, weekEnd);
+    const leads = scope === "Tarot" ? tarotLeads : scope === "Reiki" ? reikiLeads : tarotLeads + reikiLeads;
+    const spend = sumSpend(data.marketing.adSpend, weekStart, weekEnd, scope === "Combined" ? null : scope);
+    const scopedSales = scope === "Combined" ? data.sales : (data.sales || []).filter(e => isFunnelEnrollment(e, scope));
+    const sales = rangeSales(scopedSales, weekStart, weekEnd);
+    const intern = aggregateInternKPI(internHistory, { from: weekStart, to: weekEnd, funnel: scope === "Combined" ? null : scope });
+    const show = workshopShowUpForWeek(data.showUp, weekStart, weekEnd, scope === "Reiki" ? "R12" : "UTW");
     const prev = chronological[chronological.length - 1];
     const revenueChange = prev ? sales.revenue - prev.revenue : null;
 
@@ -169,6 +173,7 @@ export function buildRollingPerformance(data, internHistory, weeks = 12) {
       weekEnd,
       tarotLeads,
       reikiLeads,
+      leads,
       spend,
       blendedCpl: leads > 0 ? Math.round(spend / leads) : null,
       showD1Pct: show.d1,
@@ -183,6 +188,64 @@ export function buildRollingPerformance(data, internHistory, weeks = 12) {
   }
 
   return chronological.reverse();
+}
+
+export function buildWorkshopAudit(data, selectedWorkshop, internHistory) {
+  if (!selectedWorkshop) return null;
+
+  const leadFrom = addDays(selectedWorkshop.startDate, -7);
+  const leadTo = addDays(selectedWorkshop.startDate, -1);
+  const conversionFrom = selectedWorkshop.startDate;
+  const conversionTo = addDays(selectedWorkshop.startDate, 7);
+  const funnel = selectedWorkshop.funnel === "Reiki" ? "Reiki" : "Tarot";
+  const leads = countFunnelLeads(data.marketing, funnel, leadFrom, leadTo);
+  const spend = sumSpend(data.marketing.adSpend, leadFrom, leadTo, funnel);
+  const show = getShowUp(data.showUp, selectedWorkshop);
+  const enrollments = (data.sales || []).filter(e => e.date >= conversionFrom && e.date <= conversionTo && isFunnelEnrollment(e, funnel));
+  const revenue = enrollments.reduce((s, e) => s + (e.amtReceived || 0), 0);
+  const workshop = {
+    ...selectedWorkshop,
+    leadFrom,
+    leadTo,
+    leads,
+    callWindow: callWindow(selectedWorkshop),
+    showD1: show["1"] || 0,
+    showD2: show["2"] || 0,
+    showD3: show["3"] || 0,
+    showD1Pct: pct(show["1"] || 0, leads),
+    showD2Pct: pct(show["2"] || 0, leads),
+    showD3Pct: pct(show["3"] || 0, leads),
+  };
+  const calls = workshop.callWindow
+    ? aggregateInternKPI(internHistory, { from: workshop.callWindow.from, to: workshop.callWindow.to, funnel })
+    : null;
+  const funnelRow = {
+    funnel,
+    leads,
+    spend,
+    cpl: leads > 0 ? Math.round(spend / leads) : null,
+    enrollments: enrollments.length,
+    revenue,
+    conversionPct: pct(enrollments.length, leads),
+    roas: moneyRatio(revenue, spend),
+  };
+  const flags = addCallFlags({
+    weekStart: selectedWorkshop.startDate,
+    weekEnd: conversionTo,
+    flags: buildSourceFlags({ funnelRows: [funnelRow], workshopRows: [workshop], leadFrom, leadTo }),
+    workshopRows: [workshop],
+  }, { [workshop.id]: calls });
+
+  return {
+    workshop,
+    funnelRow,
+    calls,
+    flags,
+    leadFrom,
+    leadTo,
+    conversionFrom,
+    conversionTo,
+  };
 }
 
 export function workshopKind(workshop) {

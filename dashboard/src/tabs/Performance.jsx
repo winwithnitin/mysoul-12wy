@@ -54,7 +54,30 @@ function MetricCard({ label, value, color }) {
   );
 }
 
-function TrajectoryCard({ row }) {
+const PERFORMANCE_SCOPES = ["Combined", "Tarot", "Reiki"];
+
+function ScopeSelector({ scope, onChange }) {
+  return (
+    <div style={{ display: "flex", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, overflow: "hidden" }}>
+      {PERFORMANCE_SCOPES.map(option => (
+        <button key={option} onClick={() => onChange(option)} style={{
+          border: "none",
+          borderRadius: 0,
+          padding: "5px 13px",
+          fontSize: 12,
+          fontWeight: 500,
+          background: scope === option ? "var(--tarot)" : "transparent",
+          color: scope === option ? "#fff" : "var(--text3)",
+        }}>{option}</button>
+      ))}
+    </div>
+  );
+}
+
+function TrajectoryCard({ row, scope }) {
+  const leadLabel = scope === "Combined" ? "Total Leads" : `${scope} Leads`;
+  const cplLabel = scope === "Combined" ? "Blended CPL" : `${scope} CPL`;
+  const cplOk = scope === "Combined" || !row.blendedCpl || row.blendedCpl <= WORKSHOP_BENCHMARKS[scope].cpl;
   return (
     <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, padding: "16px 18px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10, marginBottom: 12 }}>
@@ -62,10 +85,10 @@ function TrajectoryCard({ row }) {
         <div style={{ fontSize: 10, color: "var(--text3)" }}>{fmtDisplay(row.from)} - {fmtDisplay(row.to)}</div>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-        <MiniMetric label="Total Leads" value={num(row.leads)} />
-        <MiniMetric label="Blended CPL" value={row.blendedCpl ? inr(row.blendedCpl) : "--"} />
-        <MiniMetric label="Enrollments" value={num(row.enrollments)} />
-        <MiniMetric label="Revenue" value={inr(Math.round(row.revenue))} color="var(--success)" />
+        <MiniMetric label={leadLabel} value={num(row.leads)} />
+        <MiniMetric label={cplLabel} value={row.blendedCpl ? inr(row.blendedCpl) : "--"} color={scope === "Combined" ? undefined : cplOk ? "var(--success)" : "var(--danger)"} />
+        <MiniMetric label={`${scope === "Combined" ? "" : scope} Enrollments`.trim()} value={num(row.enrollments)} />
+        <MiniMetric label={`${scope === "Combined" ? "" : scope} Revenue`.trim()} value={inr(Math.round(row.revenue))} color="var(--success)" />
       </div>
     </div>
   );
@@ -89,18 +112,18 @@ function SectionTitle({ title, subtitle }) {
   );
 }
 
-function TrajectoryOverview({ rows }) {
+function TrajectoryOverview({ rows, scope }) {
   return (
     <section style={{ marginBottom: 26 }}>
       <SectionTitle title="Trajectory Overview" subtitle="Rolling health check across leads, CPL, enrollments, and cash revenue." />
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 14 }}>
-        {rows.map(row => <TrajectoryCard key={row.label} row={row} />)}
+        {rows.map(row => <TrajectoryCard key={row.label} row={row} scope={scope} />)}
       </div>
     </section>
   );
 }
 
-function RollingPerformanceTable({ rows }) {
+function RollingPerformanceTable({ rows, scope }) {
   const rowBg = status => {
     if (status === "up") return "rgba(16,185,129,0.08)";
     if (status === "down") return "rgba(239,68,68,0.08)";
@@ -114,7 +137,10 @@ function RollingPerformanceTable({ rows }) {
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr>
-              {["Week", "Tarot Leads", "Reiki Leads", "Total Ad Spend", "Blended CPL", "UTW D1", "UTW D2", "UTW D3", "Intern Connect", "Enrollments", "Revenue", "WoW Revenue"].map((h, i) => (
+              {(scope === "Combined"
+                ? ["Week", "Tarot Leads", "Reiki Leads", "Total Ad Spend", "Blended CPL", "UTW D1", "UTW D2", "UTW D3", "Intern Connect", "Enrollments", "Revenue", "WoW Revenue"]
+                : ["Week", `${scope} Leads`, `${scope} Ad Spend`, `${scope} CPL`, scope === "Reiki" ? "R12 D1" : "UTW D1", scope === "Reiki" ? "R12 D2" : "UTW D2", scope === "Reiki" ? "R12 D3" : "UTW D3", "Intern Connect", `${scope} Enrollments`, `${scope} Revenue`, "WoW Revenue"]
+              ).map((h, i) => (
                 <th key={h} style={i === 0 ? thL : th}>{h}</th>
               ))}
             </tr>
@@ -123,13 +149,15 @@ function RollingPerformanceTable({ rows }) {
             {rows.map(row => {
               const changeColor = row.status === "up" ? "var(--success)" : row.status === "down" ? "var(--danger)" : "var(--text3)";
               const arrow = row.revenueChange === null ? "" : row.revenueChange >= 0 ? "▲" : "▼";
+              const cplOk = scope === "Combined" || !row.blendedCpl || row.blendedCpl <= WORKSHOP_BENCHMARKS[scope].cpl;
               return (
                 <tr key={row.weekStart} style={{ background: rowBg(row.status) }}>
                   <td style={{ ...td("left"), color: "var(--text)", fontWeight: 700 }}>{fmtDisplay(row.weekStart)}</td>
-                  <td style={td()}>{num(row.tarotLeads)}</td>
-                  <td style={td()}>{num(row.reikiLeads)}</td>
+                  {scope === "Combined" && <td style={td()}>{num(row.tarotLeads)}</td>}
+                  {scope === "Combined" && <td style={td()}>{num(row.reikiLeads)}</td>}
+                  {scope !== "Combined" && <td style={td()}>{num(row.leads)}</td>}
                   <td style={td()}>{inr(Math.round(row.spend))}</td>
-                  <td style={td()}>{row.blendedCpl ? inr(row.blendedCpl) : "--"}</td>
+                  <td style={{ ...td(), color: scope === "Combined" ? "var(--text2)" : cplOk ? "var(--success)" : "var(--danger)", fontWeight: scope === "Combined" ? 400 : 700 }}>{row.blendedCpl ? inr(row.blendedCpl) : "--"}</td>
                   <td style={td()}>{pctText(row.showD1Pct)}</td>
                   <td style={td()}>{pctText(row.showD2Pct)}</td>
                   <td style={td()}>{pctText(row.showD3Pct)}</td>
@@ -271,6 +299,7 @@ export default function Performance() {
   const [weekStart, setWeekStart] = useState(lastCompletedWeekStart());
   const [notes, setNotes] = useState("");
   const [copied, setCopied] = useState(false);
+  const [scope, setScope] = useState("Combined");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -303,8 +332,8 @@ export default function Performance() {
 
   const audit = useMemo(() => data ? buildAudit(data, weekStart) : null, [data, weekStart]);
   const callData = useMemo(() => audit ? buildAuditCallData(audit, data?.internHistory) : {}, [audit, data]);
-  const trajectoryRows = useMemo(() => data ? buildTrajectoryOverview(data) : [], [data]);
-  const rollingRows = useMemo(() => data ? buildRollingPerformance(data, data.internHistory) : [], [data]);
+  const trajectoryRows = useMemo(() => data ? buildTrajectoryOverview(data, scope) : [], [data, scope]);
+  const rollingRows = useMemo(() => data ? buildRollingPerformance(data, data.internHistory, 12, scope) : [], [data, scope]);
 
   const flags = useMemo(() => audit ? addCallFlags(audit, callData) : [], [audit, callData]);
 
@@ -329,9 +358,13 @@ export default function Performance() {
       <ReviewHeader weekStart={weekStart} audit={audit} updated={updated} onWeekChange={setWeekStart} onRefresh={load} />
 
       <div style={{ padding: "24px 24px 36px" }}>
-        <TrajectoryOverview rows={trajectoryRows} />
+        <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: 18 }}>
+          <ScopeSelector scope={scope} onChange={setScope} />
+        </div>
 
-        <RollingPerformanceTable rows={rollingRows} />
+        <TrajectoryOverview rows={trajectoryRows} scope={scope} />
+
+        <RollingPerformanceTable rows={rollingRows} scope={scope} />
 
         <SectionTitle title="Workshop Audit" subtitle="The week picker above controls this audit section only." />
 

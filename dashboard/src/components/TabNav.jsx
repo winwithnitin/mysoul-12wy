@@ -3,6 +3,7 @@ const TABS = [
   { key: 'sales',       label: 'Sales'        },
   { key: 'crm',         label: 'CRM'          },
   { key: 'performance', label: 'Performance'  },
+  { key: 'workshopAudit', label: 'Workshop Audit' },
   { key: 'finance',     label: 'Finance'      },
   { key: 'emi',         label: 'SUPER & RGM'  },
   { key: 'ltvfunnel',   label: 'LTV & Funnel' },
