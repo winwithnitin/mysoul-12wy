@@ -213,13 +213,96 @@ function workshopShowUpForWeek(showRows, weekStart, weekEnd, kind = "UTW") {
   };
 }
 
-function preferredWorkshopForWeek(workshops, weekStart, weekEnd, scope = "Combined") {
+function showUpKind(row) {
+  const name = String(row.workshopName || "").toLowerCase();
+  if (name.includes("r12") || name.includes("reiki")) return "R12";
+  if (name.includes("utw") || name.includes("wand")) return "UTW";
+  if (name.includes("icp") || name.includes("predict")) return "ICP";
+  if (name.includes("thw") || name.includes("health")) return "THW";
+  return null;
+}
+
+function fallbackWorkshopFromShowUp(showRows, weekStart, weekEnd, scope = "Combined") {
   const targetKind = scope === "Reiki" ? "R12" : "UTW";
-  const inWeek = (workshops || [])
+  const matching = (showRows || [])
+    .filter(row => row.startDate >= weekStart && row.startDate <= weekEnd)
+    .filter(row => {
+      const kind = showUpKind(row);
+      if (!kind) return false;
+      if (scope === "Reiki") return kind === "R12";
+      if (scope === "Tarot") return kind !== "R12";
+      return true;
+    })
+    .sort((a, b) => a.startDate.localeCompare(b.startDate));
+
+  const row = matching.find(r => showUpKind(r) === targetKind) || matching[0];
+  if (!row) return null;
+
+  const kind = showUpKind(row);
+  const funnel = kind === "R12" ? "Reiki" : "Tarot";
+  return {
+    id: kind || funnel,
+    name: row.workshopName || `${kind || funnel} Workshop`,
+    days: kind === "UTW" ? 3 : 1,
+    startDate: row.startDate,
+    startTime: "",
+    startDay: "",
+    status: "Done",
+    funnel,
+    inferredFromShowUp: true,
+  };
+}
+
+function preferredWorkshopForWeek(data, weekStart, weekEnd, scope = "Combined") {
+  const targetKind = scope === "Reiki" ? "R12" : "UTW";
+  const inWeek = (data.workshops || [])
     .filter(w => w.startDate >= weekStart && w.startDate <= weekEnd)
     .filter(w => scope === "Combined" || w.funnel === scope)
     .sort((a, b) => a.startDate.localeCompare(b.startDate));
-  return inWeek.find(w => workshopKind(w) === targetKind) || inWeek[0] || null;
+  return inWeek.find(w => workshopKind(w) === targetKind) || inWeek[0] || fallbackWorkshopFromShowUp(data.showUp, weekStart, weekEnd, scope);
+}
+
+function avgPct(values) {
+  const nums = values.filter(v => v !== null && v !== undefined);
+  if (!nums.length) return null;
+  return +(nums.reduce((s, v) => s + v, 0) / nums.length).toFixed(2);
+}
+
+function monthlyShowUpAverages(showRows, from, to, scope = "Combined") {
+  const targetKind = scope === "Reiki" ? "R12" : "UTW";
+  const byWorkshop = {};
+
+  for (const row of showRows || []) {
+    if (row.startDate < from || row.startDate > to) continue;
+    const kind = showUpKind(row);
+    if (!kind) continue;
+    if (scope === "Reiki" && kind !== "R12") continue;
+    if (scope !== "Reiki" && kind !== targetKind) continue;
+
+    const key = `${row.startDate}:${kind}`;
+    const day = String(row.workshopDay || "1").match(/\d+/)?.[0] || "1";
+    const current = byWorkshop[key]?.[day] || { show: 0, leads: 0 };
+    byWorkshop[key] = {
+      ...(byWorkshop[key] || {}),
+      [day]: {
+        show: Math.max(current.show, row.maxShowUp || 0),
+        leads: Math.max(current.leads, row.reportedLeads || 0),
+      },
+    };
+  }
+
+  const days = { d1: [], d2: [], d3: [] };
+  for (const workshop of Object.values(byWorkshop)) {
+    days.d1.push(pct(workshop["1"]?.show || 0, workshop["1"]?.leads || 0));
+    days.d2.push(pct(workshop["2"]?.show || 0, workshop["2"]?.leads || 0));
+    days.d3.push(pct(workshop["3"]?.show || 0, workshop["3"]?.leads || 0));
+  }
+
+  return {
+    d1: avgPct(days.d1),
+    d2: avgPct(days.d2),
+    d3: avgPct(days.d3),
+  };
 }
 
 export function buildRollingPerformance(data, internHistory, weeks = 12, scope = "Combined") {
@@ -230,7 +313,7 @@ export function buildRollingPerformance(data, internHistory, weeks = 12, scope =
   for (let i = 0; i < weeks; i++) {
     const calendarWeekStart = addDays(firstWeek, i * 7);
     const calendarWeekEnd = addDays(calendarWeekStart, 6);
-    const workshop = preferredWorkshopForWeek(data.workshops, calendarWeekStart, calendarWeekEnd, scope);
+    const workshop = preferredWorkshopForWeek(data, calendarWeekStart, calendarWeekEnd, scope);
     const rowStart = workshop?.startDate || calendarWeekStart;
     const hasWorkshop = Boolean(workshop);
     const spendFrom = hasWorkshop ? addDays(rowStart, -7) : calendarWeekStart;
@@ -292,6 +375,8 @@ export function buildMonthlyPerformance(data, months = 6, scope = "Combined", to
     const { tarotLeads, reikiLeads, leads } = countScopedLeads(data.marketing, scope, from, to);
     const spend = sumSpend(data.marketing.adSpend, from, to, scope === "Combined" ? null : scope);
     const sales = rangeSales(scopedSalesRows(data.sales, scope), from, to);
+    const show = monthlyShowUpAverages(data.showUp, from, to, scope);
+    const intern = aggregateInternKPI(data.internHistory, { from, to, funnel: scope === "Combined" ? null : scope });
     const prev = chronological[chronological.length - 1];
     const revenueChange = prev ? sales.revenue - prev.revenue : null;
 
@@ -305,6 +390,10 @@ export function buildMonthlyPerformance(data, months = 6, scope = "Combined", to
       leads,
       spend,
       blendedCpl: leads > 0 ? Math.round(spend / leads) : null,
+      showD1Pct: show.d1,
+      showD2Pct: show.d2,
+      showD3Pct: show.d3,
+      internConnectedRatio: intern.connectedRatio,
       enrollments: sales.enrollments,
       revenue: sales.revenue,
       roas: roas(sales.revenue, spend),

@@ -32,6 +32,54 @@ const td = (align = "right") => ({
 });
 const box = { background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, overflow: "hidden", marginBottom: 18 };
 const CALL_DATA_START = "2026-06-29";
+const AUDIT_FUNNELS = ["Tarot", "Reiki"];
+
+function FunnelToggle({ value, onChange }) {
+  return (
+    <div style={{ display: "flex", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 8, overflow: "hidden" }}>
+      {AUDIT_FUNNELS.map(option => (
+        <button key={option} onClick={() => onChange(option)} style={{
+          border: "none",
+          borderRadius: 0,
+          padding: "5px 13px",
+          fontSize: 12,
+          fontWeight: 500,
+          background: value === option ? "var(--tarot)" : "transparent",
+          color: value === option ? "#fff" : "var(--text3)",
+        }}>{option}</button>
+      ))}
+    </div>
+  );
+}
+
+function fallbackWorkshopsFromShowUp(showUp) {
+  const byKey = {};
+  for (const row of showUp || []) {
+    const name = String(row.workshopName || "").toLowerCase();
+    const kind = name.includes("r12") || name.includes("reiki") ? "R12"
+      : name.includes("utw") || name.includes("wand") ? "UTW"
+      : name.includes("icp") || name.includes("predict") ? "ICP"
+      : name.includes("thw") || name.includes("health") ? "THW"
+      : null;
+    if (!kind || !row.startDate) continue;
+    const funnel = kind === "R12" ? "Reiki" : "Tarot";
+    const key = `${kind}-${row.startDate}`;
+    if (!byKey[key]) {
+      byKey[key] = {
+        id: key,
+        name: row.workshopName || `${kind} Workshop`,
+        days: kind === "UTW" ? 3 : 1,
+        startDate: row.startDate,
+        startTime: "",
+        startDay: "",
+        status: "Done",
+        funnel,
+        inferredFromShowUp: true,
+      };
+    }
+  }
+  return Object.values(byKey);
+}
 
 function SectionTitle({ title, subtitle }) {
   return (
@@ -86,6 +134,7 @@ export default function WorkshopAudit({ sharedData = null, sharedLoading = false
   const [ownData, setOwnData] = useState(null);
   const [ownLoading, setOwnLoading] = useState(true);
   const [selectedId, setSelectedId] = useState("");
+  const [auditFunnel, setAuditFunnel] = useState("Tarot");
   const [notes, setNotes] = useState("");
   const [copied, setCopied] = useState(false);
   const [ownUpdated, setOwnUpdated] = useState(null);
@@ -116,13 +165,28 @@ export default function WorkshopAudit({ sharedData = null, sharedLoading = false
   const updated = sharedData ? sharedUpdated : ownUpdated;
   const refresh = onRefresh || ownLoad;
 
-  const workshops = useMemo(() => (data?.workshops || []).slice().sort((a, b) => b.startDate.localeCompare(a.startDate)), [data]);
+  const workshops = useMemo(() => {
+    const planWorkshops = data?.workshops || [];
+    const fallback = fallbackWorkshopsFromShowUp(data?.showUp || []);
+    const seen = new Set(planWorkshops.map(w => `${w.funnel}:${w.startDate}`));
+    const combined = [
+      ...planWorkshops,
+      ...fallback.filter(w => !seen.has(`${w.funnel}:${w.startDate}`)),
+    ];
+    return combined
+      .filter(w => w.funnel === auditFunnel)
+      .sort((a, b) => b.startDate.localeCompare(a.startDate));
+  }, [data, auditFunnel]);
   const selectedWorkshop = useMemo(() => workshops.find(w => w.id === selectedId) || null, [workshops, selectedId]);
   const audit = useMemo(() => data && selectedWorkshop ? buildWorkshopAudit(data, selectedWorkshop, data.internHistory) : null, [data, selectedWorkshop]);
 
   useEffect(() => {
     setNotes(selectedId ? localStorage.getItem(`workshop-audit-notes:${selectedId}`) || "" : "");
   }, [selectedId]);
+
+  useEffect(() => {
+    setSelectedId("");
+  }, [auditFunnel]);
 
   useEffect(() => {
     if (selectedId) localStorage.setItem(`workshop-audit-notes:${selectedId}`, notes);
@@ -146,13 +210,14 @@ export default function WorkshopAudit({ sharedData = null, sharedLoading = false
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 24px", borderBottom: "1px solid var(--border)", background: "var(--surface2)", flexWrap: "wrap", gap: 10 }}>
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+          <FunnelToggle value={auditFunnel} onChange={setAuditFunnel} />
           <select value={selectedId} onChange={e => setSelectedId(e.target.value)} style={{ minWidth: 320 }}>
             <option value="">Select workshop...</option>
             {workshops.map(w => (
-              <option key={w.id} value={w.id}>{w.id} - {w.funnel} - {fmtDisplay(w.startDate)}</option>
+              <option key={w.id} value={w.id}>{w.id} - {w.funnel} - {fmtDisplay(w.startDate)}{w.inferredFromShowUp ? " - ShowUp" : ""}</option>
             ))}
           </select>
-          <span style={{ fontSize: 12, color: "var(--text3)" }}>{workshops.length} workshops loaded</span>
+          <span style={{ fontSize: 12, color: "var(--text3)" }}>{workshops.length} {auditFunnel} workshops loaded</span>
         </div>
         {!embedded && <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
           {updated && <span style={{ fontSize: 11, color: "var(--text3)" }}>{updated.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}</span>}
