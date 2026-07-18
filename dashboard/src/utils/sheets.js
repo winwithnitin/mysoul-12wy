@@ -231,6 +231,56 @@ export async function loadInternKPIData({ from, to, funnel }) {
   return total;
 }
 
+export async function loadInternKPIHistory() {
+  const discoveredTabs = await listPublicSheetTabs(INTERNS_KPI.id);
+  const tabs = (discoveredTabs.length ? discoveredTabs : INTERNS_KPI.fallbackTabs)
+    .filter(tab => tab && !(INTERNS_KPI.skipTabs || []).includes(tab));
+
+  const results = await Promise.all(tabs.map(async tab => {
+    try {
+      const rows = await fetchCSV(INTERNS_KPI.id, tab);
+      const entries = [];
+
+      for (const row of rows) {
+        const date = parseAnyDate(row[1]);
+        if (!date) continue;
+
+        const entry = {
+          date,
+          tab,
+          tarotLeadsAssigned: parseAmount(row[3]),
+          tarotCallsAttempted: parseAmount(row[4]),
+          tarotConnected: parseAmount(row[5]),
+          reikiLeadsAssigned: parseAmount(row[7]),
+          reikiCallsAttempted: parseAmount(row[8]),
+          reikiConnected: parseAmount(row[9]),
+        };
+
+        const hasData = [
+          entry.tarotLeadsAssigned,
+          entry.tarotCallsAttempted,
+          entry.tarotConnected,
+          entry.reikiLeadsAssigned,
+          entry.reikiCallsAttempted,
+          entry.reikiConnected,
+        ].some(v => v > 0);
+
+        if (hasData) entries.push(entry);
+      }
+
+      return { tab, entries };
+    } catch (e) {
+      return { tab, entries: [], error: e.message };
+    }
+  }));
+
+  return {
+    rows: results.flatMap(r => r.entries),
+    tabs: results.map(r => ({ tab: r.tab, rows: r.entries.length, error: r.error || null })),
+    discoveryMode: discoveredTabs.length ? 'auto' : 'fallback',
+  };
+}
+
 // --- Count leads in a date range from raw rows --------------------------------
 export function countLeadsInRange(rows, dateCol, from, to) {
   let count = 0;

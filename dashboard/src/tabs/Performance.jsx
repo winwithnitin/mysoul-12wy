@@ -6,14 +6,17 @@ import {
   loadWorkshopPlan,
   loadWorkshopShowUpData,
   loadAuditMemory,
-  loadInternKPIData,
+  loadInternKPIHistory,
 } from "../utils/sheets.js";
 import { fmtDisplay } from "../utils/dates.js";
 import { inr, num } from "../utils/format.js";
 import {
   addCallFlags,
   buildAudit,
+  buildAuditCallData,
   buildQuestions,
+  buildRollingPerformance,
+  buildTrajectoryOverview,
   lastCompletedWeekStart,
   makeSlackSummary,
   pctText,
@@ -48,6 +51,101 @@ function MetricCard({ label, value, color }) {
       <div style={{ fontSize: 11, color: "var(--text3)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 5 }}>{label}</div>
       <div style={{ fontSize: 20, fontWeight: 700, color: color || "var(--text)" }}>{value}</div>
     </div>
+  );
+}
+
+function TrajectoryCard({ row }) {
+  return (
+    <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, padding: "16px 18px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10, marginBottom: 12 }}>
+        <div style={{ fontSize: 13, color: "var(--text)", fontWeight: 700 }}>{row.label}</div>
+        <div style={{ fontSize: 10, color: "var(--text3)" }}>{fmtDisplay(row.from)} - {fmtDisplay(row.to)}</div>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <MiniMetric label="Total Leads" value={num(row.leads)} />
+        <MiniMetric label="Blended CPL" value={row.blendedCpl ? inr(row.blendedCpl) : "--"} />
+        <MiniMetric label="Enrollments" value={num(row.enrollments)} />
+        <MiniMetric label="Revenue" value={inr(Math.round(row.revenue))} color="var(--success)" />
+      </div>
+    </div>
+  );
+}
+
+function MiniMetric({ label, value, color }) {
+  return (
+    <div>
+      <div style={{ fontSize: 10, color: "var(--text3)", textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 3 }}>{label}</div>
+      <div style={{ fontSize: 16, fontWeight: 700, color: color || "var(--text2)" }}>{value}</div>
+    </div>
+  );
+}
+
+function SectionTitle({ title, subtitle }) {
+  return (
+    <div style={{ margin: "0 0 12px" }}>
+      <div style={{ fontSize: 11, color: "var(--text3)", textTransform: "uppercase", letterSpacing: 0.5 }}>{title}</div>
+      {subtitle && <div style={{ fontSize: 12, color: "var(--text3)", marginTop: 4 }}>{subtitle}</div>}
+    </div>
+  );
+}
+
+function TrajectoryOverview({ rows }) {
+  return (
+    <section style={{ marginBottom: 26 }}>
+      <SectionTitle title="Trajectory Overview" subtitle="Rolling health check across leads, CPL, enrollments, and cash revenue." />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 14 }}>
+        {rows.map(row => <TrajectoryCard key={row.label} row={row} />)}
+      </div>
+    </section>
+  );
+}
+
+function RollingPerformanceTable({ rows }) {
+  const rowBg = status => {
+    if (status === "up") return "rgba(16,185,129,0.08)";
+    if (status === "down") return "rgba(239,68,68,0.08)";
+    return "rgba(148,163,184,0.07)";
+  };
+
+  return (
+    <section style={{ marginBottom: 30 }}>
+      <SectionTitle title="12-Week Rolling Performance" subtitle="The main weekly business trajectory view. Revenue color compares each week against the week before it." />
+      <div style={box}>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr>
+              {["Week", "Tarot Leads", "Reiki Leads", "Total Ad Spend", "Blended CPL", "UTW D1", "UTW D2", "UTW D3", "Intern Connect", "Enrollments", "Revenue", "WoW Revenue"].map((h, i) => (
+                <th key={h} style={i === 0 ? thL : th}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map(row => {
+              const changeColor = row.status === "up" ? "var(--success)" : row.status === "down" ? "var(--danger)" : "var(--text3)";
+              const arrow = row.revenueChange === null ? "" : row.revenueChange >= 0 ? "▲" : "▼";
+              return (
+                <tr key={row.weekStart} style={{ background: rowBg(row.status) }}>
+                  <td style={{ ...td("left"), color: "var(--text)", fontWeight: 700 }}>{fmtDisplay(row.weekStart)}</td>
+                  <td style={td()}>{num(row.tarotLeads)}</td>
+                  <td style={td()}>{num(row.reikiLeads)}</td>
+                  <td style={td()}>{inr(Math.round(row.spend))}</td>
+                  <td style={td()}>{row.blendedCpl ? inr(row.blendedCpl) : "--"}</td>
+                  <td style={td()}>{pctText(row.showD1Pct)}</td>
+                  <td style={td()}>{pctText(row.showD2Pct)}</td>
+                  <td style={td()}>{pctText(row.showD3Pct)}</td>
+                  <td style={td()}>{pctText(row.internConnectedRatio)}</td>
+                  <td style={td()}>{num(row.enrollments)}</td>
+                  <td style={{ ...td(), color: "var(--success)", fontWeight: 700 }}>{inr(Math.round(row.revenue))}</td>
+                  <td style={{ ...td(), color: changeColor, fontWeight: 700 }}>
+                    {row.revenueChange === null ? "--" : `${arrow} ${inr(Math.abs(Math.round(row.revenueChange)))}`}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </section>
   );
 }
 
@@ -173,19 +271,19 @@ export default function Performance() {
   const [weekStart, setWeekStart] = useState(lastCompletedWeekStart());
   const [notes, setNotes] = useState("");
   const [copied, setCopied] = useState(false);
-  const [callData, setCallData] = useState({});
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [workshops, showUp, marketing, sales, memory] = await Promise.all([
+      const [workshops, showUp, marketing, sales, memory, internHistory] = await Promise.all([
         loadWorkshopPlan().catch(() => []),
         loadWorkshopShowUpData().catch(() => []),
         loadMarketingData(),
         loadSalesData(),
         loadAuditMemory().catch(() => []),
+        loadInternKPIHistory().catch(() => ({ rows: [], tabs: [], discoveryMode: "unavailable" })),
       ]);
-      setData({ workshops, showUp, marketing, sales, memory });
+      setData({ workshops, showUp, marketing, sales, memory, internHistory });
     } finally {
       setLoading(false);
       setUpdated(new Date());
@@ -204,23 +302,9 @@ export default function Performance() {
   }, [weekStart, notes]);
 
   const audit = useMemo(() => data ? buildAudit(data, weekStart) : null, [data, weekStart]);
-
-  useEffect(() => {
-    if (!audit) return;
-    let alive = true;
-
-    async function loadCalls() {
-      const entries = await Promise.all(audit.workshopRows.map(async workshop => {
-        if (!workshop.callWindow) return [workshop.id, null];
-        const calls = await loadInternKPIData({ from: workshop.callWindow.from, to: workshop.callWindow.to, funnel: workshop.funnel }).catch(e => ({ error: e.message }));
-        return [workshop.id, calls];
-      }));
-      if (alive) setCallData(Object.fromEntries(entries));
-    }
-
-    loadCalls();
-    return () => { alive = false; };
-  }, [audit]);
+  const callData = useMemo(() => audit ? buildAuditCallData(audit, data?.internHistory) : {}, [audit, data]);
+  const trajectoryRows = useMemo(() => data ? buildTrajectoryOverview(data) : [], [data]);
+  const rollingRows = useMemo(() => data ? buildRollingPerformance(data, data.internHistory) : [], [data]);
 
   const flags = useMemo(() => audit ? addCallFlags(audit, callData) : [], [audit, callData]);
 
@@ -244,15 +328,21 @@ export default function Performance() {
     <div>
       <ReviewHeader weekStart={weekStart} audit={audit} updated={updated} onWeekChange={setWeekStart} onRefresh={load} />
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 1, background: "var(--border)", marginBottom: 24 }}>
-        <MetricCard label="Workshops" value={num(audit.workshopRows.length)} />
-        <MetricCard label="Lead Pool" value={num(totalLeads)} />
-        <MetricCard label="Ad Spend" value={inr(Math.round(totalSpend))} color="var(--warning)" />
-        <MetricCard label="Cash Revenue" value={inr(Math.round(totalRevenue))} color="var(--success)" />
-        <MetricCard label="Audit Flags" value={num(flags.length)} color={flags.length ? "var(--danger)" : "var(--success)"} />
-      </div>
+      <div style={{ padding: "24px 24px 36px" }}>
+        <TrajectoryOverview rows={trajectoryRows} />
 
-      <div style={{ padding: "0 24px 36px" }}>
+        <RollingPerformanceTable rows={rollingRows} />
+
+        <SectionTitle title="Workshop Audit" subtitle="The week picker above controls this audit section only." />
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 1, background: "var(--border)", marginBottom: 24 }}>
+          <MetricCard label="Workshops" value={num(audit.workshopRows.length)} />
+          <MetricCard label="Lead Pool" value={num(totalLeads)} />
+          <MetricCard label="Ad Spend" value={inr(Math.round(totalSpend))} color="var(--warning)" />
+          <MetricCard label="Cash Revenue" value={inr(Math.round(totalRevenue))} color="var(--success)" />
+          <MetricCard label="Audit Flags" value={num(flags.length)} color={flags.length ? "var(--danger)" : "var(--success)"} />
+        </div>
+
         <div style={{ fontSize: 11, color: "var(--text3)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10 }}>Funnel Performance</div>
         <FunnelTable rows={audit.funnelRows} />
 

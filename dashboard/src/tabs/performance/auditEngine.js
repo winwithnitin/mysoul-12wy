@@ -39,6 +39,152 @@ function moneyRatio(n, d) {
   return d > 0 ? +(n / d).toFixed(2) : null;
 }
 
+function sumSpend(adSpend, from, to, program = null) {
+  return (adSpend || [])
+    .filter(r => r.date >= from && r.date <= to && (!program || r.program === program))
+    .reduce((s, r) => s + (r.spend || 0), 0);
+}
+
+function countFunnelLeads(marketing, funnel, from, to) {
+  const rows = funnel === "Tarot" ? marketing.tarotRows : marketing.reikiRows;
+  return countLeadsInRange(rows || [], LEAD_DATE_COLS[funnel], from, to);
+}
+
+function rangeSales(sales, from, to) {
+  const enrollments = (sales || []).filter(e => e.date >= from && e.date <= to);
+  return {
+    enrollments: enrollments.length,
+    revenue: enrollments.reduce((s, e) => s + (e.amtReceived || 0), 0),
+  };
+}
+
+function monthsBack(dateStr, months) {
+  const d = new Date(`${dateStr}T12:00:00`);
+  d.setMonth(d.getMonth() - months);
+  return iso(d);
+}
+
+function summarizeBusinessWindow(data, from, to) {
+  const tarotLeads = countFunnelLeads(data.marketing, "Tarot", from, to);
+  const reikiLeads = countFunnelLeads(data.marketing, "Reiki", from, to);
+  const leads = tarotLeads + reikiLeads;
+  const spend = sumSpend(data.marketing.adSpend, from, to);
+  const sales = rangeSales(data.sales, from, to);
+
+  return {
+    from,
+    to,
+    tarotLeads,
+    reikiLeads,
+    leads,
+    spend,
+    blendedCpl: leads > 0 ? Math.round(spend / leads) : null,
+    enrollments: sales.enrollments,
+    revenue: sales.revenue,
+  };
+}
+
+export function aggregateInternKPI(internHistory, { from, to, funnel = null }) {
+  const total = { leadsAssigned: 0, callsAttempted: 0, connected: 0, rows: 0, latestDate: null, tabs: [], errors: [] };
+  const rows = Array.isArray(internHistory) ? internHistory : (internHistory?.rows || []);
+  const selected = rows.filter(row => row.date >= from && row.date <= to);
+
+  for (const row of selected) {
+    if (!total.tabs.includes(row.tab)) total.tabs.push(row.tab);
+
+    if (!funnel || funnel === "Tarot") {
+      total.leadsAssigned += row.tarotLeadsAssigned || 0;
+      total.callsAttempted += row.tarotCallsAttempted || 0;
+      total.connected += row.tarotConnected || 0;
+    }
+    if (!funnel || funnel === "Reiki") {
+      total.leadsAssigned += row.reikiLeadsAssigned || 0;
+      total.callsAttempted += row.reikiCallsAttempted || 0;
+      total.connected += row.reikiConnected || 0;
+    }
+
+    total.rows += 1;
+    if (!total.latestDate || row.date > total.latestDate) total.latestDate = row.date;
+  }
+
+  total.connectedRatio = total.callsAttempted > 0 ? (total.connected / total.callsAttempted) * 100 : null;
+  total.discoveryMode = internHistory?.discoveryMode || "loaded";
+  return total;
+}
+
+export function buildTrajectoryOverview(data, today = iso(new Date())) {
+  const windows = [
+    { label: "Last 7 Days", from: addDays(today, -6), to: today },
+    { label: "Last 30 Days", from: addDays(today, -29), to: today },
+    { label: "Last 90 Days", from: addDays(today, -89), to: today },
+    { label: "Last 6 Months", from: monthsBack(today, 6), to: today },
+  ];
+
+  return windows.map(w => ({ ...w, ...summarizeBusinessWindow(data, w.from, w.to) }));
+}
+
+function utwShowUpForWeek(showRows, weekStart, weekEnd) {
+  const matching = (showRows || []).filter(row => {
+    const name = row.workshopName.toLowerCase();
+    return row.startDate >= weekStart && row.startDate <= weekEnd && (name.includes("utw") || name.includes("wand"));
+  });
+
+  const byDay = {};
+  for (const row of matching) {
+    const day = String(row.workshopDay || "1").match(/\d+/)?.[0] || "1";
+    const current = byDay[day] || { show: 0, leads: 0 };
+    byDay[day] = {
+      show: Math.max(current.show, row.maxShowUp || 0),
+      leads: Math.max(current.leads, row.reportedLeads || 0),
+    };
+  }
+
+  return {
+    d1: pct(byDay["1"]?.show || 0, byDay["1"]?.leads || 0),
+    d2: pct(byDay["2"]?.show || 0, byDay["2"]?.leads || 0),
+    d3: pct(byDay["3"]?.show || 0, byDay["3"]?.leads || 0),
+  };
+}
+
+export function buildRollingPerformance(data, internHistory, weeks = 12) {
+  const anchor = lastCompletedWeekStart();
+  const firstWeek = addDays(anchor, -(weeks - 1) * 7);
+  const chronological = [];
+
+  for (let i = 0; i < weeks; i++) {
+    const weekStart = addDays(firstWeek, i * 7);
+    const weekEnd = addDays(weekStart, 6);
+    const tarotLeads = countFunnelLeads(data.marketing, "Tarot", weekStart, weekEnd);
+    const reikiLeads = countFunnelLeads(data.marketing, "Reiki", weekStart, weekEnd);
+    const leads = tarotLeads + reikiLeads;
+    const spend = sumSpend(data.marketing.adSpend, weekStart, weekEnd);
+    const sales = rangeSales(data.sales, weekStart, weekEnd);
+    const intern = aggregateInternKPI(internHistory, { from: weekStart, to: weekEnd });
+    const show = utwShowUpForWeek(data.showUp, weekStart, weekEnd);
+    const prev = chronological[chronological.length - 1];
+    const revenueChange = prev ? sales.revenue - prev.revenue : null;
+
+    chronological.push({
+      weekStart,
+      weekEnd,
+      tarotLeads,
+      reikiLeads,
+      spend,
+      blendedCpl: leads > 0 ? Math.round(spend / leads) : null,
+      showD1Pct: show.d1,
+      showD2Pct: show.d2,
+      showD3Pct: show.d3,
+      internConnectedRatio: intern.connectedRatio,
+      enrollments: sales.enrollments,
+      revenue: sales.revenue,
+      revenueChange,
+      status: revenueChange === null ? "neutral" : revenueChange >= 0 ? "up" : "down",
+    });
+  }
+
+  return chronological.reverse();
+}
+
 export function workshopKind(workshop) {
   const s = `${workshop.id} ${workshop.name}`.toLowerCase();
   if (s.includes("utw")) return "UTW";
@@ -138,6 +284,20 @@ export function buildAudit(data, weekStart) {
 
   const flags = buildSourceFlags({ funnelRows, workshopRows, leadFrom, leadTo });
   return { weekStart, weekEnd, leadFrom, leadTo, reviewCutoff, workshops, workshopRows, funnelRows, flags };
+}
+
+export function buildAuditCallData(audit, internHistory) {
+  return Object.fromEntries(audit.workshopRows.map(workshop => {
+    if (!workshop.callWindow) return [workshop.id, null];
+    return [
+      workshop.id,
+      aggregateInternKPI(internHistory, {
+        from: workshop.callWindow.from,
+        to: workshop.callWindow.to,
+        funnel: workshop.funnel,
+      }),
+    ];
+  }));
 }
 
 function buildSourceFlags({ funnelRows, workshopRows, leadFrom, leadTo }) {
