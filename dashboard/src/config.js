@@ -25,7 +25,7 @@ export const WORKSHOP_PERFORMANCE = {
 
 // Aravind will add the Sheet ID after creating "MySoul Ads Intelligence".
 export const ADS_INTELLIGENCE = {
-  id:  '',
+  id:  '1IaRtJyJTo1YHmpHW-BGK8o67HvZFGklDcynwd1lh6m0',
   tab: 'Sheet1',
 };
 
