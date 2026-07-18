@@ -287,7 +287,6 @@ function preferredWorkshopForWeek(data, weekStart, weekEnd, scope = "Combined") 
     .filter(w => scope === "Combined" || w.funnel === scope)
     .sort((a, b) => a.startDate.localeCompare(b.startDate));
   const planned = inWeek.find(w => workshopKind(w) === targetKind) || inWeek[0] || null;
-  if (scope === "Reiki") return planned;
   return planned || fallbackWorkshopFromShowUp(data.showUp, weekStart, weekEnd, scope);
 }
 
