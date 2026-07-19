@@ -328,7 +328,7 @@ function monthlyShowUpAverages(showRows, from, to, scope = "Combined") {
 }
 
 export function buildRollingPerformance(data, internHistory, weeks = 12, scope = "Combined") {
-  const anchor = lastCompletedWeekStart();
+  const anchor = weekStartFor(new Date());
   const firstWeek = addDays(anchor, -(weeks - 1) * 7);
   const chronological = [];
   const workshops = showUpWorkshopsForRange(data.showUp, firstWeek, addDays(anchor, 6), scope);

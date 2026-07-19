@@ -236,7 +236,7 @@ function RollingPerformanceTable({ rows, scope, tableMode, onTableModeChange }) 
   const title = monthly ? "Monthly Performance" : "12-Week Rolling Performance";
   const subtitle = monthly
     ? "Last 6 calendar months. Monthly view hides workshop-level show-up and intern-call columns."
-    : "The main weekly business trajectory view. Revenue color compares each workshop row against the previous row.";
+    : "Includes current-week workshops as soon as ShowUp data exists. Revenue color compares each workshop row against the previous row.";
   const headers = monthly
     ? (scope === "Combined"
       ? ["Month", "Tarot Leads", "Reiki Leads", "Total Ad Spend", "Blended CPL", "UTW D1 Avg", "UTW D2 Avg", "UTW D3 Avg", "Intern Connect", "Enrollments", "Revenue", "ROAS", "MoM Revenue"]
