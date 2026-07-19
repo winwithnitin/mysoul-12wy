@@ -199,6 +199,32 @@ function RoasCell({ value }) {
   return <td style={{ ...td(), color: roasColor(value), fontWeight: value === null || value === undefined ? 400 : 700 }}>{value === null || value === undefined ? "--" : `${value.toFixed(2)}x`}</td>;
 }
 
+function WorkshopStartCell({ row, scope, monthly }) {
+  if (monthly) return <td style={{ ...td("left"), color: "var(--text)", fontWeight: 700 }}>{row.monthLabel}</td>;
+  const tag = row.workshopTag;
+  return (
+    <td style={{ ...td("left"), color: "var(--text)", fontWeight: 700 }}>
+      <span>{fmtDisplay(row.weekStart)}</span>
+      {scope === "Combined" && tag && (
+        <span style={{
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: 18,
+          height: 18,
+          marginLeft: 8,
+          borderRadius: 999,
+          fontSize: 10,
+          fontWeight: 800,
+          color: tag === "R" ? "var(--reiki)" : "var(--tarot)",
+          background: tag === "R" ? "rgba(16,185,129,0.12)" : "rgba(139,92,246,0.16)",
+          border: `1px solid ${tag === "R" ? "rgba(16,185,129,0.25)" : "rgba(139,92,246,0.30)"}`,
+        }}>{tag}</span>
+      )}
+    </td>
+  );
+}
+
 function RollingPerformanceTable({ rows, scope, tableMode, onTableModeChange }) {
   const rowBg = status => {
     if (status === "up") return "rgba(16,185,129,0.08)";
@@ -238,8 +264,8 @@ function RollingPerformanceTable({ rows, scope, tableMode, onTableModeChange }) 
             {rows.map(row => {
               const cplOk = scope === "Combined" || !row.blendedCpl || row.blendedCpl <= WORKSHOP_BENCHMARKS[scope].cpl;
               return (
-                <tr key={monthly ? row.month : row.weekStart} style={{ background: rowBg(row.status) }}>
-                  <td style={{ ...td("left"), color: "var(--text)", fontWeight: 700 }}>{monthly ? row.monthLabel : fmtDisplay(row.weekStart)}</td>
+                <tr key={monthly ? row.month : `${row.weekStart}-${row.workshopId || row.workshopTag || ""}`} style={{ background: rowBg(row.status) }}>
+                  <WorkshopStartCell row={row} scope={scope} monthly={monthly} />
                   {!monthly && <td style={td()}>{row.workshopDay || "--"}</td>}
                   {scope === "Combined" && <td style={td()}>{num(row.tarotLeads)}</td>}
                   {scope === "Combined" && <td style={td()}>{num(row.reikiLeads)}</td>}
