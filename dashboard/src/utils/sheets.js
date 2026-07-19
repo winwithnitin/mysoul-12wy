@@ -10,7 +10,6 @@ import {
   WORKSHOP_PMS,
   WORKSHOP_PERFORMANCE,
   INTERNS_KPI,
-  ADS_INTELLIGENCE,
 } from '../config.js';
 
 // --- Shared helpers -----------------------------------------------------------
@@ -377,46 +376,6 @@ export function getMarketingSample() {
     mtdSpend:   { Tarot: 382000, Reiki: 156000 },
     tarotRows: [], reikiRows: [],
   };
-}
-
-// --- Ads Intelligence ---------------------------------------------------------
-export async function loadAdsIntelligenceData() {
-  if (!ADS_INTELLIGENCE.id) return { rows: [], configured: false };
-
-  const rows = await fetchCSV(ADS_INTELLIGENCE.id, ADS_INTELLIGENCE.tab);
-  if (rows.length < 2) return { rows: [], configured: true };
-
-  const header = rows[0] || [];
-  const cols = {
-    date:     findHeaderIndex(header, ['date'], 0),
-    program:  findHeaderIndex(header, ['program'], 1),
-    campaign: findHeaderIndex(header, ['campaign name', 'campaign'], 2),
-    adSet:    findHeaderIndex(header, ['ad set name', 'adset name', 'ad set', 'adset'], 3),
-    adName:   findHeaderIndex(header, ['ad name', 'creative'], 4),
-    spend:    findHeaderIndex(header, ['spend'], 5),
-    leads:    findHeaderIndex(header, ['leads'], 6),
-    cpl:      findHeaderIndex(header, ['cpl'], 7),
-    notes:    findHeaderIndex(header, ['notes'], 8),
-  };
-
-  const parsedRows = rows.slice(1).map(r => {
-    const spend = parseAmount(r[cols.spend]);
-    const leads = parseAmount(r[cols.leads]);
-    const sheetCpl = parseAmount(r[cols.cpl]);
-    return {
-      date: toISO(r[cols.date], true),
-      program: String(r[cols.program] || '').trim(),
-      campaign: String(r[cols.campaign] || '').trim(),
-      adSet: String(r[cols.adSet] || '').trim(),
-      adName: String(r[cols.adName] || '').trim(),
-      spend,
-      leads,
-      cpl: leads > 0 ? Math.round(spend / leads) : sheetCpl || null,
-      notes: String(r[cols.notes] || '').trim(),
-    };
-  }).filter(r => r.date && r.program && (r.spend > 0 || r.leads > 0 || r.campaign || r.adSet || r.adName));
-
-  return { rows: parsedRows, configured: true };
 }
 
 // --- Transaction data -- reads BOTH tabs and merges ------------------------

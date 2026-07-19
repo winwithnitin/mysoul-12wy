@@ -23,12 +23,6 @@ export const WORKSHOP_PERFORMANCE = {
   memoryTab:   'AuditMemory',
 };
 
-// Aravind will add the Sheet ID after creating "MySoul Ads Intelligence".
-export const ADS_INTELLIGENCE = {
-  id:  '1IaRtJyJTo1YHmpHW-BGK8o67HvZFGklDcynwd1lh6m0',
-  tab: 'Sheet1',
-};
-
 export const INTERNS_KPI = {
   id: '1WxlbrmNC2W9pRxmTOTNbVlMwyHjuR79nOK19tVJKar8',
   fallbackTabs: ['Harpreet', 'Ishika', 'Prerna', 'Niranjana', 'Niyati'],

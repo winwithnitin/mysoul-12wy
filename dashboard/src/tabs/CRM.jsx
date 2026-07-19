@@ -462,7 +462,6 @@ const SUBS = [
   { key:"students",   label:"All Students"     },
   { key:"defaulters", label:"Defaulters"       },
   { key:"duplicates", label:"Duplicates"       },
-  { key:"ads",        label:"Ads Performance"  },
 ];
 
 export default function CRM() {
@@ -528,7 +527,6 @@ export default function CRM() {
       {sub==="students"   && <AllStudentsTab  enrollments={enrollments} attr={attr} />}
       {sub==="defaulters" && <DefaultersTab   enrollments={enrollments} />}
       {sub==="duplicates" && <DuplicatesTab   enrollments={enrollments} />}
-      {sub==="ads"        && <AdsPerformanceTab enrollments={enrollments} attr={attr} />}
     </div>
   );
 }
