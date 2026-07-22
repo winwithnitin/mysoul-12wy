@@ -775,7 +775,7 @@ function switchTab(tab) {
 async function tfRefresh(quiet) {
   setSyncPill('busy', '⟳ Refreshing…');
   try {
-    const res  = await fetch(API + '?tf=1&t=' + Date.now(), { mode: 'cors' });
+    const res  = await fetch(API + '?tf=1&ts=' + Date.now(), { mode: 'cors' });
     const data = JSON.parse(await res.text());
     if (data.focuses) {
       // Merge — don't overwrite local focuses that aren't in sheet yet
@@ -861,7 +861,7 @@ function pushData(extra) {
 async function pullData(quiet) {
   setSyncPill('busy', '⟳ Loading…');
   try {
-    const res  = await fetch(API + '?t=' + Date.now(), { mode:'cors' });
+    const res  = await fetch(API + '?ts=' + Date.now(), { mode:'cors' });
     const text = await res.text();
     if (text && text.includes('"weeks"')) {
       S = JSON.parse(text); lsSave();
@@ -1337,7 +1337,7 @@ function tfAssign() {
 // Poll sheet after a delay to read delivery status back
 async function tfPollDelivery(id) {
   try {
-    const res  = await fetch(API + '?tf=1&t=' + Date.now(), { mode: 'cors' });
+    const res  = await fetch(API + '?tf=1&ts=' + Date.now(), { mode: 'cors' });
     const data = JSON.parse(await res.text());
     if (data.focuses && data.focuses[id]) {
       TF.focuses[id].deliveryStatus = data.focuses[id].deliveryStatus;
