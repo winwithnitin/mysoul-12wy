@@ -44,6 +44,7 @@ This dashboard is for MySoulSchool / 12WY business review.
   - Formula ratio columns are ignored; ratios are recalculated.
 - Show-up percent = Tanvi show-up / source lead pool.
 - Conversion and ROAS use trusted Dashboard sales data available by Monday 12 PM.
+- Performance conversion/revenue includes only core front-end programs: Tarot - Diploma, Tarot - Mastery, and Reiki - L1/L2.
 
 ## Benchmarks
 

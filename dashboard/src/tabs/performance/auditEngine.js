@@ -1,5 +1,4 @@
 import { WORKSHOP_BENCHMARKS } from "../../config.js";
-import { getFunnel } from "../../config.js";
 import { countLeadsInRange, classifyWorkshop } from "../../utils/sheets.js";
 import { fmtDisplay } from "../../utils/dates.js";
 import { inr, num } from "../../utils/format.js";
@@ -532,12 +531,14 @@ export function getShowUp(showRows, workshop) {
 }
 
 function isFunnelEnrollment(enrollment, funnel) {
+  const program = String(enrollment.program || "").toLowerCase();
   if (funnel === "Tarot") {
-    const program = String(enrollment.program || "").toLowerCase();
     const isCoreTarot = program.includes("tarot") && (program.includes("diploma") || program.includes("mastery"));
     return isCoreTarot && !program.includes("health");
   }
-  if (funnel === "Reiki") return getFunnel(enrollment.program) === "Reiki";
+  if (funnel === "Reiki") {
+    return program.includes("reiki") && program.includes("l1/l2");
+  }
   return false;
 }
 
