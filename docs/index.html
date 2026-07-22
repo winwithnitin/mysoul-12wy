@@ -780,7 +780,7 @@ async function tfRefresh(quiet) {
     if (data.focuses) {
       // Merge — don't overwrite local focuses that aren't in sheet yet
       Object.keys(data.focuses).forEach(id => {
-        TF.focuses[id] = data.focuses[id];
+        TF.focuses[id] = tfNormalizeFocus(data.focuses[id]);
       });
       if (data.cur) TF.curWeek = data.cur;
       tfSave();
@@ -810,8 +810,27 @@ const getW  = n => { if(!S.weeks[n]) S.weeks[n]=defWeek(); return S.weeks[n]; };
 const wd    = ()  => S.weekDates || WD_DEF;
 const esc   = s   => String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 const escNl = s   => esc(s).replace(/\n/g,'<br>');
-const todayStr = () => new Date().toISOString().split('T')[0];
+const todayStr = () => {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
 const tfInitials = n => n.split(' ').map(p=>p[0]).join('').toUpperCase().slice(0,2);
+const sameWeek = (a,b) => String(a) === String(b);
+function tfNormalizeFocus(f) {
+  if (!f.updates) f.updates = [];
+  f.updates = f.updates
+    .filter(u => u && (u.text || u.updateText))
+    .map(u => ({
+      text: u.text || u.updateText || '',
+      date: String(u.date || '').slice(0, 10) || todayStr(),
+      ts: u.ts || u.date || ''
+    }))
+    .sort((a,b) => new Date(a.ts || a.date) - new Date(b.ts || b.date));
+  return f;
+}
 
 // ════════════════════════════════════════════════════════════
 // STORAGE
@@ -1118,7 +1137,7 @@ function tfWeekFilter() {
 }
 
 function tfActiveFocuses() {
-  return Object.values(TF.focuses||{}).filter(f => f.active && f.week === TF.viewWeek);
+  return Object.values(TF.focuses||{}).map(tfNormalizeFocus).filter(f => f.active && sameWeek(f.week, TF.viewWeek));
 }
 
 function tfDaysSince(f) {
@@ -1619,7 +1638,7 @@ function tfMarkComplete(id) {
   const f = TF.focuses[id]; if (!f) return;
   if (!confirm(`Mark "${f.person}'s" focus as completed?`)) return;
   f.active = false;
-  f.completedDate = new Date().toISOString().split('T')[0];
+  f.completedDate = todayStr();
   tfPush('team_focus', {});
   tfRender();
   toast(`${f.person.split(' ')[0]}'s focus marked complete ✓`, 'green');

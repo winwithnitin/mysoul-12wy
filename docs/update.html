@@ -171,6 +171,13 @@ body {
 const API = 'https://script.google.com/macros/s/AKfycbwAnRCgx7A9ucRSx4OH39Eufhq1_Doami_wGqFgmQvu5vNhI6q1q5ldXWgkNKH2k_pz/exec';
 
 const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const todayStr = () => {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
 
 function getParams() {
   const p = new URLSearchParams(window.location.search);
@@ -265,7 +272,7 @@ async function submitUpdate() {
     task: task,
     week: _currentParams.week || 1,
     updateText: text,
-    date: new Date().toISOString().split('T')[0],
+    date: todayStr(),
     ts: new Date().toISOString(),
   };
 
