@@ -124,6 +124,7 @@ function TrajectoryCard({ row, scope, compact = false }) {
         <MiniMetric label={leadLabel} value={num(row.leads)} />
         <TrendMetric label={cplLabel} value={row.blendedCpl ? inr(row.blendedCpl) : "--"} color={scope === "Combined" ? undefined : cplOk ? "var(--success)" : "var(--danger)"} trend={trendFor(row.blendedCpl, row.previous?.blendedCpl, "downGood")} />
         <TrendMetric label={`${scope === "Combined" ? "" : scope} Enrollments`.trim()} value={num(row.enrollments)} trend={trendFor(row.enrollments, row.previous?.enrollments)} />
+        <TrendMetric label="Conversion %" value={pctText(row.conversionPct)} trend={trendFor(row.conversionPct, row.previous?.conversionPct)} />
         <TrendMetric label={`${scope === "Combined" ? "" : scope} Revenue`.trim()} value={inr(Math.round(row.revenue))} color="var(--success)" trend={trendFor(row.revenue, row.previous?.revenue)} />
         <TrendMetric label="ROAS" value={row.roas === null || row.roas === undefined ? "--" : `${row.roas.toFixed(2)}x`} color={roasColor(row.roas)} trend={trendFor(row.roas, row.previous?.roas)} />
       </div>

@@ -145,6 +145,7 @@ function summarizeBusinessWindow(data, from, to, scope = "Combined") {
     spend,
     blendedCpl: leads > 0 ? Math.round(spend / leads) : null,
     enrollments: sales.enrollments,
+    conversionPct: pct(sales.enrollments, leads),
     revenue: sales.revenue,
     roas: roas(sales.revenue, spend),
   };
