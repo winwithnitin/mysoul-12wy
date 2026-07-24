@@ -31,6 +31,87 @@ const td  = (a='right') => ({ padding:'9px 14px', borderBottom:'1px solid var(--
 const tableWrap = { background:'var(--surface)', border:'1px solid var(--border)', borderRadius:12, overflow:'hidden', marginBottom:28 };
 const eye = (t) => <div style={{ fontSize:11, color:'var(--text3)', textTransform:'uppercase', letterSpacing:.5, marginBottom:12 }}>{t}</div>;
 
+function getL1JoiningDate(student, sales) {
+  const email = (student.email || '').toLowerCase().trim();
+  const phone = (student.phone || '').replace(/\D/g, '').slice(-10);
+  const matches = (sales || []).filter(e => {
+    const program = (e.program || '').toLowerCase();
+    const isL1 = program.includes('tarot') || program.includes('reiki') || program.includes('30 days mani') || program.includes('hooponopono') || program.includes("ho'oponopono");
+    const sameEmail = email && e.email === email;
+    const samePhone = phone && e.phone === phone;
+    return isL1 && (sameEmail || samePhone);
+  }).sort((a,b) => a.date.localeCompare(b.date));
+  return matches[0]?.date || null;
+}
+
+function V3Content({ students, sales }) {
+  const [prog, setProg] = useState('ALL');
+  const [batch, setBatch] = useState('ALL');
+  const allBatches = [...new Set((students || []).map(s => s.batch).filter(Boolean))].sort();
+  const rows = (students || [])
+    .filter(s => (prog === 'ALL' || s.program === prog) && (batch === 'ALL' || s.batch === batch))
+    .map(s => ({
+      ...s,
+      joiningDate: getL1JoiningDate(s, sales),
+      ltvPaid: s.totalActual || 0,
+      totalDue: s.emiDue || 0,
+    }))
+    .sort((a,b) => (b.joiningDate || b.timestamp || '').localeCompare(a.joiningDate || a.timestamp || ''));
+
+  const totals = rows.reduce((acc, s) => {
+    acc.paid += s.ltvPaid || 0;
+    acc.due += s.totalDue || 0;
+    if (s.program === 'SUPER') acc.super += 1;
+    if (s.program === 'RGM') acc.rgm += 1;
+    return acc;
+  }, { paid:0, due:0, super:0, rgm:0 });
+
+  return (
+    <div>
+      <div style={{display:'flex',alignItems:'center',gap:12,padding:'10px 24px',borderBottom:'1px solid var(--border)',background:'var(--surface2)',flexWrap:'wrap'}}>
+        <div style={{display:'flex',background:'var(--surface)',border:'1px solid var(--border)',borderRadius:8,overflow:'hidden'}}>
+          {['ALL','SUPER','RGM'].map(p=><button key={p} onClick={()=>setProg(p)} style={{border:'none',borderRadius:0,padding:'4px 12px',fontSize:12,fontWeight:500,background:prog===p?'var(--tarot)':'transparent',color:prog===p?'#fff':'var(--text3)'}}>{p}</button>)}
+        </div>
+        <select value={batch} onChange={e=>setBatch(e.target.value)} style={{background:'var(--surface)',border:'1px solid var(--border)',color:'var(--text)',padding:'4px 10px',borderRadius:8,fontSize:12}}>
+          <option value="ALL">All Batches</option>
+          {allBatches.map(b=><option key={b} value={b}>{b}</option>)}
+        </select>
+      </div>
+
+      <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:1,background:'var(--border)',marginBottom:24}}>
+        {[['Students',num(rows.length),null],['SUPER',num(totals.super),'var(--tarot)'],['RGM',num(totals.rgm),'var(--reiki)'],['LTV paid',inr(totals.paid),'var(--success)'],['Total due',inr(totals.due),totals.due>0?'var(--warning)':'var(--text)']].map(([label,value,color])=>(
+          <div key={label} style={{background:'var(--surface)',padding:'16px 20px'}}>
+            <div style={{fontSize:11,color:'var(--text3)',textTransform:'uppercase',letterSpacing:.5,marginBottom:6}}>{label}</div>
+            <div style={{fontSize:22,fontWeight:600,color:color||'var(--text)'}}>{value}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{padding:'0 24px 32px'}}>
+        {eye('Student list — SUPER, RGM and combined')}
+        <div style={tableWrap}>
+          <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
+            <thead><tr>{['Name','Phone','Batch','Community Joining Date','LTV - Total Paid','Total Due'].map((h,i)=><th key={h} style={i<3?thL:th}>{h}</th>)}</tr></thead>
+            <tbody>
+              {rows.length===0?<tr><td colSpan={6} style={{...td(),textAlign:'center',padding:'2rem'}}>No students found.</td></tr>
+              :rows.map((s,i)=>(
+                <tr key={`${s.email || s.phone || s.name}-${s.batch}-${i}`}>
+                  <td style={{...td('left'),color:'var(--text)',fontWeight:500}}>{s.name || '--'}</td>
+                  <td style={td('left')}>{s.phone || '--'}</td>
+                  <td style={{...td('left'),color:s.program==='SUPER'?'var(--tarot)':'var(--reiki)',fontWeight:500}}>{s.batch || s.program || '--'}</td>
+                  <td style={td()}>{s.joiningDate || '--'}</td>
+                  <td style={{...td(),color:'var(--success)',fontWeight:600}}>{inr(s.ltvPaid)}</td>
+                  <td style={{...td(),color:s.totalDue>0?'var(--warning)':'var(--text3)',fontWeight:600}}>{inr(s.totalDue)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function V1Content({ students }) {
   const [prog,  setProg]  = useState('ALL');
   const [batch, setBatch] = useState('ALL');
@@ -147,7 +228,7 @@ export default function EMI() {
             {updated&&<span style={{color:'var(--text3)',marginLeft:8}}>· {updated.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</span>}
           </span>
           <div style={{display:'flex',background:'var(--surface)',border:'1px solid var(--border)',borderRadius:8,overflow:'hidden'}}>
-            {[{k:'v2',l:'V2 — Revenue & Analysis'},{k:'v1',l:'V1 — EMI Tracking'}].map(({k,l})=>(
+            {[{k:'v2',l:'V2 — Revenue & Analysis'},{k:'v1',l:'V1 — EMI Tracking'},{k:'v3',l:'V3 - Analysis'}].map(({k,l})=>(
               <button key={k} onClick={()=>setView(k)} style={{border:'none',borderRadius:0,padding:'4px 14px',fontSize:12,fontWeight:500,background:view===k?'var(--tarot)':'transparent',color:view===k?'#fff':'var(--text3)'}}>{l}</button>
             ))}
           </div>
@@ -156,6 +237,7 @@ export default function EMI() {
       </div>
       {view==='v1'&&<V1Content students={data.students||[]} />}
       {view==='v2'&&<EMIv2 v2Students={data.v2||[]} salesEnrollments={sales} />}
+      {view==='v3'&&<V3Content students={data.v2||[]} sales={sales} />}
     </div>
   );
 }
