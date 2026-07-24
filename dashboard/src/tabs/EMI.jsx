@@ -31,7 +31,7 @@ const td  = (a='right') => ({ padding:'9px 14px', borderBottom:'1px solid var(--
 const tableWrap = { background:'var(--surface)', border:'1px solid var(--border)', borderRadius:12, overflow:'hidden', marginBottom:28 };
 const eye = (t) => <div style={{ fontSize:11, color:'var(--text3)', textTransform:'uppercase', letterSpacing:.5, marginBottom:12 }}>{t}</div>;
 
-function getL1JoiningDate(student, sales) {
+function getCommunityEntry(student, sales) {
   const email = (student.email || '').toLowerCase().trim();
   const phone = (student.phone || '').replace(/\D/g, '').slice(-10);
   const matches = (sales || []).filter(e => {
@@ -41,7 +41,15 @@ function getL1JoiningDate(student, sales) {
     const samePhone = phone && e.phone === phone;
     return isL1 && (sameEmail || samePhone);
   }).sort((a,b) => a.date.localeCompare(b.date));
-  return matches[0]?.date || null;
+  return matches[0] ? { date: matches[0].date, program: matches[0].program || '' } : { date: null, program: '' };
+}
+
+function daysBetween(from, to) {
+  if (!from || !to) return null;
+  const start = new Date(`${from}T12:00:00`);
+  const end = new Date(`${to}T12:00:00`);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return null;
+  return Math.max(0, Math.round((end - start) / 86400000));
 }
 
 function V3Content({ students, sales }) {
@@ -50,12 +58,17 @@ function V3Content({ students, sales }) {
   const allBatches = [...new Set((students || []).map(s => s.batch).filter(Boolean))].sort();
   const rows = (students || [])
     .filter(s => (prog === 'ALL' || s.program === prog) && (batch === 'ALL' || s.batch === batch))
-    .map(s => ({
-      ...s,
-      joiningDate: getL1JoiningDate(s, sales),
-      ltvPaid: s.totalActual || 0,
-      totalDue: s.emiDue || 0,
-    }))
+    .map(s => {
+      const entry = getCommunityEntry(s, sales);
+      return {
+        ...s,
+        joiningDate: entry.date,
+        firstProgram: entry.program,
+        timeTakenDays: daysBetween(entry.date, s.timestamp),
+        ltvPaid: s.totalActual || 0,
+        totalDue: s.emiDue || 0,
+      };
+    })
     .sort((a,b) => (b.joiningDate || b.timestamp || '').localeCompare(a.joiningDate || a.timestamp || ''));
 
   const totals = rows.reduce((acc, s) => {
@@ -91,15 +104,17 @@ function V3Content({ students, sales }) {
         {eye('Student list — SUPER, RGM and combined')}
         <div style={tableWrap}>
           <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
-            <thead><tr>{['Name','Phone','Batch','Community Joining Date','LTV - Total Paid','Total Due'].map((h,i)=><th key={h} style={i<3?thL:th}>{h}</th>)}</tr></thead>
+            <thead><tr>{['Name','Phone','Batch','Community Joining Date','First Program','Time Taken','LTV - Total Paid','Total Due'].map((h,i)=><th key={h} style={i<3?thL:th}>{h}</th>)}</tr></thead>
             <tbody>
-              {rows.length===0?<tr><td colSpan={6} style={{...td(),textAlign:'center',padding:'2rem'}}>No students found.</td></tr>
+              {rows.length===0?<tr><td colSpan={8} style={{...td(),textAlign:'center',padding:'2rem'}}>No students found.</td></tr>
               :rows.map((s,i)=>(
                 <tr key={`${s.email || s.phone || s.name}-${s.batch}-${i}`}>
                   <td style={{...td('left'),color:'var(--text)',fontWeight:500}}>{s.name || '--'}</td>
                   <td style={td('left')}>{s.phone || '--'}</td>
                   <td style={{...td('left'),color:s.program==='SUPER'?'var(--tarot)':'var(--reiki)',fontWeight:500}}>{s.batch || s.program || '--'}</td>
                   <td style={td()}>{s.joiningDate || '--'}</td>
+                  <td style={td()}>{s.firstProgram || '--'}</td>
+                  <td style={td()}>{s.timeTakenDays === null ? '--' : `${s.timeTakenDays}d`}</td>
                   <td style={{...td(),color:'var(--success)',fontWeight:600}}>{inr(s.ltvPaid)}</td>
                   <td style={{...td(),color:s.totalDue>0?'var(--warning)':'var(--text3)',fontWeight:600}}>{inr(s.totalDue)}</td>
                 </tr>
