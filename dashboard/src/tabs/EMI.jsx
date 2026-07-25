@@ -52,6 +52,175 @@ function daysBetween(from, to) {
   return Math.max(0, Math.round((end - start) / 86400000));
 }
 
+const MONTH_MAP = { jan:1, feb:2, mar:3, apr:4, may:5, jun:6, jul:7, aug:8, sep:9, oct:10, nov:11, dec:12 };
+
+function parseBatchMonth(batchName) {
+  const m = String(batchName || '').toLowerCase().match(/([a-z]+)\s+(\d{4})/);
+  if (!m) return null;
+  const month = MONTH_MAP[m[1].slice(0, 3)];
+  if (!month) return null;
+  return `${m[2]}-${String(month).padStart(2, '0')}-01`;
+}
+
+function addDays(iso, days) {
+  const d = new Date(`${iso}T12:00:00`);
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+function addMonths(iso, months) {
+  const d = new Date(`${iso}T12:00:00`);
+  d.setMonth(d.getMonth() + months);
+  return d.toISOString().slice(0, 10);
+}
+
+function monthLabel(iso) {
+  if (!iso) return '--';
+  return new Date(`${iso}T12:00:00`).toLocaleDateString('en-IN', { month:'short', year:'numeric' });
+}
+
+function isTarotCoreL1(program) {
+  const p = String(program || '').toLowerCase();
+  return p.includes('tarot - diploma') || p.includes('tarot - mastery');
+}
+
+function pct(value) {
+  return value === null || value === undefined ? '--' : `${value.toFixed(1)}%`;
+}
+
+function buildSuperLaunchRows(students, sales) {
+  const superStudents = (students || []).filter(s => s.program === 'SUPER');
+  const batchNames = [...new Set(superStudents.map(s => s.batch).filter(Boolean))]
+    .map(batchName => ({ batchName, launchISO: parseBatchMonth(batchName) }))
+    .filter(b => b.launchISO)
+    .sort((a, b) => a.launchISO.localeCompare(b.launchISO));
+
+  return batchNames.map((batch, index) => {
+    const prev = batchNames[index - 1] || null;
+    const batchStudents = superStudents.filter(s => s.batch === batch.batchName);
+    const poolStart = prev ? addDays(prev.launchISO, 1) : addMonths(batch.launchISO, -4);
+    const poolEnd = addDays(batch.launchISO, -1);
+    const l1Rows = (sales || []).filter(e => e.date >= poolStart && e.date <= poolEnd && isTarotCoreL1(e.program));
+    const superRevenue = batchStudents.reduce((sum, s) => sum + (s.totalPlanned || 0), 0);
+    const cashReceived = batchStudents.reduce((sum, s) => sum + (s.totalActual || 0), 0);
+    const l1Students = l1Rows.length;
+    const enrolled = batchStudents.length;
+    const gapDays = prev ? daysBetween(prev.launchISO, batch.launchISO) : null;
+    const previousRevenue = index > 0 ? null : 0;
+
+    return {
+      batchName: batch.batchName,
+      launchISO: batch.launchISO,
+      batchMonth: monthLabel(batch.launchISO),
+      lastBatchMonth: prev ? monthLabel(prev.launchISO) : '--',
+      gapDays,
+      poolStart,
+      poolEnd,
+      l1Students,
+      l1Revenue: l1Rows.reduce((sum, e) => sum + (e.amtReceived || e.bookingAmount || 0), 0),
+      superEnrolled: enrolled,
+      superConv: l1Students > 0 ? (enrolled / l1Students) * 100 : null,
+      superRevenue,
+      cashReceived,
+      collectionPct: superRevenue > 0 ? (cashReceived / superRevenue) * 100 : null,
+      avgL1PerMonth: l1Students > 0 && gapDays ? l1Students / Math.max(gapDays / 30, 1) : null,
+      revenueDiff: previousRevenue,
+    };
+  }).map((row, index, rows) => ({
+    ...row,
+    revenueDiff: index === 0 ? null : row.superRevenue - rows[index - 1].superRevenue,
+  })).sort((a, b) => b.launchISO.localeCompare(a.launchISO));
+}
+
+function diffCell(value) {
+  if (value === null || value === undefined) return <span style={{color:'var(--text3)'}}>--</span>;
+  const up = value >= 0;
+  return <span style={{color:up?'var(--success)':'var(--danger)',fontWeight:700}}>{up ? '▲' : '▼'} {inr(Math.abs(value))}</span>;
+}
+
+function V4SuperAnalysis({ students, sales }) {
+  const rows = buildSuperLaunchRows(students, sales);
+  const latest = rows[0] || null;
+  const prior = rows[1] || null;
+  const today = todayStr();
+  const lastLaunchDate = latest?.launchISO || addMonths(today, -4);
+  const freshPool = (sales || []).filter(e => e.date > lastLaunchDate && e.date <= today && isTarotCoreL1(e.program));
+  const avgConv = rows.filter(r => r.superConv !== null).slice(0, 4).reduce((sum, r, _, arr) => sum + (r.superConv / arr.length), 0);
+  const freshLeads = freshPool.length;
+  const projectedEnrollments = avgConv ? Math.round(freshLeads * avgConv / 100) : null;
+  const avgRevenuePerSuper = rows.reduce((sum, r) => sum + (r.superEnrolled ? r.superRevenue / r.superEnrolled : 0), 0) / Math.max(rows.filter(r => r.superEnrolled).length, 1);
+  const projectedRevenue = projectedEnrollments ? projectedEnrollments * avgRevenuePerSuper : null;
+  const currentGap = latest ? daysBetween(latest.launchISO, today) : null;
+  const avgGap = rows.filter(r => r.gapDays).reduce((sum, r, _, arr) => sum + (r.gapDays / arr.length), 0);
+
+  let recommendation = 'Need more SUPER batch history before giving a strong next-launch recommendation.';
+  if (latest && avgConv) {
+    if (freshLeads >= Math.max(80, (prior?.l1Students || 0) * 0.8)) {
+      recommendation = `You already have ${num(freshLeads)} fresh Tarot Diploma/Mastery students since ${monthLabel(latest.launchISO)}. This is enough to start warming the next SUPER launch now and aim for a live conversion window within the next 2-3 weeks.`;
+    } else if (currentGap && avgGap && currentGap >= avgGap * 0.8) {
+      recommendation = `The launch gap is getting close to your historical rhythm, but the fresh L1 pool is only ${num(freshLeads)}. Spend the next 2 weeks increasing Diploma/Mastery intake before opening SUPER.`;
+    } else {
+      recommendation = `Keep building the L1 pool first. At the current pool size of ${num(freshLeads)}, the next SUPER launch should be prepared but not pushed hard until the fresh student base is stronger.`;
+    }
+  }
+
+  return (
+    <div style={{padding:'20px 24px 40px'}}>
+      {eye('SUPER launch performance — batch by batch')}
+      <div style={tableWrap}>
+        <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
+          <thead>
+            <tr>{['Batch Name','Batch Month','Last SUPER Batch Month','Gap','L1 Students','L1 Revenue','SUPER Enrolled','SUPER Conv %','SUPER Revenue','Cash Received','Collection %','Avg L1 / Month','Revenue Diff'].map((h,i)=><th key={h} style={i===0?thL:th}>{h}</th>)}</tr>
+          </thead>
+          <tbody>
+            {rows.length===0?<tr><td colSpan={13} style={{...td(),textAlign:'center',padding:'2rem'}}>No SUPER batches found.</td></tr>
+            :rows.map(r=>(
+              <tr key={r.batchName}>
+                <td style={{...td('left'),color:'var(--text)',fontWeight:600}}>{r.batchName}</td>
+                <td style={td()}>{r.batchMonth}</td>
+                <td style={td()}>{r.lastBatchMonth}</td>
+                <td style={td()}>{r.gapDays === null ? '--' : `${r.gapDays}d`}</td>
+                <td style={{...td(),fontWeight:600,color:'var(--text)'}}>{num(r.l1Students)}</td>
+                <td style={td()}>{inr(r.l1Revenue)}</td>
+                <td style={{...td(),color:'var(--tarot)',fontWeight:700}}>{num(r.superEnrolled)}</td>
+                <td style={{...td(),color:r.superConv >= 10 ? 'var(--success)' : r.superConv >= 5 ? 'var(--warning)' : 'var(--danger)',fontWeight:700}}>{pct(r.superConv)}</td>
+                <td style={{...td(),color:'var(--success)',fontWeight:700}}>{inr(r.superRevenue)}</td>
+                <td style={td()}>{inr(r.cashReceived)}</td>
+                <td style={td()}>{pct(r.collectionPct)}</td>
+                <td style={td()}>{r.avgL1PerMonth === null ? '--' : num(Math.round(r.avgL1PerMonth))}</td>
+                <td style={td()}>{diffCell(r.revenueDiff)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {eye('AI business coach analysis')}
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+        <div style={{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:12,padding:'18px 20px'}}>
+          <div style={{fontSize:13,fontWeight:700,color:'var(--tarot)',marginBottom:12}}>Next launch readiness</div>
+          {[
+            ['Fresh L1 pool since last SUPER', num(freshLeads)],
+            ['Avg recent SUPER conversion', avgConv ? `${avgConv.toFixed(1)}%` : '--'],
+            ['Projected SUPER enrollments', projectedEnrollments ? num(projectedEnrollments) : '--'],
+            ['Projected SUPER revenue', projectedRevenue ? inr(projectedRevenue) : '--'],
+          ].map(([label,value])=>(
+            <div key={label} style={{display:'flex',justifyContent:'space-between',padding:'6px 0',borderBottom:'1px solid var(--border2)'}}>
+              <span style={{fontSize:12,color:'var(--text2)'}}>{label}</span>
+              <span style={{fontSize:13,fontWeight:600,color:'var(--text)'}}>{value}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:12,padding:'18px 20px'}}>
+          <div style={{fontSize:13,fontWeight:700,color:'var(--success)',marginBottom:10}}>Recommendation</div>
+          <p style={{fontSize:13,lineHeight:1.6,color:'var(--text2)',margin:'0 0 10px'}}>{recommendation}</p>
+          <p style={{fontSize:12,lineHeight:1.6,color:'var(--text3)',margin:0}}>Use this view every week: if L1 pool is growing but SUPER conversion drops, fix nurturing and sales calls; if L1 pool is weak, delay launch and scale Diploma/Mastery first.</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function V3Content({ students, sales }) {
   const [prog, setProg] = useState('ALL');
   const [batch, setBatch] = useState('ALL');
@@ -243,7 +412,7 @@ export default function EMI() {
             {updated&&<span style={{color:'var(--text3)',marginLeft:8}}>· {updated.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</span>}
           </span>
           <div style={{display:'flex',background:'var(--surface)',border:'1px solid var(--border)',borderRadius:8,overflow:'hidden'}}>
-            {[{k:'v2',l:'V2 — Revenue & Analysis'},{k:'v1',l:'V1 — EMI Tracking'},{k:'v3',l:'V3 - Analysis'}].map(({k,l})=>(
+            {[{k:'v2',l:'V2 — Revenue & Analysis'},{k:'v1',l:'V1 — EMI Tracking'},{k:'v3',l:'V3 - Analysis'},{k:'v4',l:'V4 - SUPER Analysis'}].map(({k,l})=>(
               <button key={k} onClick={()=>setView(k)} style={{border:'none',borderRadius:0,padding:'4px 14px',fontSize:12,fontWeight:500,background:view===k?'var(--tarot)':'transparent',color:view===k?'#fff':'var(--text3)'}}>{l}</button>
             ))}
           </div>
@@ -253,6 +422,7 @@ export default function EMI() {
       {view==='v1'&&<V1Content students={data.students||[]} />}
       {view==='v2'&&<EMIv2 v2Students={data.v2||[]} salesEnrollments={sales} />}
       {view==='v3'&&<V3Content students={data.v2||[]} sales={sales} />}
+      {view==='v4'&&<V4SuperAnalysis students={data.v2||[]} sales={sales} />}
     </div>
   );
 }
