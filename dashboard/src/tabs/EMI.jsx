@@ -53,9 +53,10 @@ function daysBetween(from, to) {
 }
 
 const MONTH_MAP = { jan:1, feb:2, mar:3, apr:4, may:5, jun:6, jul:7, aug:8, sep:9, oct:10, nov:11, dec:12 };
+const SUPER_PRICE = 250000;
 
 function parseBatchMonth(batchName) {
-  const m = String(batchName || '').toLowerCase().match(/([a-z]+)\s+(\d{4})/);
+  const m = String(batchName || '').toLowerCase().match(/([a-z]+)[\s-]+(\d{4})/);
   if (!m) return null;
   const month = MONTH_MAP[m[1].slice(0, 3)];
   if (!month) return null;
@@ -89,9 +90,13 @@ function pct(value) {
 }
 
 function buildSuperLaunchRows(students, sales) {
-  const superStudents = (students || []).filter(s => s.program === 'SUPER');
+  const superStudents = (students || []).filter(s => String(s.program || '').toUpperCase() === 'SUPER');
   const batchNames = [...new Set(superStudents.map(s => s.batch).filter(Boolean))]
-    .map(batchName => ({ batchName, launchISO: parseBatchMonth(batchName) }))
+    .map(batchName => {
+      const batchStudents = superStudents.filter(s => s.batch === batchName);
+      const firstStudentDate = batchStudents.map(s => s.timestamp).filter(Boolean).sort()[0] || null;
+      return { batchName, launchISO: parseBatchMonth(batchName) || firstStudentDate };
+    })
     .filter(b => b.launchISO)
     .sort((a, b) => a.launchISO.localeCompare(b.launchISO));
 
@@ -101,10 +106,10 @@ function buildSuperLaunchRows(students, sales) {
     const poolStart = prev ? addDays(prev.launchISO, 1) : addMonths(batch.launchISO, -4);
     const poolEnd = addDays(batch.launchISO, -1);
     const l1Rows = (sales || []).filter(e => e.date >= poolStart && e.date <= poolEnd && isTarotCoreL1(e.program));
-    const superRevenue = batchStudents.reduce((sum, s) => sum + (s.totalPlanned || 0), 0);
-    const cashReceived = batchStudents.reduce((sum, s) => sum + (s.totalActual || 0), 0);
     const l1Students = l1Rows.length;
     const enrolled = batchStudents.length;
+    const superRevenue = enrolled * SUPER_PRICE;
+    const cashReceived = batchStudents.reduce((sum, s) => sum + (s.totalActual || 0), 0);
     const gapDays = prev ? daysBetween(prev.launchISO, batch.launchISO) : null;
     const previousRevenue = index > 0 ? null : 0;
 
@@ -394,9 +399,23 @@ export default function EMI() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    try { const [e,s]=await Promise.all([loadEMIData(),loadSalesData()]); setData(e); setSales(s); setDemo(false); }
-    catch (e) { setData(getEMISample()); setSales([]); setDemo(true); }
-    finally { setLoading(false); setUpdated(new Date()); }
+    let usingSample = false;
+    try {
+      const e = await loadEMIData();
+      setData(e);
+    } catch (e) {
+      setData(getEMISample());
+      usingSample = true;
+    }
+    try {
+      const s = await loadSalesData();
+      setSales(s);
+    } catch (e) {
+      setSales([]);
+    }
+    setDemo(usingSample);
+    setLoading(false);
+    setUpdated(new Date());
   }, []);
 
   useEffect(() => { load(); }, [load]);
