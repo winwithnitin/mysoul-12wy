@@ -441,6 +441,42 @@ body {
 .wf-btn:hover { background: var(--card2); color: var(--t1); }
 .wf-btn.on { background: linear-gradient(135deg, var(--accent), var(--accent2)); border-color: var(--accent); color: #fff; }
 
+/* ── DAILY SCHEDULE + NEXT 12WY ── */
+.tool-panel { background: linear-gradient(145deg, var(--card), var(--card2)); border: 1px solid var(--line2); border-radius: var(--r); padding: 16px 18px; margin-bottom: 12px; }
+.tool-row { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+.tool-field { display: flex; flex-direction: column; gap: 5px; min-width: 160px; flex: 1; }
+.tool-field.narrow { flex: 0 0 116px; min-width: 116px; }
+.tool-label { font-size: 10px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--t3); }
+.tool-input, .tool-select, .tool-textarea { width: 100%; background: var(--bg2); border: 1px solid var(--line2); border-radius: var(--rs); color: var(--t1); font-family: 'Inter', sans-serif; font-size: 13px; padding: 8px 11px; outline: none; transition: border-color .15s; }
+.tool-input:focus, .tool-select:focus, .tool-textarea:focus { border-color: var(--accent2); }
+.tool-select option { background: var(--card2); }
+.tool-textarea { resize: vertical; min-height: 76px; line-height: 1.55; }
+.month-strip { display: flex; gap: 6px; overflow-x: auto; padding: 4px 0 10px; scrollbar-width: thin; }
+.day-cell { flex: 0 0 54px; height: 58px; border: 1px solid var(--line2); border-radius: var(--rs); background: rgba(255,255,255,.02); color: var(--t2); cursor: pointer; font-family: 'Inter', sans-serif; transition: all .15s; position: relative; }
+.day-cell:hover { background: var(--card2); color: var(--t1); }
+.day-cell.on { background: linear-gradient(135deg, var(--accent), var(--accent2)); border-color: var(--accent); color: #fff; }
+.day-num { display: block; font-size: 16px; font-weight: 700; line-height: 1; margin-top: 10px; }
+.day-name { display: block; font-size: 10px; font-weight: 600; margin-top: 4px; }
+.day-dot { position: absolute; left: 50%; bottom: 6px; transform: translateX(-50%); width: 4px; height: 4px; border-radius: 50%; background: var(--green); }
+.day-cell.on .day-dot { background: rgba(255,255,255,.75); }
+.schedule-list, .ideas-list { background: linear-gradient(145deg, var(--card), var(--card2)); border: 1px solid var(--line2); border-radius: var(--r); overflow: hidden; }
+.schedule-empty, .ideas-empty { padding: 34px 18px; text-align: center; color: var(--t3); font-size: 13px; }
+.schedule-item, .idea-item { display: grid; gap: 12px; padding: 13px 16px; border-bottom: 1px solid var(--line); align-items: start; }
+.schedule-item { grid-template-columns: 72px 1fr 168px 54px; }
+.idea-item { grid-template-columns: 120px 128px 1fr 54px; }
+.schedule-item:last-child, .idea-item:last-child { border-bottom: none; }
+.schedule-time { font-size: 12px; font-weight: 700; color: var(--accent2); }
+.schedule-title, .idea-title { font-size: 13px; font-weight: 600; color: var(--t1); overflow-wrap: anywhere; }
+.schedule-meta, .idea-meta { font-size: 11px; color: var(--t3); margin-top: 3px; overflow-wrap: anywhere; }
+.move-select { width: 100%; background: var(--bg2); border: 1px solid var(--line2); border-radius: 6px; color: var(--t2); font-family: 'Inter', sans-serif; font-size: 11px; padding: 6px 8px; outline: none; }
+.mini-del { background: none; border: none; color: var(--line2); cursor: pointer; font-size: 18px; line-height: 1; padding: 2px; transition: color .15s; }
+.mini-del:hover { color: var(--red); }
+.idea-pill { display: inline-block; font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 20px; background: rgba(99,102,241,.12); color: var(--accent2); border: 1px solid rgba(99,102,241,.22); }
+@media(max-width:760px){
+  .schedule-item, .idea-item { grid-template-columns: 1fr; }
+  .move-select { max-width: 220px; }
+}
+
 /* ── LOADER ── */
 .loader { position: fixed; inset: 0; background: rgba(28,32,48,.93); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 999; gap: 14px; }
 .loader.gone { display: none; }
@@ -519,6 +555,8 @@ body {
   <div class="main-tab-nav">
     <button class="main-tab-btn active" id="tab-planner-btn" onclick="switchTab('planner')">📋 12WY Planner</button>
     <button class="main-tab-btn" id="tab-focus-btn" onclick="switchTab('focus')">👥 Team Focus <span class="tab-badge" id="alertBadge" style="display:none">0</span></button>
+    <button class="main-tab-btn" id="tab-schedule-btn" onclick="switchTab('schedule')">🗓 Daily Schedule</button>
+    <button class="main-tab-btn" id="tab-next-btn" onclick="switchTab('next')">💡 Next 12WY</button>
   </div>
 
   <!-- ══ TAB 1: 12WY PLANNER ══════════════════════════════════════ -->
@@ -651,6 +689,78 @@ body {
 
   </div><!-- /tab-focus -->
 
+  <!-- ══ TAB 3: DAILY SCHEDULE ════════════════════════════════════ -->
+  <div class="tab-panel" id="tab-schedule">
+
+    <div class="divlabel" style="margin-top:20px">Month View</div>
+    <div class="tool-panel">
+      <div class="tool-row">
+        <div class="tool-field narrow">
+          <div class="tool-label">Month</div>
+          <input class="tool-input" id="dsMonth" type="month" onchange="dsSetMonth(this.value)">
+        </div>
+        <button class="abtn blue" onclick="dsToday()">Today</button>
+        <button class="abtn" onclick="pullData()">↓ Load from Sheet</button>
+        <button class="abtn green" onclick="pushData()">↑ Save to Sheet</button>
+      </div>
+    </div>
+
+    <div class="month-strip" id="dsDays"></div>
+
+    <div class="divlabel">Schedule For <span id="dsSelectedLabel" style="color:var(--accent2);font-size:11px;text-transform:none;letter-spacing:0"></span></div>
+    <div class="tool-panel">
+      <div class="tool-row">
+        <div class="tool-field narrow">
+          <div class="tool-label">Time</div>
+          <input class="tool-input" id="dsTime" type="time">
+        </div>
+        <div class="tool-field">
+          <div class="tool-label">Item</div>
+          <input class="tool-input" id="dsTitle" type="text" placeholder="Add meeting, focus block, workout, follow-up…">
+        </div>
+        <div class="tool-field">
+          <div class="tool-label">Note</div>
+          <input class="tool-input" id="dsNote" type="text" placeholder="Context, location, owner, or reminder">
+        </div>
+        <button class="abtn blue" onclick="dsAddItem()">Add</button>
+      </div>
+    </div>
+    <div class="schedule-list" id="dsList"></div>
+
+  </div><!-- /tab-schedule -->
+
+  <!-- ══ TAB 4: NEXT 12WY IDEAS ═══════════════════════════════════ -->
+  <div class="tab-panel" id="tab-next">
+
+    <div class="divlabel" style="margin-top:20px">Capture Ideas For Next 12WY</div>
+    <div class="tool-panel">
+      <div class="tool-row">
+        <div class="tool-field">
+          <div class="tool-label">Idea</div>
+          <input class="tool-input" id="ideaTitle" type="text" placeholder="What should not be forgotten for the next cycle?">
+        </div>
+        <div class="tool-field narrow">
+          <div class="tool-label">Category</div>
+          <select class="tool-select" id="ideaCat"></select>
+        </div>
+        <div class="tool-field narrow">
+          <div class="tool-label">Area</div>
+          <select class="tool-select" id="ideaArea"></select>
+        </div>
+      </div>
+      <div class="tool-row" style="margin-top:10px">
+        <div class="tool-field">
+          <div class="tool-label">Details</div>
+          <textarea class="tool-textarea" id="ideaDetails" placeholder="Why it matters, rough execution thought, people involved, links, or success metric…"></textarea>
+        </div>
+        <button class="abtn blue" onclick="ideaAdd()">Add Idea</button>
+        <button class="abtn green" onclick="pushData()">↑ Save to Sheet</button>
+      </div>
+    </div>
+    <div class="ideas-list" id="ideasList"></div>
+
+  </div><!-- /tab-next -->
+
   <!-- Edit Focus Modal -->
   <div class="overlay hidden" id="tfEditOverlay">
     <div class="modal">
@@ -709,6 +819,8 @@ const CATS = [
   {id:'personal',name:'Personal Growth', color:'#a78bfa', bg:'rgba(167,139,250,.1)',  ico:'🎯', ph:'Strategic blocks & journaling',   full:true},
 ];
 
+const IDEA_AREAS = ['Marketing','Sales','Ops','Team','Offer Updates','Personal Goals','Health'];
+
 const TEAM = [
   'Namita Singh','Dolly Nagar','Varsha Rajput','Tanvi Negi',
   'Deesha Jain','Aravind Kumaravel','Siddhi Singh',
@@ -739,7 +851,7 @@ const CAT_CHIP_COLORS = {
 // ════════════════════════════════════════════════════════════
 // 12WY STATE
 // ════════════════════════════════════════════════════════════
-let S = { cur:8, view:8, weeks:{}, col:{}, cycleName:'Y3 Mar–Jun 2026', weekDates:WD_DEF };
+let S = { cur:8, view:8, weeks:{}, col:{}, cycleName:'Y3 Mar–Jun 2026', weekDates:WD_DEF, schedule:null, nextIdeas:[] };
 let pushTimer = null;
 let reviewData = null;
 let newWeekDates = {};
@@ -769,6 +881,8 @@ function switchTab(tab) {
     tfPollInterval = setInterval(tfRefresh, 30000); // then every 30s
   } else {
     clearInterval(tfPollInterval);        // stop polling when leaving tab
+    if (tab === 'schedule') dsRender();
+    if (tab === 'next') ideasRender();
   }
 }
 
@@ -817,8 +931,17 @@ const todayStr = () => {
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
 };
+const monthStr = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
 const tfInitials = n => n.split(' ').map(p=>p[0]).join('').toUpperCase().slice(0,2);
 const sameWeek = (a,b) => String(a) === String(b);
+function ensureExtensions() {
+  const today = todayStr();
+  if (!S.schedule || typeof S.schedule !== 'object') S.schedule = { month: today.slice(0,7), selectedDate: today, days: {} };
+  if (!S.schedule.month) S.schedule.month = today.slice(0,7);
+  if (!S.schedule.selectedDate) S.schedule.selectedDate = S.schedule.month + '-01';
+  if (!S.schedule.days || typeof S.schedule.days !== 'object') S.schedule.days = {};
+  if (!Array.isArray(S.nextIdeas)) S.nextIdeas = [];
+}
 function tfNormalizeFocus(f) {
   if (!f.updates) f.updates = [];
   f.updates = f.updates
@@ -835,8 +958,8 @@ function tfNormalizeFocus(f) {
 // ════════════════════════════════════════════════════════════
 // STORAGE
 // ════════════════════════════════════════════════════════════
-const lsSave = () => { try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch(e){} };
-const lsLoad = () => { try { const d=localStorage.getItem(LS_KEY); if(d) S=JSON.parse(d); } catch(e){} };
+const lsSave = () => { ensureExtensions(); try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch(e){} };
+const lsLoad = () => { try { const d=localStorage.getItem(LS_KEY); if(d) S=JSON.parse(d); } catch(e){} ensureExtensions(); };
 const tfSave = () => { try { localStorage.setItem(TF_KEY, JSON.stringify(TF)); } catch(e){} };
 const tfLoad = () => { try { const d=localStorage.getItem(TF_KEY); if(d) TF=JSON.parse(d); } catch(e){} };
 
@@ -864,7 +987,7 @@ async function pullData(quiet) {
     const res  = await fetch(API + '?ts=' + Date.now(), { mode:'cors' });
     const text = await res.text();
     if (text && text.includes('"weeks"')) {
-      S = JSON.parse(text); lsSave();
+      S = JSON.parse(text); ensureExtensions(); lsSave();
       // Also pull TF if bundled
       if (S._tf) { TF = S._tf; tfSave(); delete S._tf; }
       setSyncPill('ok', '✓ Synced');
@@ -925,7 +1048,7 @@ const getDelegs  = n => {
 // ════════════════════════════════════════════════════════════
 // RENDER — 12WY
 // ════════════════════════════════════════════════════════════
-function render() { rTimeline(); rWeekTabs(); rScores(); rBreakdown(); rWeekGoal(); rGrid(); rDelegs(); rAlertBadge(); }
+function render() { ensureExtensions(); rTimeline(); rWeekTabs(); rScores(); rBreakdown(); rWeekGoal(); rGrid(); rDelegs(); rAlertBadge(); dsRender(); ideasRender(); }
 
 function rTimeline() {
   const sc = allScores(), dates = wd();
@@ -1570,6 +1693,194 @@ function delT(cid, tid) {
 function clearWeek() {
   if (!confirm(`Clear all data for Week ${S.view}?`)) return;
   delete S.weeks[S.view]; schedulePush(); render(); toast('Week cleared', 'red');
+}
+
+// ════════════════════════════════════════════════════════════
+// DAILY SCHEDULE
+// ════════════════════════════════════════════════════════════
+const dayNames = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+
+function dsDaysInMonth(month) {
+  const [y,m] = month.split('-').map(Number);
+  return new Date(y, m, 0).getDate();
+}
+
+function dsDate(month, day) {
+  return month + '-' + String(day).padStart(2, '0');
+}
+
+function dsItems(date) {
+  ensureExtensions();
+  if (!S.schedule.days[date]) S.schedule.days[date] = [];
+  return S.schedule.days[date];
+}
+
+function dsSetMonth(month) {
+  if (!month) return;
+  ensureExtensions();
+  S.schedule.month = month;
+  const max = dsDaysInMonth(month);
+  const day = Math.min(Number((S.schedule.selectedDate||'').slice(8,10)) || 1, max);
+  S.schedule.selectedDate = dsDate(month, day);
+  schedulePush();
+  dsRender();
+}
+
+function dsSelect(date) {
+  ensureExtensions();
+  S.schedule.selectedDate = date;
+  schedulePush();
+  dsRender();
+}
+
+function dsToday() {
+  ensureExtensions();
+  const d = new Date();
+  S.schedule.month = monthStr(d);
+  S.schedule.selectedDate = todayStr();
+  schedulePush();
+  dsRender();
+}
+
+function dsAddItem() {
+  ensureExtensions();
+  const time = document.getElementById('dsTime').value;
+  const title = document.getElementById('dsTitle').value.trim();
+  const note = document.getElementById('dsNote').value.trim();
+  if (!title) { toast('Add a schedule item first', 'red'); return; }
+  dsItems(S.schedule.selectedDate).push({ id:uid(), time, title, note, createdAt:new Date().toISOString() });
+  dsItems(S.schedule.selectedDate).sort((a,b) => (a.time||'99:99').localeCompare(b.time||'99:99'));
+  document.getElementById('dsTime').value = '';
+  document.getElementById('dsTitle').value = '';
+  document.getElementById('dsNote').value = '';
+  schedulePush();
+  dsRender();
+  toast('Schedule item added', 'green');
+}
+
+function dsMove(id, targetDate) {
+  if (!targetDate) return;
+  const sourceDate = S.schedule.selectedDate;
+  const list = dsItems(sourceDate);
+  const item = list.find(x => x.id === id);
+  if (!item) return;
+  S.schedule.days[sourceDate] = list.filter(x => x.id !== id);
+  dsItems(targetDate).push(item);
+  dsItems(targetDate).sort((a,b) => (a.time||'99:99').localeCompare(b.time||'99:99'));
+  S.schedule.selectedDate = targetDate;
+  S.schedule.month = targetDate.slice(0,7);
+  schedulePush();
+  dsRender();
+  toast('Moved to ' + fmt(targetDate), 'blue');
+}
+
+function dsDelete(id) {
+  const date = S.schedule.selectedDate;
+  S.schedule.days[date] = dsItems(date).filter(x => x.id !== id);
+  schedulePush();
+  dsRender();
+  toast('Schedule item removed', 'red');
+}
+
+function dsRender() {
+  ensureExtensions();
+  const monthEl = document.getElementById('dsMonth');
+  const daysEl = document.getElementById('dsDays');
+  const listEl = document.getElementById('dsList');
+  if (!monthEl || !daysEl || !listEl) return;
+
+  monthEl.value = S.schedule.month;
+  const month = S.schedule.month;
+  const selected = S.schedule.selectedDate;
+  const max = dsDaysInMonth(month);
+  const dates = Array.from({length:max}, (_,i) => dsDate(month, i+1));
+
+  daysEl.innerHTML = dates.map(date => {
+    const d = new Date(date + 'T00:00:00');
+    const hasItems = (S.schedule.days[date]||[]).length > 0;
+    return `<button class="day-cell${date===selected?' on':''}" onclick="dsSelect('${date}')" title="${fmt(date)}">
+      <span class="day-num">${d.getDate()}</span>
+      <span class="day-name">${dayNames[d.getDay()]}</span>
+      ${hasItems ? '<span class="day-dot"></span>' : ''}
+    </button>`;
+  }).join('');
+
+  document.getElementById('dsSelectedLabel').textContent = fmt(selected);
+  const items = dsItems(selected).slice().sort((a,b) => (a.time||'99:99').localeCompare(b.time||'99:99'));
+  if (!items.length) {
+    listEl.innerHTML = `<div class="schedule-empty">No schedule items for ${fmt(selected)}.</div>`;
+    return;
+  }
+
+  listEl.innerHTML = items.map(item => `<div class="schedule-item">
+    <div class="schedule-time">${item.time || 'Anytime'}</div>
+    <div>
+      <div class="schedule-title">${esc(item.title)}</div>
+      ${item.note ? `<div class="schedule-meta">${esc(item.note)}</div>` : ''}
+    </div>
+    <select class="move-select" onchange="dsMove('${item.id}', this.value)">
+      <option value="">Move to another day…</option>
+      ${dates.map(date => `<option value="${date}">${fmt(date)} · ${dayNames[new Date(date+'T00:00:00').getDay()]}</option>`).join('')}
+    </select>
+    <button class="mini-del" onclick="dsDelete('${item.id}')" title="Remove">×</button>
+  </div>`).join('');
+}
+
+// ════════════════════════════════════════════════════════════
+// NEXT 12WY IDEAS
+// ════════════════════════════════════════════════════════════
+function ideaOptions() {
+  const catEl = document.getElementById('ideaCat');
+  const areaEl = document.getElementById('ideaArea');
+  if (!catEl || !areaEl) return;
+  catEl.innerHTML = CATS.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  areaEl.innerHTML = IDEA_AREAS.map(a => `<option>${a}</option>`).join('');
+}
+
+function ideaAdd() {
+  ensureExtensions();
+  const title = document.getElementById('ideaTitle').value.trim();
+  const category = document.getElementById('ideaCat').value;
+  const area = document.getElementById('ideaArea').value;
+  const details = document.getElementById('ideaDetails').value.trim();
+  if (!title) { toast('Add the idea first', 'red'); return; }
+  S.nextIdeas.unshift({ id:uid(), title, category, area, details, createdAt:new Date().toISOString() });
+  document.getElementById('ideaTitle').value = '';
+  document.getElementById('ideaDetails').value = '';
+  schedulePush();
+  ideasRender();
+  toast('Idea captured for next 12WY', 'purple');
+}
+
+function ideaDelete(id) {
+  S.nextIdeas = (S.nextIdeas||[]).filter(x => x.id !== id);
+  schedulePush();
+  ideasRender();
+  toast('Idea removed', 'red');
+}
+
+function ideasRender() {
+  ensureExtensions();
+  ideaOptions();
+  const el = document.getElementById('ideasList');
+  if (!el) return;
+  if (!S.nextIdeas.length) {
+    el.innerHTML = `<div class="ideas-empty">No next-cycle ideas captured yet.</div>`;
+    return;
+  }
+  const byCat = Object.fromEntries(CATS.map(c => [c.id, c]));
+  el.innerHTML = S.nextIdeas.map(idea => {
+    const cat = byCat[idea.category] || { name: idea.category || 'Category', color: 'var(--accent2)' };
+    return `<div class="idea-item">
+      <div><span class="idea-pill" style="color:${cat.color};border-color:${cat.color}55;background:${cat.color}18">${esc(cat.name)}</span></div>
+      <div><span class="idea-pill">${esc(idea.area || 'Area')}</span></div>
+      <div>
+        <div class="idea-title">${esc(idea.title)}</div>
+        ${idea.details ? `<div class="idea-meta">${escNl(idea.details)}</div>` : ''}
+      </div>
+      <button class="mini-del" onclick="ideaDelete('${idea.id}')" title="Remove">×</button>
+    </div>`;
+  }).join('');
 }
 
 // ════════════════════════════════════════════════════════════
