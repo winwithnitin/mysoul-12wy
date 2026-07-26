@@ -327,16 +327,15 @@ function V4LaunchAnalysis({ students, sales }) {
       <div style={tableWrap}>
         <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
           <thead>
-            <tr>{['Batch Name','Batch Month',`${eventLabel} Date`,`Last ${eventLabel} Date`,'Gap',`${pipelineLabel} Students`,`${pipelineLabel} Revenue`,`${launchProgram} Enrolled`,`${launchProgram} Conv %`,`${launchProgram} Revenue`,'Cash Received','Collection %','Avg Pipeline / Month','Revenue Diff'].map((h,i)=><th key={h} style={i===0?thL:th}>{h}</th>)}</tr>
+            <tr>{['Batch Name','Batch Month',`${eventLabel} Date`,'Gap',`${pipelineLabel} Students`,`${pipelineLabel} Revenue`,`${launchProgram} Enrolled`,`${launchProgram} Conv %`,`${launchProgram} Revenue`,'Cash Received','Collection %','Avg Pipeline / Month','Revenue Diff'].map((h,i)=><th key={h} style={i===0?thL:th}>{h}</th>)}</tr>
           </thead>
           <tbody>
-            {rows.length===0?<tr><td colSpan={14} style={{...td(),textAlign:'center',padding:'2rem'}}>No {launchProgram} batches found.</td></tr>
+            {rows.length===0?<tr><td colSpan={13} style={{...td(),textAlign:'center',padding:'2rem'}}>No {launchProgram} batches found.</td></tr>
             :rows.map(r=>(
               <tr key={r.batchName}>
                 <td style={{...td('left'),color:'var(--text)',fontWeight:600}}>{r.batchName}</td>
                 <td style={td()}>{r.batchMonth}</td>
                 <td style={td()}>{r.eventDate || '--'}</td>
-                <td style={td()}>{r.lastEventDate || '--'}</td>
                 <td style={td()}>{r.gapDays === null ? '--' : `${r.gapDays}d`}</td>
                 <td style={{...td(),fontWeight:600,color:'var(--text)'}}>{num(r.l1Students)}</td>
                 <td style={td()}>{inr(r.l1Revenue)}</td>
