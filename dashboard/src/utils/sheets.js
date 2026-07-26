@@ -581,6 +581,8 @@ async function loadBatchRegistry() {
     program: findHeaderIndex(header, ['program'], 1),
     sheet:  findHeaderIndex(header, ['sheet_id', 'sheet id'], 2),
     active: findHeaderIndex(header, ['active'], 3),
+    tmrDate: findHeaderIndex(header, ['tmr date', 'tmr_date'], 4),
+    rmeDate: findHeaderIndex(header, ['rme date', 'rme_date'], 5),
   };
 
   return rows.slice(1).map(r => ({
@@ -588,6 +590,8 @@ async function loadBatchRegistry() {
     program: String(r[cols.program] || '').trim().toUpperCase(),
     sheetId: r[cols.sheet]?.trim() || '',
     active: String(r[cols.active] || '').trim().toUpperCase(),
+    tmrDate: toISO(r[cols.tmrDate], true) || '',
+    rmeDate: toISO(r[cols.rmeDate], true) || '',
   })).filter(r => r.batchName && r.sheetId && r.active === 'Y' && ['SUPER', 'RGM'].includes(r.program));
 }
 
@@ -643,6 +647,9 @@ async function readRegistryBatch(batch) {
       latestDate: latest.date || null,
       nextDueDate: latest.nextDate || null,
       sourceSheetId: batch.sheetId,
+      tmrDate: batch.tmrDate || '',
+      rmeDate: batch.rmeDate || '',
+      launchEventDate: batch.program === 'SUPER' ? batch.tmrDate || '' : batch.rmeDate || '',
     };
   });
 

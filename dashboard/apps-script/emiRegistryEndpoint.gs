@@ -27,6 +27,8 @@ function getActiveBatches_() {
     program: findCol_(header, ['program'], 1),
     sheet: findCol_(header, ['sheet_id', 'sheet id'], 2),
     active: findCol_(header, ['active'], 3),
+    tmrDate: findCol_(header, ['tmr date', 'tmr_date'], 4),
+    rmeDate: findCol_(header, ['rme date', 'rme_date'], 5),
   };
 
   return values.slice(1).map(row => ({
@@ -34,6 +36,8 @@ function getActiveBatches_() {
     program: String(row[cols.program] || '').trim().toUpperCase(),
     sheetId: String(row[cols.sheet] || '').trim(),
     active: String(row[cols.active] || '').trim().toUpperCase(),
+    tmrDate: parseDate_(row[cols.tmrDate]) || '',
+    rmeDate: parseDate_(row[cols.rmeDate]) || '',
   })).filter(b => b.active === 'Y' && b.batchName && b.sheetId && ['SUPER', 'RGM'].indexOf(b.program) >= 0);
 }
 
@@ -77,6 +81,9 @@ function readBatchStudents_(batch) {
       latestDate: latest.date || null,
       nextDueDate: latest.nextDate || null,
       sourceSheetId: batch.sheetId,
+      tmrDate: batch.tmrDate || '',
+      rmeDate: batch.rmeDate || '',
+      launchEventDate: batch.program === 'SUPER' ? batch.tmrDate || '' : batch.rmeDate || '',
     };
   });
 }
@@ -146,9 +153,15 @@ function parseBatchTimestamp_(raw, batchISO) {
 }
 
 function parseDate_(raw) {
+  if (raw instanceof Date && !isNaN(raw.getTime())) {
+    return Utilities.formatDate(raw, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+  }
+
   const s = String(raw || '').trim();
   const dmy = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
   if (dmy) return dmy[3] + '-' + String(dmy[2]).padStart(2, '0') + '-' + String(dmy[1]).padStart(2, '0');
+  const googleDate = s.match(/(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s+([A-Za-z]{3,})\s+(\d{1,2})\s+(\d{4})/i);
+  if (googleDate) return googleDate[3] + '-' + monthNum_(googleDate[1]) + '-' + String(googleDate[2]).padStart(2, '0');
   const named = s.match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{2,4})/);
   if (named) {
     const year = named[3].length === 2 ? '20' + named[3] : named[3];

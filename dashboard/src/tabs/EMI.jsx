@@ -54,6 +54,7 @@ function daysBetween(from, to) {
 
 const MONTH_MAP = { jan:1, feb:2, mar:3, apr:4, may:5, jun:6, jul:7, aug:8, sep:9, oct:10, nov:11, dec:12 };
 const SUPER_PRICE = 250000;
+const RGM_PRICE = 120000;
 
 function parseBatchMonth(batchName) {
   if (!batchName) return null;
@@ -97,48 +98,75 @@ function monthLabel(iso) {
 }
 
 function batchDisplayName(program, launchISO, fallback) {
+  const p = String(program || '').toUpperCase();
   const label = monthLabel(launchISO);
-  if (label !== '--') return `${program} - ${label}`;
+  if (label !== '--') return `${p} - ${label}`;
   return String(fallback || '').trim() || '--';
 }
 
-function isTarotCoreL1(program) {
+function getStudentBatchDisplay(student) {
+  const launchISO = parseBatchMonth(student?.batch) || student?.timestamp || null;
+  return batchDisplayName(student?.program, launchISO, student?.batch);
+}
+
+function isSuperPipelineProgram(program) {
   const p = String(program || '').toLowerCase();
-  return p.includes('tarot - diploma') || p.includes('tarot - mastery');
+  return p.includes('tarot - mastery');
+}
+
+function isRgmPipelineProgram(program) {
+  const p = String(program || '').toLowerCase();
+  return p.includes('reiki - l1/l2');
+}
+
+function isPipelineProgram(program, launchProgram) {
+  return launchProgram === 'RGM' ? isRgmPipelineProgram(program) : isSuperPipelineProgram(program);
 }
 
 function pct(value) {
   return value === null || value === undefined ? '--' : `${value.toFixed(1)}%`;
 }
 
-function buildSuperLaunchRows(students, sales) {
-  const superStudents = (students || []).filter(s => String(s.program || '').toUpperCase() === 'SUPER');
-  const batchNames = [...new Set(superStudents.map(s => s.batch).filter(Boolean))]
+function buildLaunchRows(students, sales, launchProgram) {
+  const program = launchProgram === 'RGM' ? 'RGM' : 'SUPER';
+  const programStudents = (students || []).filter(s => String(s.program || '').toUpperCase() === program);
+  const price = program === 'RGM' ? RGM_PRICE : SUPER_PRICE;
+  const eventField = program === 'RGM' ? 'rmeDate' : 'tmrDate';
+  const eventLabel = program === 'RGM' ? 'RME' : 'TMR';
+
+  const batchNames = [...new Set(programStudents.map(s => s.batch).filter(Boolean))]
     .map(batchName => {
-      const batchStudents = superStudents.filter(s => s.batch === batchName);
+      const batchStudents = programStudents.filter(s => s.batch === batchName);
       const firstStudentDate = batchStudents.map(s => s.timestamp).filter(Boolean).sort()[0] || null;
-      return { batchName, launchISO: parseBatchMonth(batchName) || firstStudentDate };
+      const launchISO = parseBatchMonth(batchName) || firstStudentDate;
+      const eventDate = batchStudents.map(s => s[eventField] || s.launchEventDate).filter(Boolean).sort()[0] || '';
+      return { batchName, launchISO, eventDate };
     })
     .filter(b => b.launchISO)
     .sort((a, b) => a.launchISO.localeCompare(b.launchISO));
 
   return batchNames.map((batch, index) => {
     const prev = batchNames[index - 1] || null;
-    const batchStudents = superStudents.filter(s => s.batch === batch.batchName);
-    const poolStart = prev ? addDays(prev.launchISO, 1) : addMonths(batch.launchISO, -4);
-    const poolEnd = addDays(batch.launchISO, -1);
-    const l1Rows = (sales || []).filter(e => e.date >= poolStart && e.date <= poolEnd && isTarotCoreL1(e.program));
+    const batchStudents = programStudents.filter(s => s.batch === batch.batchName);
+    const currentEventDate = batch.eventDate || batch.launchISO;
+    const previousEventDate = prev ? (prev.eventDate || prev.launchISO) : null;
+    const poolStart = previousEventDate ? addDays(previousEventDate, 1) : addMonths(currentEventDate, -4);
+    const poolEnd = currentEventDate;
+    const l1Rows = (sales || []).filter(e => e.date >= poolStart && e.date <= poolEnd && isPipelineProgram(e.program, program));
     const l1Students = l1Rows.length;
     const enrolled = batchStudents.length;
-    const superRevenue = enrolled * SUPER_PRICE;
+    const launchRevenue = enrolled * price;
     const cashReceived = batchStudents.reduce((sum, s) => sum + (s.totalActual || 0), 0);
-    const gapDays = prev ? daysBetween(prev.launchISO, batch.launchISO) : null;
+    const gapDays = previousEventDate ? daysBetween(previousEventDate, currentEventDate) : null;
     const previousRevenue = index > 0 ? null : 0;
 
     return {
-      batchName: batchDisplayName('SUPER', batch.launchISO, batch.batchName),
+      batchName: batchDisplayName(program, batch.launchISO, batch.batchName),
       sourceBatchName: batch.batchName,
       launchISO: batch.launchISO,
+      eventDate: batch.eventDate || null,
+      lastEventDate: previousEventDate,
+      eventLabel,
       batchMonth: monthLabel(batch.launchISO),
       lastBatchMonth: prev ? monthLabel(prev.launchISO) : '--',
       gapDays,
@@ -146,17 +174,17 @@ function buildSuperLaunchRows(students, sales) {
       poolEnd,
       l1Students,
       l1Revenue: l1Rows.reduce((sum, e) => sum + (e.amtReceived || e.bookingAmount || 0), 0),
-      superEnrolled: enrolled,
-      superConv: l1Students > 0 ? (enrolled / l1Students) * 100 : null,
-      superRevenue,
+      launchEnrolled: enrolled,
+      launchConv: l1Students > 0 ? (enrolled / l1Students) * 100 : null,
+      launchRevenue,
       cashReceived,
-      collectionPct: superRevenue > 0 ? (cashReceived / superRevenue) * 100 : null,
+      collectionPct: launchRevenue > 0 ? (cashReceived / launchRevenue) * 100 : null,
       avgL1PerMonth: l1Students > 0 && gapDays ? l1Students / Math.max(gapDays / 30, 1) : null,
       revenueDiff: previousRevenue,
     };
   }).map((row, index, rows) => ({
     ...row,
-    revenueDiff: index === 0 ? null : row.superRevenue - rows[index - 1].superRevenue,
+    revenueDiff: index === 0 ? null : row.launchRevenue - rows[index - 1].launchRevenue,
   })).sort((a, b) => b.launchISO.localeCompare(a.launchISO));
 }
 
@@ -236,7 +264,7 @@ function V5EMIReview({ students }) {
                 <tr key={`${r.email || r.phone || r.name}-${r.batch}-${i}`} style={{background:!r.paymentsLoaded?'rgba(245,158,11,.10)':r.isMatched?'transparent':'rgba(239,68,68,.10)'}}>
                   <td style={{...td('left'),color:!r.paymentsLoaded?'var(--warning)':r.isMatched?'var(--success)':'var(--danger)',fontWeight:800}}>{!r.paymentsLoaded?'NOT LOADED':r.isMatched?'OK':'VERIFY'}</td>
                   <td style={{...td('left'),color:'var(--text)',fontWeight:600}}>{r.name || '--'}</td>
-                  <td style={td('left')}>{r.batch || '--'}</td>
+                  <td style={td('left')}>{getStudentBatchDisplay(r)}</td>
                   <td style={{...td('left'),color:r.program==='SUPER'?'var(--tarot)':'var(--reiki)',fontWeight:600}}>{r.program || '--'}</td>
                   <td style={td()}>{inr(r.actualProgramFee)}</td>
                   <td style={td()}>{inr(r.dashboardReceived)}</td>
@@ -257,53 +285,64 @@ function V5EMIReview({ students }) {
   );
 }
 
-function V4SuperAnalysis({ students, sales }) {
-  const rows = buildSuperLaunchRows(students, sales);
+function V4LaunchAnalysis({ students, sales }) {
+  const [launchProgram, setLaunchProgram] = useState('SUPER');
+  const isRgm = launchProgram === 'RGM';
+  const eventLabel = isRgm ? 'RME' : 'TMR';
+  const pipelineLabel = isRgm ? 'Reiki L1/L2' : 'Tarot Mastery';
+  const color = isRgm ? 'var(--reiki)' : 'var(--tarot)';
+  const rows = buildLaunchRows(students, sales, launchProgram);
   const latest = rows[0] || null;
   const prior = rows[1] || null;
   const today = todayStr();
-  const lastLaunchDate = latest?.launchISO || addMonths(today, -4);
-  const freshPool = (sales || []).filter(e => e.date > lastLaunchDate && e.date <= today && isTarotCoreL1(e.program));
-  const avgConv = rows.filter(r => r.superConv !== null).slice(0, 4).reduce((sum, r, _, arr) => sum + (r.superConv / arr.length), 0);
+  const lastEventDate = latest?.eventDate || latest?.launchISO || addMonths(today, -4);
+  const freshPool = (sales || []).filter(e => e.date > lastEventDate && e.date <= today && isPipelineProgram(e.program, launchProgram));
+  const avgConv = rows.filter(r => r.launchConv !== null).slice(0, 4).reduce((sum, r, _, arr) => sum + (r.launchConv / arr.length), 0);
   const freshLeads = freshPool.length;
   const projectedEnrollments = avgConv ? Math.round(freshLeads * avgConv / 100) : null;
-  const avgRevenuePerSuper = rows.reduce((sum, r) => sum + (r.superEnrolled ? r.superRevenue / r.superEnrolled : 0), 0) / Math.max(rows.filter(r => r.superEnrolled).length, 1);
-  const projectedRevenue = projectedEnrollments ? projectedEnrollments * avgRevenuePerSuper : null;
-  const currentGap = latest ? daysBetween(latest.launchISO, today) : null;
+  const avgRevenuePerEnrollment = rows.reduce((sum, r) => sum + (r.launchEnrolled ? r.launchRevenue / r.launchEnrolled : 0), 0) / Math.max(rows.filter(r => r.launchEnrolled).length, 1);
+  const projectedRevenue = projectedEnrollments ? projectedEnrollments * avgRevenuePerEnrollment : null;
+  const currentGap = latest ? daysBetween(lastEventDate, today) : null;
   const avgGap = rows.filter(r => r.gapDays).reduce((sum, r, _, arr) => sum + (r.gapDays / arr.length), 0);
 
-  let recommendation = 'Need more SUPER batch history before giving a strong next-launch recommendation.';
+  let recommendation = `Need more ${launchProgram} launch history before giving a strong next-launch recommendation.`;
   if (latest && avgConv) {
     if (freshLeads >= Math.max(80, (prior?.l1Students || 0) * 0.8)) {
-      recommendation = `You already have ${num(freshLeads)} fresh Tarot Diploma/Mastery students since ${monthLabel(latest.launchISO)}. This is enough to start warming the next SUPER launch now and aim for a live conversion window within the next 2-3 weeks.`;
+      recommendation = `You already have ${num(freshLeads)} fresh ${pipelineLabel} students since the last ${eventLabel}. This is enough to start warming the next ${launchProgram} launch now and aim for a live conversion window within the next 2-3 weeks.`;
     } else if (currentGap && avgGap && currentGap >= avgGap * 0.8) {
-      recommendation = `The launch gap is getting close to your historical rhythm, but the fresh L1 pool is only ${num(freshLeads)}. Spend the next 2 weeks increasing Diploma/Mastery intake before opening SUPER.`;
+      recommendation = `The launch gap is getting close to your historical rhythm, but the fresh ${pipelineLabel} pool is only ${num(freshLeads)}. Spend the next 2 weeks increasing the eligible student base before opening ${launchProgram}.`;
     } else {
-      recommendation = `Keep building the L1 pool first. At the current pool size of ${num(freshLeads)}, the next SUPER launch should be prepared but not pushed hard until the fresh student base is stronger.`;
+      recommendation = `Keep building the ${pipelineLabel} pool first. At the current pool size of ${num(freshLeads)}, the next ${launchProgram} launch should be prepared but not pushed hard until the fresh student base is stronger.`;
     }
   }
 
   return (
     <div style={{padding:'20px 24px 40px'}}>
-      {eye('SUPER launch performance — batch by batch')}
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16,gap:12,flexWrap:'wrap'}}>
+        {eye(`${launchProgram} launch performance — batch by batch`)}
+        <div style={{display:'flex',background:'var(--surface)',border:'1px solid var(--border)',borderRadius:8,overflow:'hidden'}}>
+          {['SUPER','RGM'].map(p=><button key={p} onClick={()=>setLaunchProgram(p)} style={{border:'none',borderRadius:0,padding:'5px 16px',fontSize:12,fontWeight:600,background:launchProgram===p?'var(--tarot)':'transparent',color:launchProgram===p?'#fff':'var(--text3)'}}>{p}</button>)}
+        </div>
+      </div>
       <div style={tableWrap}>
         <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
           <thead>
-            <tr>{['Batch Name','Batch Month','Last SUPER Batch Month','Gap','L1 Students','L1 Revenue','SUPER Enrolled','SUPER Conv %','SUPER Revenue','Cash Received','Collection %','Avg L1 / Month','Revenue Diff'].map((h,i)=><th key={h} style={i===0?thL:th}>{h}</th>)}</tr>
+            <tr>{['Batch Name','Batch Month',`${eventLabel} Date`,`Last ${eventLabel} Date`,'Gap',`${pipelineLabel} Students`,`${pipelineLabel} Revenue`,`${launchProgram} Enrolled`,`${launchProgram} Conv %`,`${launchProgram} Revenue`,'Cash Received','Collection %','Avg Pipeline / Month','Revenue Diff'].map((h,i)=><th key={h} style={i===0?thL:th}>{h}</th>)}</tr>
           </thead>
           <tbody>
-            {rows.length===0?<tr><td colSpan={13} style={{...td(),textAlign:'center',padding:'2rem'}}>No SUPER batches found.</td></tr>
+            {rows.length===0?<tr><td colSpan={14} style={{...td(),textAlign:'center',padding:'2rem'}}>No {launchProgram} batches found.</td></tr>
             :rows.map(r=>(
               <tr key={r.batchName}>
                 <td style={{...td('left'),color:'var(--text)',fontWeight:600}}>{r.batchName}</td>
                 <td style={td()}>{r.batchMonth}</td>
-                <td style={td()}>{r.lastBatchMonth}</td>
+                <td style={td()}>{r.eventDate || '--'}</td>
+                <td style={td()}>{r.lastEventDate || '--'}</td>
                 <td style={td()}>{r.gapDays === null ? '--' : `${r.gapDays}d`}</td>
                 <td style={{...td(),fontWeight:600,color:'var(--text)'}}>{num(r.l1Students)}</td>
                 <td style={td()}>{inr(r.l1Revenue)}</td>
-                <td style={{...td(),color:'var(--tarot)',fontWeight:700}}>{num(r.superEnrolled)}</td>
-                <td style={{...td(),color:r.superConv >= 10 ? 'var(--success)' : r.superConv >= 5 ? 'var(--warning)' : 'var(--danger)',fontWeight:700}}>{pct(r.superConv)}</td>
-                <td style={{...td(),color:'var(--success)',fontWeight:700}}>{inr(r.superRevenue)}</td>
+                <td style={{...td(),color,fontWeight:700}}>{num(r.launchEnrolled)}</td>
+                <td style={{...td(),color:r.launchConv >= 10 ? 'var(--success)' : r.launchConv >= 5 ? 'var(--warning)' : 'var(--danger)',fontWeight:700}}>{pct(r.launchConv)}</td>
+                <td style={{...td(),color:'var(--success)',fontWeight:700}}>{inr(r.launchRevenue)}</td>
                 <td style={td()}>{inr(r.cashReceived)}</td>
                 <td style={td()}>{pct(r.collectionPct)}</td>
                 <td style={td()}>{r.avgL1PerMonth === null ? '--' : num(Math.round(r.avgL1PerMonth))}</td>
@@ -317,12 +356,12 @@ function V4SuperAnalysis({ students, sales }) {
       {eye('AI business coach analysis')}
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
         <div style={{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:12,padding:'18px 20px'}}>
-          <div style={{fontSize:13,fontWeight:700,color:'var(--tarot)',marginBottom:12}}>Next launch readiness</div>
+          <div style={{fontSize:13,fontWeight:700,color,marginBottom:12}}>Next launch readiness</div>
           {[
-            ['Fresh L1 pool since last SUPER', num(freshLeads)],
-            ['Avg recent SUPER conversion', avgConv ? `${avgConv.toFixed(1)}%` : '--'],
-            ['Projected SUPER enrollments', projectedEnrollments ? num(projectedEnrollments) : '--'],
-            ['Projected SUPER revenue', projectedRevenue ? inr(projectedRevenue) : '--'],
+            [`Fresh ${pipelineLabel} pool since last ${eventLabel}`, num(freshLeads)],
+            [`Avg recent ${launchProgram} conversion`, avgConv ? `${avgConv.toFixed(1)}%` : '--'],
+            [`Projected ${launchProgram} enrollments`, projectedEnrollments ? num(projectedEnrollments) : '--'],
+            [`Projected ${launchProgram} revenue`, projectedRevenue ? inr(projectedRevenue) : '--'],
           ].map(([label,value])=>(
             <div key={label} style={{display:'flex',justifyContent:'space-between',padding:'6px 0',borderBottom:'1px solid var(--border2)'}}>
               <span style={{fontSize:12,color:'var(--text2)'}}>{label}</span>
@@ -333,7 +372,7 @@ function V4SuperAnalysis({ students, sales }) {
         <div style={{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:12,padding:'18px 20px'}}>
           <div style={{fontSize:13,fontWeight:700,color:'var(--success)',marginBottom:10}}>Recommendation</div>
           <p style={{fontSize:13,lineHeight:1.6,color:'var(--text2)',margin:'0 0 10px'}}>{recommendation}</p>
-          <p style={{fontSize:12,lineHeight:1.6,color:'var(--text3)',margin:0}}>Use this view every week: if L1 pool is growing but SUPER conversion drops, fix nurturing and sales calls; if L1 pool is weak, delay launch and scale Diploma/Mastery first.</p>
+          <p style={{fontSize:12,lineHeight:1.6,color:'var(--text3)',margin:0}}>Pipeline rule: SUPER uses only Tarot Mastery students around TMR events. RGM uses only Reiki L1/L2 students around RME events.</p>
         </div>
       </div>
     </div>
@@ -343,7 +382,8 @@ function V4SuperAnalysis({ students, sales }) {
 function V3Content({ students, sales }) {
   const [prog, setProg] = useState('ALL');
   const [batch, setBatch] = useState('ALL');
-  const allBatches = [...new Set((students || []).map(s => s.batch).filter(Boolean))].sort();
+  const allBatches = [...new Set((students || []).map(s => s.batch).filter(Boolean))]
+    .sort((a, b) => getStudentBatchDisplay((students || []).find(s => s.batch === a)).localeCompare(getStudentBatchDisplay((students || []).find(s => s.batch === b))));
   const rows = (students || [])
     .filter(s => (prog === 'ALL' || s.program === prog) && (batch === 'ALL' || s.batch === batch))
     .map(s => {
@@ -375,7 +415,7 @@ function V3Content({ students, sales }) {
         </div>
         <select value={batch} onChange={e=>setBatch(e.target.value)} style={{background:'var(--surface)',border:'1px solid var(--border)',color:'var(--text)',padding:'4px 10px',borderRadius:8,fontSize:12}}>
           <option value="ALL">All Batches</option>
-          {allBatches.map(b=><option key={b} value={b}>{b}</option>)}
+          {allBatches.map(b=><option key={b} value={b}>{getStudentBatchDisplay((students || []).find(s => s.batch === b))}</option>)}
         </select>
       </div>
 
@@ -399,7 +439,7 @@ function V3Content({ students, sales }) {
                 <tr key={`${s.email || s.phone || s.name}-${s.batch}-${i}`}>
                   <td style={{...td('left'),color:'var(--text)',fontWeight:500}}>{s.name || '--'}</td>
                   <td style={td('left')}>{s.phone || '--'}</td>
-                  <td style={{...td('left'),color:s.program==='SUPER'?'var(--tarot)':'var(--reiki)',fontWeight:500}}>{s.batch || s.program || '--'}</td>
+                  <td style={{...td('left'),color:s.program==='SUPER'?'var(--tarot)':'var(--reiki)',fontWeight:500}}>{getStudentBatchDisplay(s)}</td>
                   <td style={td()}>{s.joiningDate || '--'}</td>
                   <td style={td()}>{s.firstProgram || '--'}</td>
                   <td style={td()}>{s.timeTakenDays === null ? '--' : `${s.timeTakenDays}d`}</td>
@@ -545,7 +585,7 @@ export default function EMI() {
             {updated&&<span style={{color:'var(--text3)',marginLeft:8}}>· {updated.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</span>}
           </span>
           <div style={{display:'flex',background:'var(--surface)',border:'1px solid var(--border)',borderRadius:8,overflow:'hidden'}}>
-            {[{k:'v2',l:'V2 — Revenue & Analysis'},{k:'v1',l:'V1 — EMI Tracking'},{k:'v3',l:'V3 - Analysis'},{k:'v4',l:'V4 - SUPER Analysis'},{k:'v5',l:'V5 - EMI Review'}].map(({k,l})=>(
+            {[{k:'v2',l:'V2 — Revenue & Analysis'},{k:'v1',l:'V1 — EMI Tracking'},{k:'v3',l:'V3 - Analysis'},{k:'v4',l:'V4 - Launch Analysis'},{k:'v5',l:'V5 - EMI Review'}].map(({k,l})=>(
               <button key={k} onClick={()=>setView(k)} style={{border:'none',borderRadius:0,padding:'4px 14px',fontSize:12,fontWeight:500,background:view===k?'var(--tarot)':'transparent',color:view===k?'#fff':'var(--text3)'}}>{l}</button>
             ))}
           </div>
@@ -555,7 +595,7 @@ export default function EMI() {
       {view==='v1'&&<V1Content students={data.students||[]} />}
       {view==='v2'&&<EMIv2 v2Students={data.v2||[]} salesEnrollments={sales} />}
       {view==='v3'&&<V3Content students={data.v2||[]} sales={sales} />}
-      {view==='v4'&&<V4SuperAnalysis students={data.v2||[]} sales={sales} />}
+      {view==='v4'&&<V4LaunchAnalysis students={data.v2||[]} sales={sales} />}
       {view==='v5'&&<V5EMIReview students={data.v2||[]} />}
     </div>
   );

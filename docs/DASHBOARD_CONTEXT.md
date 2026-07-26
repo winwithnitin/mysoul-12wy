@@ -19,6 +19,7 @@ This dashboard is for MySoulSchool / 12WY business review.
 - Ad spend and lead pools: existing `SHEETS` config.
 - Campaign/adset enrollment attribution: existing lead attribution loader used by CRM.
 - SUPER/RGM high-ticket truth: `BATCH_REGISTRY` tab `Batches`; active rows point to each batch PMS sheet. Each batch sheet uses `EMI Dashboard` columns A-L for enrollment/current due and `Resp EMI` for received payments and next planned EMI date. Because batch PMS sheets are private, deployed dashboard verification needs an Apps Script endpoint to return `Resp EMI` rows server-side; direct public CSV reads return 401.
+- SUPER/RGM launch analysis: Batch Registry column E = `TMR Date` for SUPER pipeline windows, column F = `RME Date` for RGM pipeline windows. SUPER pipeline includes only `Tarot - Mastery`; RGM pipeline includes only `Reiki - L1/L2`.
 - Workshop calendar: `WORKSHOP_PMS`, tab `Plan`, where `STATUS = Done` means approved/happened.
 - Daily show-up: `WORKSHOP_PERFORMANCE`, tab `ShowUp`, filled by Tanvi form.
 - Audit notes/memory: `WORKSHOP_PERFORMANCE`, tab `AuditMemory`; current UI stores notes in browser localStorage until a write endpoint is added.
