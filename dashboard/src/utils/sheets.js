@@ -666,7 +666,14 @@ async function loadRegistryEMIData() {
 }
 
 async function enrichEMIDataWithRegistryDates(data) {
-  const batches = await loadBatchRegistry();
+  let batches = [];
+  try {
+    batches = await loadBatchRegistry();
+  } catch (error) {
+    console.warn('[EMI] Registry event dates not enriched', error);
+    return data;
+  }
+
   const bySheet = {};
   const byBatchProgram = {};
 
