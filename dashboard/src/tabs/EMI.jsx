@@ -148,11 +148,13 @@ function buildLaunchRows(students, sales, launchProgram) {
   return batchNames.map((batch, index) => {
     const prev = batchNames[index - 1] || null;
     const batchStudents = programStudents.filter(s => s.batch === batch.batchName);
-    const currentEventDate = batch.eventDate || batch.launchISO;
-    const previousEventDate = prev ? (prev.eventDate || prev.launchISO) : null;
-    const poolStart = previousEventDate ? addDays(previousEventDate, 1) : addMonths(currentEventDate, -4);
+    const currentEventDate = batch.eventDate || null;
+    const previousEventDate = prev?.eventDate || null;
+    const poolStart = currentEventDate ? (previousEventDate ? addDays(previousEventDate, 1) : addMonths(currentEventDate, -4)) : null;
     const poolEnd = currentEventDate;
-    const l1Rows = (sales || []).filter(e => e.date >= poolStart && e.date <= poolEnd && isPipelineProgram(e.program, program));
+    const l1Rows = poolStart && poolEnd
+      ? (sales || []).filter(e => e.date >= poolStart && e.date <= poolEnd && isPipelineProgram(e.program, program))
+      : [];
     const l1Students = l1Rows.length;
     const enrolled = batchStudents.length;
     const launchRevenue = enrolled * price;
@@ -295,8 +297,10 @@ function V4LaunchAnalysis({ students, sales }) {
   const latest = rows[0] || null;
   const prior = rows[1] || null;
   const today = todayStr();
-  const lastEventDate = latest?.eventDate || latest?.launchISO || addMonths(today, -4);
-  const freshPool = (sales || []).filter(e => e.date > lastEventDate && e.date <= today && isPipelineProgram(e.program, launchProgram));
+  const lastEventDate = latest?.eventDate || null;
+  const freshPool = lastEventDate
+    ? (sales || []).filter(e => e.date > lastEventDate && e.date <= today && isPipelineProgram(e.program, launchProgram))
+    : [];
   const avgConv = rows.filter(r => r.launchConv !== null).slice(0, 4).reduce((sum, r, _, arr) => sum + (r.launchConv / arr.length), 0);
   const freshLeads = freshPool.length;
   const projectedEnrollments = avgConv ? Math.round(freshLeads * avgConv / 100) : null;
@@ -305,7 +309,9 @@ function V4LaunchAnalysis({ students, sales }) {
   const currentGap = latest ? daysBetween(lastEventDate, today) : null;
   const avgGap = rows.filter(r => r.gapDays).reduce((sum, r, _, arr) => sum + (r.gapDays / arr.length), 0);
 
-  let recommendation = `Need more ${launchProgram} launch history before giving a strong next-launch recommendation.`;
+  let recommendation = latest && !lastEventDate
+    ? `${eventLabel} Date is missing from the live EMI endpoint, so pipeline analysis is paused instead of using the wrong fallback date. Deploy the updated EMI Apps Script or make the Batch Registry public-view.`
+    : `Need more ${launchProgram} launch history before giving a strong next-launch recommendation.`;
   if (latest && avgConv) {
     if (freshLeads >= Math.max(80, (prior?.l1Students || 0) * 0.8)) {
       recommendation = `You already have ${num(freshLeads)} fresh ${pipelineLabel} students since the last ${eventLabel}. This is enough to start warming the next ${launchProgram} launch now and aim for a live conversion window within the next 2-3 weeks.`;
@@ -324,6 +330,11 @@ function V4LaunchAnalysis({ students, sales }) {
           {['SUPER','RGM'].map(p=><button key={p} onClick={()=>setLaunchProgram(p)} style={{border:'none',borderRadius:0,padding:'5px 16px',fontSize:12,fontWeight:600,background:launchProgram===p?'var(--tarot)':'transparent',color:launchProgram===p?'#fff':'var(--text3)'}}>{p}</button>)}
         </div>
       </div>
+      {rows.some(r => !r.eventDate) && (
+        <div style={{background:'rgba(245,158,11,.10)',border:'1px solid rgba(245,158,11,.35)',color:'var(--warning)',borderRadius:10,padding:'10px 14px',fontSize:12,marginBottom:14}}>
+          {eventLabel} Date is not reaching the dashboard yet. Permanent fix: deploy the updated EMI Apps Script so it returns Batch Registry column {isRgm ? 'F' : 'E'}.
+        </div>
+      )}
       <div style={tableWrap}>
         <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
           <thead>
@@ -357,7 +368,7 @@ function V4LaunchAnalysis({ students, sales }) {
         <div style={{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:12,padding:'18px 20px'}}>
           <div style={{fontSize:13,fontWeight:700,color,marginBottom:12}}>Next launch readiness</div>
           {[
-            [`Fresh ${pipelineLabel} pool since last ${eventLabel}`, num(freshLeads)],
+            [`Fresh ${pipelineLabel} pool since last ${eventLabel}`, lastEventDate ? num(freshLeads) : '--'],
             [`Avg recent ${launchProgram} conversion`, avgConv ? `${avgConv.toFixed(1)}%` : '--'],
             [`Projected ${launchProgram} enrollments`, projectedEnrollments ? num(projectedEnrollments) : '--'],
             [`Projected ${launchProgram} revenue`, projectedRevenue ? inr(projectedRevenue) : '--'],
