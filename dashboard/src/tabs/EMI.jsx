@@ -56,7 +56,23 @@ const MONTH_MAP = { jan:1, feb:2, mar:3, apr:4, may:5, jun:6, jul:7, aug:8, sep:
 const SUPER_PRICE = 250000;
 
 function parseBatchMonth(batchName) {
-  const m = String(batchName || '').toLowerCase().match(/([a-z]+)[\s-]+(\d{4})/);
+  if (!batchName) return null;
+
+  if (batchName instanceof Date && !Number.isNaN(batchName.getTime())) {
+    return `${batchName.getFullYear()}-${String(batchName.getMonth() + 1).padStart(2, '0')}-01`;
+  }
+
+  const raw = String(batchName || '').trim();
+  const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return `${iso[1]}-${iso[2]}-01`;
+
+  const namedDate = raw.match(/(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s+([A-Za-z]{3,})\s+\d{1,2}\s+(\d{4})/i);
+  if (namedDate) {
+    const month = MONTH_MAP[namedDate[1].slice(0, 3).toLowerCase()];
+    return month ? `${namedDate[2]}-${String(month).padStart(2, '0')}-01` : null;
+  }
+
+  const m = raw.toLowerCase().match(/([a-z]+)[\s-]+(\d{4})/);
   if (!m) return null;
   const month = MONTH_MAP[m[1].slice(0, 3)];
   if (!month) return null;
@@ -78,6 +94,12 @@ function addMonths(iso, months) {
 function monthLabel(iso) {
   if (!iso) return '--';
   return new Date(`${iso}T12:00:00`).toLocaleDateString('en-IN', { month:'short', year:'numeric' });
+}
+
+function batchDisplayName(program, launchISO, fallback) {
+  const label = monthLabel(launchISO);
+  if (label !== '--') return `${program} - ${label}`;
+  return String(fallback || '').trim() || '--';
 }
 
 function isTarotCoreL1(program) {
@@ -114,7 +136,8 @@ function buildSuperLaunchRows(students, sales) {
     const previousRevenue = index > 0 ? null : 0;
 
     return {
-      batchName: batch.batchName,
+      batchName: batchDisplayName('SUPER', batch.launchISO, batch.batchName),
+      sourceBatchName: batch.batchName,
       launchISO: batch.launchISO,
       batchMonth: monthLabel(batch.launchISO),
       lastBatchMonth: prev ? monthLabel(prev.launchISO) : '--',
