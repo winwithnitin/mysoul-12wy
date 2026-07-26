@@ -143,6 +143,92 @@ function diffCell(value) {
   return <span style={{color:up?'var(--success)':'var(--danger)',fontWeight:700}}>{up ? '▲' : '▼'} {inr(Math.abs(value))}</span>;
 }
 
+function V5EMIReview({ students }) {
+  const [status, setStatus] = useState('MISMATCH');
+  const [program, setProgram] = useState('ALL');
+  const rows = (students || []).map(s => {
+    const actualProgramFee = (s.programFee || 0) - (s.totalOldPayment || 0);
+    const dashboardReceived = (s.appnFee || 0) + (s.totalActual || 0);
+    const respReceived = (s.payments || []).reduce((sum, p) => sum + (p.amount || 0), 0);
+    const calculatedDue = Math.max(0, actualProgramFee - dashboardReceived);
+    const receivedDiff = dashboardReceived - respReceived;
+    const dueDiff = calculatedDue - (s.emiDue || 0);
+    const isMatched = Math.abs(receivedDiff) <= 1 && Math.abs(dueDiff) <= 1;
+
+    return { ...s, actualProgramFee, dashboardReceived, respReceived, calculatedDue, receivedDiff, dueDiff, isMatched };
+  }).filter(r => (status === 'ALL' || (status === 'MATCHED' ? r.isMatched : !r.isMatched)) && (program === 'ALL' || r.program === program))
+    .sort((a, b) => (a.isMatched === b.isMatched ? (b.receivedDiff || 0) - (a.receivedDiff || 0) : a.isMatched ? 1 : -1));
+
+  const summary = (students || []).reduce((acc, s) => {
+    const actualProgramFee = (s.programFee || 0) - (s.totalOldPayment || 0);
+    const dashboardReceived = (s.appnFee || 0) + (s.totalActual || 0);
+    const respReceived = (s.payments || []).reduce((sum, p) => sum + (p.amount || 0), 0);
+    const calculatedDue = Math.max(0, actualProgramFee - dashboardReceived);
+    const receivedDiff = dashboardReceived - respReceived;
+    const dueDiff = calculatedDue - (s.emiDue || 0);
+    const matched = Math.abs(receivedDiff) <= 1 && Math.abs(dueDiff) <= 1;
+    acc.students += 1;
+    acc.matched += matched ? 1 : 0;
+    acc.mismatch += matched ? 0 : 1;
+    acc.netDiff += receivedDiff;
+    return acc;
+  }, { students:0, matched:0, mismatch:0, netDiff:0 });
+
+  return (
+    <div>
+      <div style={{display:'flex',alignItems:'center',gap:12,padding:'10px 24px',borderBottom:'1px solid var(--border)',background:'var(--surface2)',flexWrap:'wrap'}}>
+        <div style={{display:'flex',background:'var(--surface)',border:'1px solid var(--border)',borderRadius:8,overflow:'hidden'}}>
+          {['MISMATCH','ALL','MATCHED'].map(s=><button key={s} onClick={()=>setStatus(s)} style={{border:'none',borderRadius:0,padding:'4px 12px',fontSize:12,fontWeight:500,background:status===s?'var(--tarot)':'transparent',color:status===s?'#fff':'var(--text3)'}}>{s}</button>)}
+        </div>
+        <div style={{display:'flex',background:'var(--surface)',border:'1px solid var(--border)',borderRadius:8,overflow:'hidden'}}>
+          {['ALL','SUPER','RGM'].map(p=><button key={p} onClick={()=>setProgram(p)} style={{border:'none',borderRadius:0,padding:'4px 12px',fontSize:12,fontWeight:500,background:program===p?'var(--tarot)':'transparent',color:program===p?'#fff':'var(--text3)'}}>{p}</button>)}
+        </div>
+      </div>
+
+      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:1,background:'var(--border)',marginBottom:24}}>
+        {[['Students',num(summary.students),null],['Matched',num(summary.matched),'var(--success)'],['Needs Review',num(summary.mismatch),summary.mismatch?'var(--danger)':'var(--success)'],['Net Difference',inr(summary.netDiff),summary.netDiff?'var(--warning)':'var(--success)']].map(([label,value,color])=>(
+          <div key={label} style={{background:'var(--surface)',padding:'16px 20px'}}>
+            <div style={{fontSize:11,color:'var(--text3)',textTransform:'uppercase',letterSpacing:.5,marginBottom:6}}>{label}</div>
+            <div style={{fontSize:22,fontWeight:600,color:color||'var(--text)'}}>{value}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{padding:'0 24px 32px'}}>
+        {eye('EMI dashboard vs Resp EMI verification')}
+        <div style={{fontSize:12,color:'var(--text3)',marginBottom:12}}>Expected match: EMI Dashboard received = Application Fee + Total Actual Amount. Resp EMI received = sum of Amount Received in Resp EMI for the same student.</div>
+        <div style={tableWrap}>
+          <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
+            <thead>
+              <tr>{['Status','Name','Batch','Program','Actual Program Fee','Dashboard Received','Resp EMI Sum','Difference','Calculated Due','Dashboard Due','Due Diff','Payments','Next EMI Due'].map((h,i)=><th key={h} style={i<4?thL:th}>{h}</th>)}</tr>
+            </thead>
+            <tbody>
+              {rows.length===0?<tr><td colSpan={13} style={{...td(),textAlign:'center',padding:'2rem'}}>No rows for this filter.</td></tr>
+              :rows.map((r,i)=>(
+                <tr key={`${r.email || r.phone || r.name}-${r.batch}-${i}`} style={{background:r.isMatched?'transparent':'rgba(239,68,68,.10)'}}>
+                  <td style={{...td('left'),color:r.isMatched?'var(--success)':'var(--danger)',fontWeight:800}}>{r.isMatched?'OK':'VERIFY'}</td>
+                  <td style={{...td('left'),color:'var(--text)',fontWeight:600}}>{r.name || '--'}</td>
+                  <td style={td('left')}>{r.batch || '--'}</td>
+                  <td style={{...td('left'),color:r.program==='SUPER'?'var(--tarot)':'var(--reiki)',fontWeight:600}}>{r.program || '--'}</td>
+                  <td style={td()}>{inr(r.actualProgramFee)}</td>
+                  <td style={td()}>{inr(r.dashboardReceived)}</td>
+                  <td style={td()}>{inr(r.respReceived)}</td>
+                  <td style={{...td(),color:Math.abs(r.receivedDiff)>1?'var(--danger)':'var(--success)',fontWeight:800}}>{inr(r.receivedDiff)}</td>
+                  <td style={td()}>{inr(r.calculatedDue)}</td>
+                  <td style={td()}>{inr(r.emiDue || 0)}</td>
+                  <td style={{...td(),color:Math.abs(r.dueDiff)>1?'var(--danger)':'var(--success)',fontWeight:800}}>{inr(r.dueDiff)}</td>
+                  <td style={td()}>{(r.payments || []).length}</td>
+                  <td style={td()}>{r.nextDueDate || '--'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function V4SuperAnalysis({ students, sales }) {
   const rows = buildSuperLaunchRows(students, sales);
   const latest = rows[0] || null;
@@ -431,7 +517,7 @@ export default function EMI() {
             {updated&&<span style={{color:'var(--text3)',marginLeft:8}}>· {updated.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</span>}
           </span>
           <div style={{display:'flex',background:'var(--surface)',border:'1px solid var(--border)',borderRadius:8,overflow:'hidden'}}>
-            {[{k:'v2',l:'V2 — Revenue & Analysis'},{k:'v1',l:'V1 — EMI Tracking'},{k:'v3',l:'V3 - Analysis'},{k:'v4',l:'V4 - SUPER Analysis'}].map(({k,l})=>(
+            {[{k:'v2',l:'V2 — Revenue & Analysis'},{k:'v1',l:'V1 — EMI Tracking'},{k:'v3',l:'V3 - Analysis'},{k:'v4',l:'V4 - SUPER Analysis'},{k:'v5',l:'V5 - EMI Review'}].map(({k,l})=>(
               <button key={k} onClick={()=>setView(k)} style={{border:'none',borderRadius:0,padding:'4px 14px',fontSize:12,fontWeight:500,background:view===k?'var(--tarot)':'transparent',color:view===k?'#fff':'var(--text3)'}}>{l}</button>
             ))}
           </div>
@@ -442,6 +528,7 @@ export default function EMI() {
       {view==='v2'&&<EMIv2 v2Students={data.v2||[]} salesEnrollments={sales} />}
       {view==='v3'&&<V3Content students={data.v2||[]} sales={sales} />}
       {view==='v4'&&<V4SuperAnalysis students={data.v2||[]} sales={sales} />}
+      {view==='v5'&&<V5EMIReview students={data.v2||[]} />}
     </div>
   );
 }
