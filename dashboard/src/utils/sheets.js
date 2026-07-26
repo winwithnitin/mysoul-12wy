@@ -786,13 +786,17 @@ export function getFinanceSample() {
 // --- EMI ----------------------------------------------------------------------
 export async function loadEMIData() {
   try {
-    return await loadRegistryEMIData();
-  } catch (registryError) {
-    console.warn('[EMI] Registry loader failed, falling back to Apps Script', registryError);
+    const res = await fetch(EMI_URL);
+    if (!res.ok) throw new Error(`EMI API ${res.status}`);
+    const data = await res.json();
+    if (data?.ok === false) throw new Error(data.error || 'EMI API returned an error');
+    if ((data?.v2 || []).length) return data;
+    throw new Error('EMI API returned no V2 rows');
+  } catch (apiError) {
+    console.warn('[EMI] Apps Script loader failed, falling back to direct registry read', apiError);
   }
-  const res = await fetch(EMI_URL);
-  if (!res.ok) throw new Error(`EMI API ${res.status}`);
-  return await res.json();
+
+  return await loadRegistryEMIData();
 }
 
 export function getEMISample() {
