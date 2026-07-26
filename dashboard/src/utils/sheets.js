@@ -597,6 +597,7 @@ async function readRegistryBatch(batch) {
     fetchCSV(batch.sheetId, 'EMI Dashboard').catch(() => []),
     fetchCSV(batch.sheetId, 'Resp EMI').catch(() => []),
   ]);
+  const paymentsLoaded = paymentRows.length > 1;
 
   const paymentMap = {};
   for (const r of paymentRows.slice(1)) {
@@ -637,6 +638,7 @@ async function readRegistryBatch(batch) {
       emiDue: parseAmount(r[10]),
       paymentPlan: parseInt(r[11]) || 0,
       payments,
+      paymentsLoaded,
       latestEmiNum: latest.emiNum ?? null,
       latestDate: latest.date || null,
       nextDueDate: latest.nextDate || null,
