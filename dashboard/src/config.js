@@ -80,7 +80,7 @@ export function getFunnel(program) {
 // --- Batch Registry ----------------------------------------------------------
 export const BATCH_REGISTRY = {
   id:  '1b3IZYUmRlG9nHp27b3i1ObxfUIV1Zq9jmzNtnN_iyYg',
-  tab: 'Sheet1',
+  tab: 'Batches',
 };
 
 // --- GST ---------------------------------------------------------------------

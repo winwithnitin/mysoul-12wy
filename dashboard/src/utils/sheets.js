@@ -10,6 +10,7 @@ import {
   WORKSHOP_PMS,
   WORKSHOP_PERFORMANCE,
   INTERNS_KPI,
+  BATCH_REGISTRY,
 } from '../config.js';
 
 // --- Shared helpers -----------------------------------------------------------
@@ -543,6 +544,118 @@ function parseMDY(raw) {
   return m ? `${m[3]}-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}` : null;
 }
 
+function parseBatchStart(raw) {
+  const s = String(raw || '').trim();
+  const named = s.match(/([A-Za-z]+)\s+(\d{4})/);
+  if (!named) return null;
+  const months = { jan:'01', feb:'02', mar:'03', apr:'04', may:'05', jun:'06', jul:'07', aug:'08', sep:'09', oct:'10', nov:'11', dec:'12' };
+  const mo = months[named[1].toLowerCase().slice(0, 3)];
+  return mo ? `${named[2]}-${mo}-01` : null;
+}
+
+function parseBatchTimestamp(raw, batchISO) {
+  const iso = toISO(raw, true);
+  if (iso) return iso;
+  const m = String(raw || '').trim().match(/^(\d{1,2})\s+([A-Za-z]+)/);
+  if (!m || !batchISO) return batchISO || null;
+  const months = { jan:'01', feb:'02', mar:'03', apr:'04', may:'05', jun:'06', jul:'07', aug:'08', sep:'09', oct:'10', nov:'11', dec:'12' };
+  const mo = months[m[2].toLowerCase().slice(0, 3)];
+  return mo ? `${batchISO.slice(0, 4)}-${mo}-${m[1].padStart(2, '0')}` : batchISO;
+}
+
+function normalizeKey(email, phone, name = '') {
+  const e = String(email || '').toLowerCase().trim();
+  const p = String(phone || '').replace(/\D/g, '').slice(-10);
+  return e || p || String(name || '').toLowerCase().trim();
+}
+
+function parsePaymentDate(raw) {
+  return toISO(raw, true) || parseMDY(raw);
+}
+
+async function loadBatchRegistry() {
+  const rows = await fetchCSV(BATCH_REGISTRY.id, BATCH_REGISTRY.tab);
+  const header = rows[0] || [];
+  const cols = {
+    batch:  findHeaderIndex(header, ['batch_name', 'batch name'], 0),
+    program: findHeaderIndex(header, ['program'], 1),
+    sheet:  findHeaderIndex(header, ['sheet_id', 'sheet id'], 2),
+    active: findHeaderIndex(header, ['active'], 3),
+  };
+
+  return rows.slice(1).map(r => ({
+    batchName: r[cols.batch]?.trim() || '',
+    program: String(r[cols.program] || '').trim().toUpperCase(),
+    sheetId: r[cols.sheet]?.trim() || '',
+    active: String(r[cols.active] || '').trim().toUpperCase(),
+  })).filter(r => r.batchName && r.sheetId && r.active === 'Y' && ['SUPER', 'RGM'].includes(r.program));
+}
+
+async function readRegistryBatch(batch) {
+  const batchISO = parseBatchStart(batch.batchName);
+  const [dashboardRows, paymentRows] = await Promise.all([
+    fetchCSV(batch.sheetId, 'EMI Dashboard').catch(() => []),
+    fetchCSV(batch.sheetId, 'Resp EMI').catch(() => []),
+  ]);
+
+  const paymentMap = {};
+  for (const r of paymentRows.slice(1)) {
+    const amount = parseAmount(r[5]);
+    if (!amount) continue;
+    const key = normalizeKey(r[4], '', r[2]);
+    if (!key) continue;
+    if (!paymentMap[key]) paymentMap[key] = [];
+    paymentMap[key].push({
+      amount,
+      date: parsePaymentDate(r[6]),
+      emiNum: parseInt(r[9]) || 0,
+      nextDate: parsePaymentDate(r[10]),
+      receivedVia: r[8]?.trim() || '',
+    });
+  }
+
+  const students = dashboardRows.slice(7).filter(r => r[1]?.trim() || r[2]?.trim() || r[3]?.trim()).map(r => {
+    const email = (r[2] || '').toLowerCase().trim();
+    const phone = (r[3] || '').replace(/\D/g, '').slice(-10);
+    const key = normalizeKey(email, phone, r[1]);
+    const payments = (paymentMap[key] || []).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    const latest = payments[0] || {};
+
+    return {
+      batch: batch.batchName,
+      program: batch.program,
+      name: r[1]?.trim() || '',
+      phone,
+      email,
+      timestamp: parseBatchTimestamp(r[0], batchISO),
+      enrollmentTimestamp: r[0]?.trim() || '',
+      programFee: parseAmount(r[5]),
+      appnFee: parseAmount(r[6]),
+      totalOldPayment: parseAmount(r[7]),
+      totalPlanned: parseAmount(r[8]),
+      totalActual: parseAmount(r[9]),
+      emiDue: parseAmount(r[10]),
+      paymentPlan: parseInt(r[11]) || 0,
+      payments,
+      latestEmiNum: latest.emiNum ?? null,
+      latestDate: latest.date || null,
+      nextDueDate: latest.nextDate || null,
+      sourceSheetId: batch.sheetId,
+    };
+  });
+
+  return students;
+}
+
+async function loadRegistryEMIData() {
+  const batches = await loadBatchRegistry();
+  const results = await Promise.all(batches.map(readRegistryBatch));
+  const v2 = results.flat();
+
+  if (!v2.length) throw new Error('No registry EMI rows found');
+  return { students: [], v2 };
+}
+
 async function readResponseEMITab(sheetId, tabName, program) {
   try {
     const rows = await fetchCSV(sheetId, tabName);
@@ -670,6 +783,11 @@ export function getFinanceSample() {
 
 // --- EMI ----------------------------------------------------------------------
 export async function loadEMIData() {
+  try {
+    return await loadRegistryEMIData();
+  } catch (registryError) {
+    console.warn('[EMI] Registry loader failed, falling back to Apps Script', registryError);
+  }
   const res = await fetch(EMI_URL);
   if (!res.ok) throw new Error(`EMI API ${res.status}`);
   return await res.json();
