@@ -665,6 +665,38 @@ async function loadRegistryEMIData() {
   return { students: [], v2 };
 }
 
+async function enrichEMIDataWithRegistryDates(data) {
+  const batches = await loadBatchRegistry();
+  const bySheet = {};
+  const byBatchProgram = {};
+
+  for (const batch of batches) {
+    const key = `${batch.program}|${batch.batchName}`.toLowerCase();
+    if (batch.sheetId) bySheet[batch.sheetId] = batch;
+    byBatchProgram[key] = batch;
+  }
+
+  return {
+    ...data,
+    v2: (data?.v2 || []).map(student => {
+      const program = String(student.program || '').toUpperCase();
+      const key = `${program}|${student.batch || ''}`.toLowerCase();
+      const batch = bySheet[student.sourceSheetId] || byBatchProgram[key];
+      if (!batch) return student;
+
+      return {
+        ...student,
+        batch: student.batch || batch.batchName,
+        tmrDate: batch.tmrDate || student.tmrDate || '',
+        rmeDate: batch.rmeDate || student.rmeDate || '',
+        launchEventDate: program === 'SUPER'
+          ? batch.tmrDate || student.launchEventDate || ''
+          : batch.rmeDate || student.launchEventDate || '',
+      };
+    }),
+  };
+}
+
 async function readResponseEMITab(sheetId, tabName, program) {
   try {
     const rows = await fetchCSV(sheetId, tabName);
@@ -797,7 +829,7 @@ export async function loadEMIData() {
     if (!res.ok) throw new Error(`EMI API ${res.status}`);
     const data = await res.json();
     if (data?.ok === false) throw new Error(data.error || 'EMI API returned an error');
-    if ((data?.v2 || []).length) return data;
+    if ((data?.v2 || []).length) return await enrichEMIDataWithRegistryDates(data);
     throw new Error('EMI API returned no V2 rows');
   } catch (apiError) {
     console.warn('[EMI] Apps Script loader failed, falling back to direct registry read', apiError);
