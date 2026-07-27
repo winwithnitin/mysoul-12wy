@@ -196,10 +196,20 @@ function diffCell(value) {
   return <span style={{color:up?'var(--success)':'var(--danger)',fontWeight:700}}>{up ? '▲' : '▼'} {inr(Math.abs(value))}</span>;
 }
 
-function V5EMIReview({ students }) {
-  const [status, setStatus] = useState('MISMATCH');
-  const [program, setProgram] = useState('ALL');
-  const rows = (students || []).map(s => {
+function fmtShortDate(iso) {
+  if (!iso) return '--';
+  const d = new Date(`${iso}T12:00:00`);
+  return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString('en-IN', { day:'numeric', month:'short' });
+}
+
+function addISODate(iso, days) {
+  const d = new Date(`${iso}T12:00:00`);
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+function buildV5Rows(students) {
+  return (students || []).map(s => {
     const actualProgramFee = (s.programFee || 0) - (s.totalOldPayment || 0);
     const dashboardReceived = s.totalActual || 0;
     const paymentsLoaded = s.paymentsLoaded === true || (s.payments || []).length > 0;
@@ -208,27 +218,60 @@ function V5EMIReview({ students }) {
     const receivedDiff = paymentsLoaded ? dashboardReceived - respReceived : null;
     const dueDiff = calculatedDue - (s.emiDue || 0);
     const isMatched = paymentsLoaded && Math.abs(receivedDiff) <= 1 && Math.abs(dueDiff) <= 1;
+    const paymentSig = {};
+    let duplicatePayments = 0;
+    for (const p of (s.payments || [])) {
+      const key = `${p.date || ''}|${p.amount || 0}|${p.emiNum || 0}`;
+      if (paymentSig[key]) duplicatePayments += 1;
+      paymentSig[key] = true;
+    }
 
-    return { ...s, actualProgramFee, dashboardReceived, respReceived, calculatedDue, receivedDiff, dueDiff, isMatched, paymentsLoaded };
-  }).filter(r => (status === 'ALL' || (status === 'UNLOADED' ? !r.paymentsLoaded : status === 'MATCHED' ? r.isMatched : r.paymentsLoaded && !r.isMatched)) && (program === 'ALL' || r.program === program))
+    return { ...s, actualProgramFee, dashboardReceived, respReceived, calculatedDue, receivedDiff, dueDiff, isMatched, paymentsLoaded, duplicatePayments };
+  });
+}
+
+function buildV5Audit(rows) {
+  const today = todayStr();
+  const emailMap = {}, phoneMap = {};
+  rows.forEach(r => {
+    if (r.email) (emailMap[r.email] ||= []).push(r);
+    if (r.phone) (phoneMap[r.phone] ||= []).push(r);
+  });
+
+  const duplicateStudents = rows.filter(r => (r.email && emailMap[r.email]?.length > 1) || (r.phone && phoneMap[r.phone]?.length > 1));
+  const mismatches = rows.filter(r => r.paymentsLoaded && !r.isMatched);
+  const unloaded = rows.filter(r => !r.paymentsLoaded);
+  const delayed = rows.filter(r => (r.emiDue || 0) > 0 && r.nextDueDate && r.nextDueDate < today);
+  const dueNoNextDate = rows.filter(r => (r.emiDue || 0) > 0 && !r.nextDueDate);
+  const duplicatePaymentRows = rows.filter(r => r.duplicatePayments > 0);
+  const fullyPaidButDue = rows.filter(r => r.calculatedDue <= 1 && (r.emiDue || 0) > 1);
+  const issueCount = mismatches.length + unloaded.length + duplicateStudents.length + delayed.length + dueNoNextDate.length + duplicatePaymentRows.length + fullyPaidButDue.length;
+
+  return { today, duplicateStudents, mismatches, unloaded, delayed, dueNoNextDate, duplicatePaymentRows, fullyPaidButDue, issueCount };
+}
+
+function V5EMIReview({ students }) {
+  const [status, setStatus] = useState('MISMATCH');
+  const [program, setProgram] = useState('ALL');
+  const [auditOpen, setAuditOpen] = useState(true);
+  const allRows = buildV5Rows(students);
+  const audit = buildV5Audit(allRows);
+  const rows = allRows.filter(r => (status === 'ALL' || (status === 'UNLOADED' ? !r.paymentsLoaded : status === 'MATCHED' ? r.isMatched : r.paymentsLoaded && !r.isMatched)) && (program === 'ALL' || r.program === program))
     .sort((a, b) => (a.isMatched === b.isMatched ? (b.receivedDiff || 0) - (a.receivedDiff || 0) : a.isMatched ? 1 : -1));
 
-  const summary = (students || []).reduce((acc, s) => {
-    const actualProgramFee = (s.programFee || 0) - (s.totalOldPayment || 0);
-    const dashboardReceived = s.totalActual || 0;
-    const paymentsLoaded = s.paymentsLoaded === true || (s.payments || []).length > 0;
-    const respReceived = paymentsLoaded ? (s.payments || []).reduce((sum, p) => sum + (p.amount || 0), 0) : null;
-    const calculatedDue = Math.max(0, (s.totalPlanned || 0) - dashboardReceived);
-    const receivedDiff = paymentsLoaded ? dashboardReceived - respReceived : null;
-    const dueDiff = calculatedDue - (s.emiDue || 0);
-    const matched = paymentsLoaded && Math.abs(receivedDiff) <= 1 && Math.abs(dueDiff) <= 1;
+  const summary = allRows.reduce((acc, s) => {
     acc.students += 1;
-    acc.unloaded += paymentsLoaded ? 0 : 1;
-    acc.matched += matched ? 1 : 0;
-    acc.mismatch += paymentsLoaded && !matched ? 1 : 0;
-    acc.netDiff += receivedDiff || 0;
+    acc.unloaded += s.paymentsLoaded ? 0 : 1;
+    acc.matched += s.isMatched ? 1 : 0;
+    acc.mismatch += s.paymentsLoaded && !s.isMatched ? 1 : 0;
+    acc.netDiff += s.receivedDiff || 0;
     return acc;
   }, { students:0, matched:0, mismatch:0, unloaded:0, netDiff:0 });
+
+  const weekDays = Array.from({ length: 7 }, (_, i) => addISODate(audit.today, i));
+  const calendarRows = allRows
+    .filter(r => (r.emiDue || 0) > 0 && r.nextDueDate && r.nextDueDate >= audit.today && r.nextDueDate <= weekDays[6])
+    .sort((a, b) => (a.nextDueDate || '').localeCompare(b.nextDueDate || ''));
 
   return (
     <div>
@@ -251,6 +294,70 @@ function V5EMIReview({ students }) {
       </div>
 
       <div style={{padding:'0 24px 32px'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+          {eye('Data audit — business review')}
+          <button onClick={()=>setAuditOpen(v=>!v)} style={{fontSize:12,padding:'5px 12px'}}>{auditOpen ? 'Hide Audit' : 'Show Audit'}</button>
+        </div>
+        {auditOpen && (
+          <div style={{display:'grid',gridTemplateColumns:'1.1fr .9fr',gap:16,marginBottom:24}}>
+            <div style={{background:'var(--surface)',border:`1px solid ${audit.issueCount ? 'rgba(245,158,11,.45)' : 'var(--border)'}`,borderRadius:12,padding:'16px 18px'}}>
+              <div style={{fontSize:13,fontWeight:800,color:audit.issueCount?'var(--warning)':'var(--success)',marginBottom:10}}>
+                {audit.issueCount ? `${num(audit.issueCount)} items need attention` : 'No major data issues found'}
+              </div>
+              {[
+                ['Payment mismatch', audit.mismatches.length, 'Dashboard EMI received and Resp EMI sum do not match.'],
+                ['Resp EMI not loaded', audit.unloaded.length, 'Payment rows are unavailable from batch sheet.'],
+                ['Duplicate student identifiers', audit.duplicateStudents.length, 'Same email or phone appears in multiple rows.'],
+                ['Delayed payments', audit.delayed.length, 'Next planned date is before today and due is still open.'],
+                ['Due but no next EMI date', audit.dueNoNextDate.length, 'Student has due amount but no follow-up date.'],
+                ['Duplicate payment rows', audit.duplicatePaymentRows.length, 'Same date, amount and EMI number repeated in Resp EMI.'],
+                ['Due mismatch', audit.fullyPaidButDue.length, 'Calculated due is zero but dashboard due is still open.'],
+              ].map(([label,count,help])=>(
+                <div key={label} style={{display:'grid',gridTemplateColumns:'1fr 54px',gap:10,padding:'7px 0',borderBottom:'1px solid var(--border2)'}}>
+                  <div><div style={{fontSize:12,color:'var(--text)'}}>{label}</div><div style={{fontSize:11,color:'var(--text3)'}}>{help}</div></div>
+                  <div style={{fontSize:15,fontWeight:800,textAlign:'right',color:count?'var(--warning)':'var(--success)'}}>{num(count)}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:12,padding:'16px 18px'}}>
+              <div style={{fontSize:13,fontWeight:800,color:'var(--text)',marginBottom:10}}>Weekly payment calendar</div>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:6}}>
+                {weekDays.map(day => {
+                  const due = calendarRows.filter(r => r.nextDueDate === day);
+                  const total = due.reduce((sum,r)=>sum+(r.emiDue||0),0);
+                  return <div key={day} style={{background:'var(--surface2)',border:'1px solid var(--border2)',borderRadius:8,padding:'8px 6px',minHeight:72}}>
+                    <div style={{fontSize:10,color:'var(--text3)',marginBottom:6}}>{fmtShortDate(day)}</div>
+                    <div style={{fontSize:16,fontWeight:800,color:due.length?'var(--warning)':'var(--text3)'}}>{due.length}</div>
+                    <div style={{fontSize:10,color:'var(--text2)'}}>{due.length ? inr(total) : 'No due'}</div>
+                  </div>;
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {audit.delayed.length > 0 && (
+          <>
+            {eye(`Delayed payments — ${audit.delayed.length} students`)}
+            <div style={tableWrap}>
+              <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
+                <thead><tr>{['Name','Batch','Program','Next EMI Due','Days Late','Dashboard Due','Payments'].map((h,i)=><th key={h} style={i<3?thL:th}>{h}</th>)}</tr></thead>
+                <tbody>{audit.delayed.sort((a,b)=>(a.nextDueDate||'').localeCompare(b.nextDueDate||'')).slice(0,30).map((r,i)=>(
+                  <tr key={`${r.email || r.phone || r.name}-late-${i}`} style={{background:'rgba(239,68,68,.08)'}}>
+                    <td style={{...td('left'),color:'var(--text)',fontWeight:700}}>{r.name || '--'}</td>
+                    <td style={td('left')}>{getStudentBatchDisplay(r)}</td>
+                    <td style={{...td('left'),color:r.program==='SUPER'?'var(--tarot)':'var(--reiki)',fontWeight:600}}>{r.program}</td>
+                    <td style={td()}>{r.nextDueDate}</td>
+                    <td style={{...td(),color:'var(--danger)',fontWeight:800}}>{daysBetween(r.nextDueDate, audit.today)}d</td>
+                    <td style={td()}>{inr(r.emiDue || 0)}</td>
+                    <td style={td()}>{(r.payments || []).length}</td>
+                  </tr>
+                ))}</tbody>
+              </table>
+            </div>
+          </>
+        )}
+
         {eye('EMI dashboard vs Resp EMI verification')}
         <div style={{fontSize:12,color:summary.unloaded?'var(--warning)':'var(--text3)',marginBottom:12}}>
           Expected match: EMI Dashboard Total Actual Amount = sum of Amount Received in Resp EMI for the same student. Application Fee is not included in Resp EMI verification.
