@@ -210,7 +210,7 @@ function addISODate(iso, days) {
 }
 
 function buildV5Rows(students) {
-  return (students || []).map(s => {
+  return (students || []).map((s, index) => {
     const actualProgramFee = (s.programFee || 0) - (s.totalOldPayment || 0);
     const dashboardReceived = s.totalActual || 0;
     const paymentsLoaded = s.paymentsLoaded === true || (s.payments || []).length > 0;
@@ -227,7 +227,7 @@ function buildV5Rows(students) {
       paymentSig[key] = true;
     }
 
-    return { ...s, actualProgramFee, dashboardReceived, respReceived, calculatedDue, receivedDiff, dueDiff, isMatched, paymentsLoaded, duplicatePayments };
+    return { ...s, __v5Id: `${index}-${s.email || s.phone || s.name || 'student'}`, actualProgramFee, dashboardReceived, respReceived, calculatedDue, receivedDiff, dueDiff, isMatched, paymentsLoaded, duplicatePayments };
   });
 }
 
@@ -235,46 +235,71 @@ function normName(raw) {
   return String(raw || '').toLowerCase().replace(/\s+/g, ' ').trim();
 }
 
+function personKey(row) {
+  const name = normName(row.name);
+  if (name) return `name:${name}`;
+  if (row.email) return `email:${row.email}`;
+  if (row.phone) return `phone:${row.phone}`;
+  return '';
+}
+
 function rowRecency(row) {
-  return row.timestamp || parseBatchMonth(row.batch) || '';
+  return parseBatchMonth(row.batch) || row.timestamp || '';
 }
 
 function applyShiftedStudentFlags(rows) {
   const groups = {};
   rows.forEach(row => {
-    const keys = [
-      row.email ? `email:${row.email}` : '',
-      row.phone ? `phone:${row.phone}` : '',
-      normName(row.name) ? `name:${normName(row.name)}` : '',
-    ].filter(Boolean);
-    keys.forEach(key => (groups[key] ||= []).push(row));
+    const key = `${personKey(row)}|${row.program || ''}`;
+    if (personKey(row)) (groups[key] ||= []).push(row);
   });
 
   const shiftedGroups = [];
   const oldKeys = new Set();
   const activeKeys = new Set();
+  const duplicateKeys = new Set();
   const seenGroups = new Set();
 
   Object.entries(groups).forEach(([key, list]) => {
     const batches = new Set(list.map(r => r.batch).filter(Boolean));
-    if (list.length < 2 || batches.size < 2) return;
+    if (list.length < 2) return;
+
+    const duplicateBuckets = {};
+    list.forEach(row => {
+      const signature = [
+        row.batch || '',
+        row.emiDue || 0,
+        row.dashboardReceived || 0,
+        row.nextDueDate || '',
+      ].join('|');
+      (duplicateBuckets[signature] ||= []).push(row);
+    });
+    Object.values(duplicateBuckets).forEach(bucket => {
+      if (bucket.length < 2) return;
+      [...bucket]
+        .sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''))
+        .slice(1)
+        .forEach(row => duplicateKeys.add(row.__v5Id));
+    });
+
+    if (batches.size < 2) return;
 
     const sorted = [...list].sort((a, b) => rowRecency(b).localeCompare(rowRecency(a)));
-    const signature = sorted.map(r => `${r.email || r.phone || normName(r.name)}|${r.batch}|${r.program}`).sort().join('::');
+    const signature = sorted.map(r => `${personKey(r)}|${r.batch}|${r.program}`).sort().join('::');
     if (seenGroups.has(signature)) return;
     seenGroups.add(signature);
 
     const active = sorted[0];
     const shiftedFrom = sorted.slice(1);
-    shiftedFrom.forEach(r => oldKeys.add(`${r.email || r.phone || r.name}|${r.batch}|${r.program}`));
-    activeKeys.add(`${active.email || active.phone || active.name}|${active.batch}|${active.program}`);
+    shiftedFrom.forEach(r => oldKeys.add(r.__v5Id));
+    activeKeys.add(active.__v5Id);
     shiftedGroups.push({ key, active, shiftedFrom, rows: sorted });
   });
 
   return {
     rows: rows.map(r => {
-      const key = `${r.email || r.phone || r.name}|${r.batch}|${r.program}`;
-      return { ...r, isShiftedOld: oldKeys.has(key), isShiftedActive: activeKeys.has(key) };
+      const key = r.__v5Id;
+      return { ...r, isShiftedOld: oldKeys.has(key), isShiftedActive: activeKeys.has(key), isDuplicateOld: duplicateKeys.has(key) };
     }),
     shiftedGroups,
   };
@@ -308,6 +333,11 @@ function delayedBucket(rows, today, minDays, maxDays = Infinity) {
   });
 }
 
+function ShiftedTag({ row }) {
+  if (!row?.isShiftedActive) return null;
+  return <span style={{display:'inline-block',marginLeft:8,padding:'2px 6px',borderRadius:999,background:'rgba(245,158,11,.16)',color:'var(--warning)',fontSize:10,fontWeight:800,verticalAlign:'middle'}}>Shifted (Last batch)</span>;
+}
+
 function V5EMIReview({ students }) {
   const [status, setStatus] = useState('MISMATCH');
   const [program, setProgram] = useState('ALL');
@@ -316,7 +346,8 @@ function V5EMIReview({ students }) {
   const [shiftedOpen, setShiftedOpen] = useState(false);
   const shifted = applyShiftedStudentFlags(buildV5Rows(students));
   const allRows = shifted.rows;
-  const audit = buildV5Audit(allRows, shifted.shiftedGroups);
+  const operationalRows = allRows.filter(r => !r.isShiftedOld && !r.isDuplicateOld);
+  const audit = buildV5Audit(operationalRows, shifted.shiftedGroups);
   const rows = allRows.filter(r => (status === 'ALL' || (status === 'UNLOADED' ? !r.paymentsLoaded : status === 'MATCHED' ? r.isMatched : r.paymentsLoaded && !r.isMatched)) && (program === 'ALL' || r.program === program))
     .sort((a, b) => (a.isMatched === b.isMatched ? (b.receivedDiff || 0) - (a.receivedDiff || 0) : a.isMatched ? 1 : -1));
 
@@ -330,7 +361,7 @@ function V5EMIReview({ students }) {
   }, { students:0, matched:0, mismatch:0, unloaded:0, netDiff:0 });
 
   const calendarDays = Array.from({ length: 31 }, (_, i) => addISODate(audit.today, i - 15));
-  const calendarRows = allRows
+  const calendarRows = operationalRows
     .filter(r => (r.emiDue || 0) > 0 && r.nextDueDate && r.nextDueDate >= calendarDays[0] && r.nextDueDate <= calendarDays[30])
     .sort((a, b) => (a.nextDueDate || '').localeCompare(b.nextDueDate || ''));
   const selectedDateRows = calendarRows.filter(r => r.nextDueDate === selectedDate).sort((a,b)=>(b.emiDue||0)-(a.emiDue||0));
@@ -417,7 +448,7 @@ function V5EMIReview({ students }) {
               ? <div style={{fontSize:12,color:'var(--text3)',padding:'1rem 0'}}>No planned payments for this date.</div>
               : selectedDateRows.map((r,i)=>(
                 <div key={`${r.email || r.phone || r.name}-${selectedDate}-${i}`} style={{display:'grid',gridTemplateColumns:'1.2fr 1fr 90px',gap:10,padding:'8px 0',borderBottom:'1px solid var(--border2)'}}>
-                  <div><div style={{fontSize:12,color:'var(--text)',fontWeight:700}}>{r.name || '--'}</div><div style={{fontSize:11,color:'var(--text3)'}}>{r.phone || r.email || '--'}</div></div>
+                  <div><div style={{fontSize:12,color:'var(--text)',fontWeight:700}}>{r.name || '--'}<ShiftedTag row={r} /></div><div style={{fontSize:11,color:'var(--text3)'}}>{r.phone || r.email || '--'}</div></div>
                   <div style={{fontSize:12,color:r.program==='SUPER'?'var(--tarot)':'var(--reiki)',fontWeight:600}}>{getStudentBatchDisplay(r)}</div>
                   <div style={{fontSize:13,color:'var(--warning)',fontWeight:800,textAlign:'right'}}>{inr(r.emiDue || 0)}</div>
                 </div>
@@ -427,7 +458,7 @@ function V5EMIReview({ students }) {
           <div style={{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:12,padding:'16px 18px'}}>
             <div style={{fontSize:13,fontWeight:800,color:'var(--success)',marginBottom:10}}>Fastest cash collection focus</div>
             {[
-              [`Call overdue first`, `${audit.delayed.length} students`, 'These are already past planned date.'],
+              [`Call overdue first`, `${audit.delayed.length} students`, 'These are already past planned date. Shifted older batches are kept out of this action list.'],
               [`Set dates for open dues`, `${audit.dueNoNextDate.length} students`, 'Due exists but no next follow-up date is visible.'],
               [`High-value due`, inr(audit.highValueDue.reduce((s,r)=>s+(r.emiDue||0),0)), 'Prioritize biggest pending dues this week.'],
             ].map(([title,value,help])=>(
@@ -485,7 +516,7 @@ function V5EMIReview({ students }) {
                   <thead><tr>{['Name','Batch','Program','Next EMI Due','Days Late','Dashboard Due','Payments'].map((h,i)=><th key={h} style={i<3?thL:th}>{h}</th>)}</tr></thead>
                   <tbody>{bucket.rows.sort((a,b)=>(b.emiDue||0)-(a.emiDue||0)).slice(0,30).map((r,i)=>(
                     <tr key={`${r.email || r.phone || r.name}-${bucket.label}-${i}`} style={{background:'rgba(239,68,68,.08)'}}>
-                      <td style={{...td('left'),color:'var(--text)',fontWeight:700}}>{r.name || '--'}</td>
+                      <td style={{...td('left'),color:'var(--text)',fontWeight:700}}>{r.name || '--'}<ShiftedTag row={r} /></td>
                       <td style={td('left')}>{getStudentBatchDisplay(r)}</td>
                       <td style={{...td('left'),color:r.program==='SUPER'?'var(--tarot)':'var(--reiki)',fontWeight:600}}>{r.program}</td>
                       <td style={td()}>{r.nextDueDate}</td>
@@ -502,7 +533,7 @@ function V5EMIReview({ students }) {
 
         {eye('EMI dashboard vs Resp EMI verification')}
         <div style={{fontSize:12,color:summary.unloaded?'var(--warning)':'var(--text3)',marginBottom:12}}>
-          Expected match: EMI Dashboard Total Actual Amount = sum of Amount Received in Resp EMI for the same student. Differences up to ₹1,000 are ignored.
+          Expected match: EMI Dashboard Total Actual Amount = sum of Amount Received in Resp EMI for the same student. Differences up to ₹1,000 are ignored. Shifted older batch rows are shown for audit history, while the current follow-up lists use the latest batch only.
         </div>
         <div style={tableWrap}>
           <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
@@ -512,9 +543,9 @@ function V5EMIReview({ students }) {
             <tbody>
               {rows.length===0?<tr><td colSpan={13} style={{...td(),textAlign:'center',padding:'2rem'}}>No rows for this filter.</td></tr>
               :rows.map((r,i)=>(
-                <tr key={`${r.email || r.phone || r.name}-${r.batch}-${i}`} style={{background:r.isShiftedOld?'rgba(245,158,11,.12)':!r.paymentsLoaded?'rgba(245,158,11,.10)':r.isMatched?'transparent':'rgba(239,68,68,.10)'}}>
-                  <td style={{...td('left'),color:r.isShiftedOld?'var(--warning)':!r.paymentsLoaded?'var(--warning)':r.isMatched?'var(--success)':'var(--danger)',fontWeight:800}}>{r.isShiftedOld?'SHIFTED':!r.paymentsLoaded?'NOT LOADED':r.isMatched?'OK':'VERIFY'}</td>
-                  <td style={{...td('left'),color:'var(--text)',fontWeight:600}}>{r.name || '--'}</td>
+                <tr key={`${r.email || r.phone || r.name}-${r.batch}-${i}`} style={{background:r.isShiftedOld || r.isDuplicateOld?'rgba(245,158,11,.12)':!r.paymentsLoaded?'rgba(245,158,11,.10)':r.isMatched?'transparent':'rgba(239,68,68,.10)'}}>
+                  <td style={{...td('left'),color:r.isShiftedOld || r.isDuplicateOld?'var(--warning)':!r.paymentsLoaded?'var(--warning)':r.isMatched?'var(--success)':'var(--danger)',fontWeight:800}}>{r.isShiftedOld?'LAST BATCH':r.isDuplicateOld?'DUPLICATE':!r.paymentsLoaded?'NOT LOADED':r.isMatched?'OK':'VERIFY'}</td>
+                  <td style={{...td('left'),color:'var(--text)',fontWeight:600}}>{r.name || '--'}<ShiftedTag row={r} /></td>
                   <td style={td('left')}>{getStudentBatchDisplay(r)}</td>
                   <td style={{...td('left'),color:r.program==='SUPER'?'var(--tarot)':'var(--reiki)',fontWeight:600}}>{r.program || '--'}</td>
                   <td style={td()}>{inr(r.actualProgramFee)}</td>
