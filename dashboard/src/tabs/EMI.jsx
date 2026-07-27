@@ -201,10 +201,10 @@ function V5EMIReview({ students }) {
   const [program, setProgram] = useState('ALL');
   const rows = (students || []).map(s => {
     const actualProgramFee = (s.programFee || 0) - (s.totalOldPayment || 0);
-    const dashboardReceived = (s.appnFee || 0) + (s.totalActual || 0);
+    const dashboardReceived = s.totalActual || 0;
     const paymentsLoaded = s.paymentsLoaded === true || (s.payments || []).length > 0;
     const respReceived = paymentsLoaded ? (s.payments || []).reduce((sum, p) => sum + (p.amount || 0), 0) : null;
-    const calculatedDue = Math.max(0, actualProgramFee - dashboardReceived);
+    const calculatedDue = Math.max(0, (s.totalPlanned || 0) - dashboardReceived);
     const receivedDiff = paymentsLoaded ? dashboardReceived - respReceived : null;
     const dueDiff = calculatedDue - (s.emiDue || 0);
     const isMatched = paymentsLoaded && Math.abs(receivedDiff) <= 1 && Math.abs(dueDiff) <= 1;
@@ -215,10 +215,10 @@ function V5EMIReview({ students }) {
 
   const summary = (students || []).reduce((acc, s) => {
     const actualProgramFee = (s.programFee || 0) - (s.totalOldPayment || 0);
-    const dashboardReceived = (s.appnFee || 0) + (s.totalActual || 0);
+    const dashboardReceived = s.totalActual || 0;
     const paymentsLoaded = s.paymentsLoaded === true || (s.payments || []).length > 0;
     const respReceived = paymentsLoaded ? (s.payments || []).reduce((sum, p) => sum + (p.amount || 0), 0) : null;
-    const calculatedDue = Math.max(0, actualProgramFee - dashboardReceived);
+    const calculatedDue = Math.max(0, (s.totalPlanned || 0) - dashboardReceived);
     const receivedDiff = paymentsLoaded ? dashboardReceived - respReceived : null;
     const dueDiff = calculatedDue - (s.emiDue || 0);
     const matched = paymentsLoaded && Math.abs(receivedDiff) <= 1 && Math.abs(dueDiff) <= 1;
@@ -253,12 +253,12 @@ function V5EMIReview({ students }) {
       <div style={{padding:'0 24px 32px'}}>
         {eye('EMI dashboard vs Resp EMI verification')}
         <div style={{fontSize:12,color:summary.unloaded?'var(--warning)':'var(--text3)',marginBottom:12}}>
-          Expected match: EMI Dashboard received = Application Fee + Total Actual Amount. Resp EMI received = sum of Amount Received in Resp EMI for the same student. If Resp EMI is not loaded, this dashboard needs the Apps Script endpoint to return payment rows from private batch sheets.
+          Expected match: EMI Dashboard Total Actual Amount = sum of Amount Received in Resp EMI for the same student. Application Fee is not included in Resp EMI verification.
         </div>
         <div style={tableWrap}>
           <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
             <thead>
-              <tr>{['Status','Name','Batch','Program','Actual Program Fee','Dashboard Received','Resp EMI Sum','Difference','Calculated Due','Dashboard Due','Due Diff','Payments','Next EMI Due'].map((h,i)=><th key={h} style={i<4?thL:th}>{h}</th>)}</tr>
+              <tr>{['Status','Name','Batch','Program','Actual Program Fee','Dashboard EMI Received','Resp EMI Sum','Difference','Calculated Due','Dashboard Due','Due Diff','Payments','Next EMI Due'].map((h,i)=><th key={h} style={i<4?thL:th}>{h}</th>)}</tr>
             </thead>
             <tbody>
               {rows.length===0?<tr><td colSpan={13} style={{...td(),textAlign:'center',padding:'2rem'}}>No rows for this filter.</td></tr>
