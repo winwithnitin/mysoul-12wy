@@ -55,6 +55,7 @@ function daysBetween(from, to) {
 const MONTH_MAP = { jan:1, feb:2, mar:3, apr:4, may:5, jun:6, jul:7, aug:8, sep:9, oct:10, nov:11, dec:12 };
 const SUPER_PRICE = 250000;
 const RGM_PRICE = 120000;
+const EMI_REVIEW_TOLERANCE = 1000;
 
 function parseBatchMonth(batchName) {
   if (!batchName) return null;
@@ -217,7 +218,7 @@ function buildV5Rows(students) {
     const calculatedDue = Math.max(0, (s.totalPlanned || 0) - dashboardReceived);
     const receivedDiff = paymentsLoaded ? dashboardReceived - respReceived : null;
     const dueDiff = calculatedDue - (s.emiDue || 0);
-    const isMatched = paymentsLoaded && Math.abs(receivedDiff) <= 1 && Math.abs(dueDiff) <= 1;
+    const isMatched = paymentsLoaded && Math.abs(receivedDiff) <= EMI_REVIEW_TOLERANCE && Math.abs(dueDiff) <= EMI_REVIEW_TOLERANCE;
     const paymentSig = {};
     let duplicatePayments = 0;
     for (const p of (s.payments || [])) {
@@ -300,6 +301,13 @@ function buildV5Audit(rows, shiftedGroups = []) {
   return { today, duplicateStudents, shiftedGroups, mismatches, unloaded, delayed, dueNoNextDate, duplicatePaymentRows, fullyPaidButDue, highValueDue, issueCount };
 }
 
+function delayedBucket(rows, today, minDays, maxDays = Infinity) {
+  return rows.filter(r => {
+    const days = daysBetween(r.nextDueDate, today);
+    return days >= minDays && days <= maxDays;
+  });
+}
+
 function V5EMIReview({ students }) {
   const [status, setStatus] = useState('MISMATCH');
   const [program, setProgram] = useState('ALL');
@@ -308,12 +316,11 @@ function V5EMIReview({ students }) {
   const [shiftedOpen, setShiftedOpen] = useState(false);
   const shifted = applyShiftedStudentFlags(buildV5Rows(students));
   const allRows = shifted.rows;
-  const activeRows = allRows.filter(r => !r.isShiftedOld);
-  const audit = buildV5Audit(activeRows, shifted.shiftedGroups);
+  const audit = buildV5Audit(allRows, shifted.shiftedGroups);
   const rows = allRows.filter(r => (status === 'ALL' || (status === 'UNLOADED' ? !r.paymentsLoaded : status === 'MATCHED' ? r.isMatched : r.paymentsLoaded && !r.isMatched)) && (program === 'ALL' || r.program === program))
     .sort((a, b) => (a.isMatched === b.isMatched ? (b.receivedDiff || 0) - (a.receivedDiff || 0) : a.isMatched ? 1 : -1));
 
-  const summary = activeRows.reduce((acc, s) => {
+  const summary = allRows.reduce((acc, s) => {
     acc.students += 1;
     acc.unloaded += s.paymentsLoaded ? 0 : 1;
     acc.matched += s.isMatched ? 1 : 0;
@@ -323,11 +330,18 @@ function V5EMIReview({ students }) {
   }, { students:0, matched:0, mismatch:0, unloaded:0, netDiff:0 });
 
   const calendarDays = Array.from({ length: 31 }, (_, i) => addISODate(audit.today, i - 15));
-  const calendarRows = activeRows
+  const calendarRows = allRows
     .filter(r => (r.emiDue || 0) > 0 && r.nextDueDate && r.nextDueDate >= calendarDays[0] && r.nextDueDate <= calendarDays[30])
     .sort((a, b) => (a.nextDueDate || '').localeCompare(b.nextDueDate || ''));
   const selectedDateRows = calendarRows.filter(r => r.nextDueDate === selectedDate).sort((a,b)=>(b.emiDue||0)-(a.emiDue||0));
   const selectedDateTotal = selectedDateRows.reduce((sum,r)=>sum+(r.emiDue||0),0);
+  const delayBuckets = [
+    { label:'0-15 Days', rows: delayedBucket(audit.delayed, audit.today, 0, 15) },
+    { label:'16-30 Days', rows: delayedBucket(audit.delayed, audit.today, 16, 30) },
+    { label:'31-60 Days', rows: delayedBucket(audit.delayed, audit.today, 31, 60) },
+    { label:'61-90 Days', rows: delayedBucket(audit.delayed, audit.today, 61, 90) },
+    { label:'90+ Days', rows: delayedBucket(audit.delayed, audit.today, 91) },
+  ];
 
   return (
     <div>
@@ -341,7 +355,7 @@ function V5EMIReview({ students }) {
       </div>
 
       <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:1,background:'var(--border)',marginBottom:24}}>
-        {[['Active Students',num(summary.students),null],['Matched',num(summary.matched),'var(--success)'],['Needs Review',num(summary.mismatch),summary.mismatch?'var(--danger)':'var(--success)'],['Shifted Excluded',num(allRows.length-activeRows.length),allRows.length-activeRows.length?'var(--warning)':'var(--success)'],['Net Difference',inr(summary.netDiff),summary.netDiff?'var(--warning)':'var(--success)']].map(([label,value,color])=>(
+        {[['Students',num(summary.students),null],['Matched',num(summary.matched),'var(--success)'],['Needs Review',num(summary.mismatch),summary.mismatch?'var(--danger)':'var(--success)'],['Shifted Students',num(audit.shiftedGroups.length),audit.shiftedGroups.length?'var(--warning)':'var(--success)'],['Net Difference',inr(summary.netDiff),summary.netDiff?'var(--warning)':'var(--success)']].map(([label,value,color])=>(
           <div key={label} style={{background:'var(--surface)',padding:'16px 20px'}}>
             <div style={{fontSize:11,color:'var(--text3)',textTransform:'uppercase',letterSpacing:.5,marginBottom:6}}>{label}</div>
             <div style={{fontSize:22,fontWeight:600,color:color||'var(--text)'}}>{value}</div>
@@ -363,7 +377,7 @@ function V5EMIReview({ students }) {
               {[
                 ['Payment mismatch', audit.mismatches.length, 'Dashboard EMI received and Resp EMI sum do not match.'],
                 ['Resp EMI not loaded', audit.unloaded.length, 'Payment rows are unavailable from batch sheet.'],
-                ['Shifted students excluded', audit.shiftedGroups.length, 'Same name, email or phone appears in different batches. Older batch rows are excluded from totals.'],
+                ['Shifted students', audit.shiftedGroups.length, 'Same name, email or phone appears in different batches. Highlight separately for operational review.'],
                 ['Duplicate student identifiers', audit.duplicateStudents.length, 'Same email or phone appears in active rows.'],
                 ['Delayed payments', audit.delayed.length, 'Next planned date is before today and due is still open.'],
                 ['Due but no next EMI date', audit.dueNoNextDate.length, 'Student has due amount but no follow-up date.'],
@@ -387,8 +401,8 @@ function V5EMIReview({ students }) {
                   const isPast = day < audit.today;
                   return <button key={day} onClick={()=>setSelectedDate(day)} style={{background:isSelected?'rgba(139,92,246,.22)':'var(--surface2)',border:`1px solid ${isSelected?'var(--tarot)':isPast&&due.length?'rgba(239,68,68,.45)':'var(--border2)'}`,borderRadius:8,padding:'8px 6px',minHeight:72,textAlign:'left',cursor:'pointer'}}>
                     <div style={{fontSize:10,color:'var(--text3)',marginBottom:6}}>{fmtShortDate(day)}</div>
-                    <div style={{fontSize:15,fontWeight:800,color:due.length?(isPast?'var(--danger)':'var(--warning)'):'var(--text3)'}}>{due.length ? inr(total) : '₹0'}</div>
-                    <div style={{fontSize:10,color:'var(--text2)'}}>{due.length ? `${due.length} students` : 'No due'}</div>
+                    <div style={{fontSize:18,fontWeight:800,color:due.length?(isPast?'var(--danger)':'var(--warning)'):'var(--text3)'}}>{due.length}</div>
+                    <div style={{fontSize:10,color:'var(--text2)'}}>{due.length === 1 ? 'payment' : 'payments'}</div>
                   </button>;
                 })}
               </div>
@@ -434,7 +448,7 @@ function V5EMIReview({ students }) {
             {shiftedOpen && (
               <div style={tableWrap}>
                 <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
-                  <thead><tr>{['Identifier','Current Batch Included','Old Batch Excluded','Program','Due In Current','Old Due Excluded'].map((h,i)=><th key={h} style={i<3?thL:th}>{h}</th>)}</tr></thead>
+                  <thead><tr>{['Identifier','Recent Batch','Earlier Batch','Program','Recent Due','Earlier Due'].map((h,i)=><th key={h} style={i<3?thL:th}>{h}</th>)}</tr></thead>
                   <tbody>{audit.shiftedGroups.map((g,i)=>(
                     <tr key={`${g.key}-${i}`} style={{background:'rgba(245,158,11,.08)'}}>
                       <td style={td('left')}>{g.key.replace(/^(email|phone|name):/,'')}</td>
@@ -454,28 +468,41 @@ function V5EMIReview({ students }) {
         {audit.delayed.length > 0 && (
           <>
             {eye(`Delayed payments — ${audit.delayed.length} students`)}
-            <div style={tableWrap}>
-              <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
-                <thead><tr>{['Name','Batch','Program','Next EMI Due','Days Late','Dashboard Due','Payments'].map((h,i)=><th key={h} style={i<3?thL:th}>{h}</th>)}</tr></thead>
-                <tbody>{audit.delayed.sort((a,b)=>(a.nextDueDate||'').localeCompare(b.nextDueDate||'')).slice(0,30).map((r,i)=>(
-                  <tr key={`${r.email || r.phone || r.name}-late-${i}`} style={{background:'rgba(239,68,68,.08)'}}>
-                    <td style={{...td('left'),color:'var(--text)',fontWeight:700}}>{r.name || '--'}</td>
-                    <td style={td('left')}>{getStudentBatchDisplay(r)}</td>
-                    <td style={{...td('left'),color:r.program==='SUPER'?'var(--tarot)':'var(--reiki)',fontWeight:600}}>{r.program}</td>
-                    <td style={td()}>{r.nextDueDate}</td>
-                    <td style={{...td(),color:'var(--danger)',fontWeight:800}}>{daysBetween(r.nextDueDate, audit.today)}d</td>
-                    <td style={td()}>{inr(r.emiDue || 0)}</td>
-                    <td style={td()}>{(r.payments || []).length}</td>
-                  </tr>
-                ))}</tbody>
-              </table>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:10,marginBottom:14}}>
+              {delayBuckets.map(bucket => {
+                const total = bucket.rows.reduce((sum,r)=>sum+(r.emiDue||0),0);
+                return <div key={bucket.label} style={{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:10,padding:'12px 14px'}}>
+                  <div style={{fontSize:11,color:'var(--text3)',textTransform:'uppercase',letterSpacing:.5,marginBottom:6}}>{bucket.label}</div>
+                  <div style={{fontSize:20,fontWeight:800,color:bucket.rows.length?'var(--danger)':'var(--success)'}}>{num(bucket.rows.length)}</div>
+                  <div style={{fontSize:11,color:'var(--text2)'}}>{inr(total)}</div>
+                </div>;
+              })}
             </div>
+            {delayBuckets.map(bucket => bucket.rows.length ? (
+              <div key={`${bucket.label}-table`} style={tableWrap}>
+                <div style={{padding:'12px 16px',fontSize:12,fontWeight:800,color:'var(--danger)',borderBottom:'1px solid var(--border2)'}}>{bucket.label}</div>
+                <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
+                  <thead><tr>{['Name','Batch','Program','Next EMI Due','Days Late','Dashboard Due','Payments'].map((h,i)=><th key={h} style={i<3?thL:th}>{h}</th>)}</tr></thead>
+                  <tbody>{bucket.rows.sort((a,b)=>(b.emiDue||0)-(a.emiDue||0)).slice(0,30).map((r,i)=>(
+                    <tr key={`${r.email || r.phone || r.name}-${bucket.label}-${i}`} style={{background:'rgba(239,68,68,.08)'}}>
+                      <td style={{...td('left'),color:'var(--text)',fontWeight:700}}>{r.name || '--'}</td>
+                      <td style={td('left')}>{getStudentBatchDisplay(r)}</td>
+                      <td style={{...td('left'),color:r.program==='SUPER'?'var(--tarot)':'var(--reiki)',fontWeight:600}}>{r.program}</td>
+                      <td style={td()}>{r.nextDueDate}</td>
+                      <td style={{...td(),color:'var(--danger)',fontWeight:800}}>{daysBetween(r.nextDueDate, audit.today)}d</td>
+                      <td style={td()}>{inr(r.emiDue || 0)}</td>
+                      <td style={td()}>{(r.payments || []).length}</td>
+                    </tr>
+                  ))}</tbody>
+                </table>
+              </div>
+            ) : null)}
           </>
         )}
 
         {eye('EMI dashboard vs Resp EMI verification')}
         <div style={{fontSize:12,color:summary.unloaded?'var(--warning)':'var(--text3)',marginBottom:12}}>
-          Expected match: EMI Dashboard Total Actual Amount = sum of Amount Received in Resp EMI for the same student. Application Fee is not included in Resp EMI verification.
+          Expected match: EMI Dashboard Total Actual Amount = sum of Amount Received in Resp EMI for the same student. Differences up to ₹1,000 are ignored.
         </div>
         <div style={tableWrap}>
           <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
@@ -493,10 +520,10 @@ function V5EMIReview({ students }) {
                   <td style={td()}>{inr(r.actualProgramFee)}</td>
                   <td style={td()}>{inr(r.dashboardReceived)}</td>
                   <td style={td()}>{r.paymentsLoaded ? inr(r.respReceived) : '--'}</td>
-                  <td style={{...td(),color:!r.paymentsLoaded?'var(--warning)':Math.abs(r.receivedDiff)>1?'var(--danger)':'var(--success)',fontWeight:800}}>{r.paymentsLoaded ? inr(r.receivedDiff) : 'Not loaded'}</td>
+                  <td style={{...td(),color:!r.paymentsLoaded?'var(--warning)':Math.abs(r.receivedDiff)>EMI_REVIEW_TOLERANCE?'var(--danger)':'var(--success)',fontWeight:800}}>{r.paymentsLoaded ? inr(r.receivedDiff) : 'Not loaded'}</td>
                   <td style={td()}>{inr(r.calculatedDue)}</td>
                   <td style={td()}>{inr(r.emiDue || 0)}</td>
-                  <td style={{...td(),color:Math.abs(r.dueDiff)>1?'var(--danger)':'var(--success)',fontWeight:800}}>{inr(r.dueDiff)}</td>
+                  <td style={{...td(),color:Math.abs(r.dueDiff)>EMI_REVIEW_TOLERANCE?'var(--danger)':'var(--success)',fontWeight:800}}>{inr(r.dueDiff)}</td>
                   <td style={td()}>{r.paymentsLoaded ? (r.payments || []).length : '--'}</td>
                   <td style={td()}>{r.nextDueDate || '--'}</td>
                 </tr>
